@@ -2,6 +2,18 @@ import 'package:get/get.dart';
 
 import '../../features/login/di/login_binding.dart';
 import '../../features/login/presentation/page/login_page.dart';
+import '../../features/main/di/main_binding.dart';
+import '../../features/main/nav/lend/di/lend_binding.dart';
+import '../../features/main/nav/lend/presentation/page/lend_page.dart';
+import '../../features/main/nav/phom/di/phom_binding.dart';
+import '../../features/main/nav/phom/presentation/page/phom_page.dart';
+import '../../features/main/nav/shelf/di/home_binding.dart';
+import '../../features/main/nav/shelf/di/shelf_binding.dart';
+import '../../features/main/nav/shelf/presentation/page/home_page.dart';
+import '../../features/main/nav/shelf/presentation/page/shelf_page.dart';
+import '../../features/main/nav/user/di/user_binding.dart';
+import '../../features/main/nav/user/presentation/page/user_page.dart';
+import '../../features/main/presentation/page/main_page.dart';
 import '../../features/splash/di/splash_binding.dart';
 import '../../features/splash/presentation/page/splash_page.dart';
 import 'routes.dart';
@@ -24,27 +36,11 @@ class Pages {
       binding: LoginBinding(),
     ),
 
-    // // màng hình register
-    // GetPage(
-    //   name: Routes.register,
-    //   page: () => const RegisterPage(),
-    //   binding: RegisterBinding(),
-    // ),
-
     // // màng hình chính
-    // GetPage(
-    //   name: Routes.main,
-    //   page: () => const MainPage(),
-    //   binding: MainBinding(),
-    // ),
-
-
-    // // trang home
-    // GetPage(
-    //   name: Routes.home,
-    //   page: () => const HomePage(),
-    //   binding: HomeBinding(),
-    // ),
-
+    GetPage(
+      name: Routes.main,
+      page: () => const MainPage(),
+      binding: MainBinding(),
+    ),
   ];
 }

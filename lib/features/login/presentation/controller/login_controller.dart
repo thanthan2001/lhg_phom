@@ -83,6 +83,6 @@ class LoginController extends GetxController {
 
   void login() {
     print("Login button clicked"); // Debug xem hàm có chạy không
-    // Thêm logic xử lý đăng nhập tại đây
+    Get.offAllNamed('/main'); // Chuyển sang màng hình home
   }
 }

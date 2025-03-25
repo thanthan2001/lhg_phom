@@ -18,7 +18,7 @@ class MainPage extends GetView<MainController> {
           Navigator(
             key: Get.nestedKey(10),
             initialRoute: "/home",
-            // onGenerateRoute: controller.onGenerateRoute,
+            onGenerateRoute: controller.onGenerateRoute,
           ),
 
           // Obx(() {
@@ -34,20 +34,21 @@ class MainPage extends GetView<MainController> {
           }),
         ],
       ),
-      // bottomNavigationBar:
-      //     Obx(() => _bottomNavigationBar(controller.isLoading.value)),
+      bottomNavigationBar: Obx(
+        () => _bottomNavigationBar(controller.isLoading.value),
+      ),
     );
   }
 
-  // Widget _bottomNavigationBar(bool hidden) {
-  //   return Obx(() {
-  //     return BottomNavigationBarWidget(
-  //       currentIndex: controller.currentIndex.value,
-  //       onPageChanged: (index) {
-  //         if (!hidden) controller.onChangeItemBottomBar(index);
-  //       },
-  //       allowSelect: !hidden,
-  //     );
-  //   });
-  // }
+  Widget _bottomNavigationBar(bool hidden) {
+    return Obx(() {
+      return BottomNavigationBarWidget(
+        currentIndex: controller.currentIndex.value,
+        onPageChanged: (index) {
+          if (!hidden) controller.onChangeItemBottomBar(index);
+        },
+        allowSelect: !hidden,
+      );
+    });
+  }
 }
