@@ -3,7 +3,11 @@ abstract class Routes {
   static const splash = '/splash';
   static const unknow = "/unknow";
   static const main = "/main";
-  
   static const login = "/login";
   static const register = "/register";
+  static const home = "/home";
+  static const phom = "/phom";
+  static const shelf = "/shelf";
+  static const lend = "/lend";
+  static const user = "/user";
 }
