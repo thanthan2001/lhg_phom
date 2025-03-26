@@ -9,7 +9,6 @@ import '../../features/main/nav/phom/di/phom_binding.dart';
 import '../../features/main/nav/phom/presentation/page/phom_page.dart';
 import '../../features/main/nav/shelf/di/home_binding.dart';
 import '../../features/main/nav/shelf/di/shelf_binding.dart';
-import '../../features/main/nav/shelf/presentation/page/home_page.dart';
 import '../../features/main/nav/shelf/presentation/page/shelf_page.dart';
 import '../../features/main/nav/user/di/user_binding.dart';
 import '../../features/main/nav/user/presentation/page/user_page.dart';

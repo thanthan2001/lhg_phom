@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lhg_phom/features/main/nav/home/presentation/page/home_page.dart';
 import 'package:lhg_phom/features/main/nav/shelf/di/shelf_binding.dart';
 import 'package:lhg_phom/features/main/nav/shelf/presentation/page/shelf_page.dart';
 
@@ -12,7 +13,6 @@ import '../../nav/lend/presentation/page/lend_page.dart';
 import '../../nav/phom/di/phom_binding.dart';
 import '../../nav/phom/presentation/page/phom_page.dart';
 import '../../nav/shelf/di/home_binding.dart';
-import '../../nav/shelf/presentation/page/home_page.dart';
 import '../../nav/user/di/user_binding.dart';
 import '../../nav/user/presentation/page/user_page.dart';
 
@@ -25,7 +25,7 @@ class MainController extends GetxController {
       case '/home':
         return GetPageRoute(
           settings: settings,
-          page: () => const HomePage(),
+          page: () => HomePage(),
           binding: HomeBinding(),
           transition: Transition.fadeIn,
         );
