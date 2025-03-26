@@ -11,6 +11,8 @@ class TextSpanWidget extends StatelessWidget {
   final FontWeight fontWeight1;
   final FontWeight fontWeight2;
   final Color textColor2;
+  final Color textColor1;
+
   const TextSpanWidget({
     super.key,
     required this.text1,
@@ -18,7 +20,8 @@ class TextSpanWidget extends StatelessWidget {
     this.size = 16.0,
     this.fontWeight2 = FontWeight.normal,
     this.fontWeight1 = FontWeight.normal,
-    this.textColor2 = AppColors.black,
+    this.textColor2 = AppColors.white,
+    this.textColor1 = AppColors.white,
   });
 
   @override
@@ -40,6 +43,7 @@ class TextSpanWidget extends StatelessWidget {
                 fontSize: size,
                 // overflow: TextOverflow.ellipsis,
                 fontWeight: fontWeight1,
+                color: textColor1,
               ),
             ),
           ),

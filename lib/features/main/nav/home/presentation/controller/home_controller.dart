@@ -23,4 +23,33 @@ class HomeController extends GetxController {
     // Clean up resources here
     super.onClose();
   }
+
+  var expandedIndex = (-1).obs;
+  var isExpanded = false.obs;
+  var items =
+      [
+        {
+          'code': 'JDF123',
+          'name': 'JDF123',
+          'material': 'Nhựa',
+          'details': [
+            {'size': 36, 'quantity': 1200, 'stock': 1000},
+            {'size': 37, 'quantity': 1500, 'stock': 1100},
+          ],
+        },
+        {
+          'code': 'JDF124',
+          'name': 'JDF124',
+          'material': 'Kim loại',
+          'details': [
+            {'size': 38, 'quantity': 1300, 'stock': 900},
+            {'size': 39, 'quantity': 1100, 'stock': 700},
+          ],
+        },
+      ].obs;
+
+  void toggleExpand(int index) {
+    expandedIndex.value = (expandedIndex.value == index) ? -1 : index;
+    isExpanded.value = !isExpanded.value;
+  }
 }
