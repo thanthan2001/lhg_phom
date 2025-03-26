@@ -1,12 +1,11 @@
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 
 class UserController extends GetxController {
-  // Observable variables
-  var isLoading = false.obs;
-  var counter = 0.obs;
+  var isDarkMode = false.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
+  void toggleDarkMode() {
+    isDarkMode.value = !isDarkMode.value;
+    Get.changeTheme(isDarkMode.value ? ThemeData.dark() : ThemeData.light());
   }
 }

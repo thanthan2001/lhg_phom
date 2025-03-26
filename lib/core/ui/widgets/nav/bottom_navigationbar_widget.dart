@@ -24,11 +24,11 @@ class BottomNavigationBarWidget extends StatelessWidget {
       animationDuration: const Duration(milliseconds: 300),
       onTap: allowSelect ? onPageChanged : null,
       items: const [
-        Icon(Icons.home, size: 30, color: Colors.white), // Trang chủ
-        Icon(Icons.category, size: 30, color: Colors.white), // Phom
-        Icon(Icons.shelves, size: 30, color: Colors.white), // Shelf
-        Icon(Icons.list_alt_sharp, size: 30, color: Colors.white), // Lend
-        Icon(Icons.person, size: 30, color: Colors.white), // User
+        Icon(Icons.home, size: 30, color: AppColors.primary1), // Trang chủ
+        Icon(Icons.category, size: 30, color: AppColors.primary1), // Phom
+        Icon(Icons.shelves, size: 30, color: AppColors.primary1), // Shelf
+        Icon(Icons.list_alt_sharp, size: 30, color: AppColors.primary1), // Lend
+        Icon(Icons.person, size: 30, color: AppColors.primary1), // User
       ],
     );
   }

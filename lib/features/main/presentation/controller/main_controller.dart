@@ -8,6 +8,7 @@ import '../../../../core/configs/enum.dart';
 import '../../../../core/routes/routes.dart';
 import '../../../../core/services/model/user/domain/usecase/get_user_use_case.dart';
 import '../../../../core/ui/dialogs/dialogs.dart';
+import '../../nav/home/presentation/page/home_page.dart';
 import '../../nav/lend/di/lend_binding.dart';
 import '../../nav/lend/presentation/page/lend_page.dart';
 import '../../nav/phom/di/phom_binding.dart';

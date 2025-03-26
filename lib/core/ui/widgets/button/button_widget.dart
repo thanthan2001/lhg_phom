@@ -60,17 +60,21 @@ class ButtonWidget extends StatelessWidget {
           child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 if (leadingIcon != null) leadingIcon!,
-                if (leadingIcon != null) const SizedBox(width: 10.0),
-                child ??
-                    TextWidget(
-                      text: text,
-                      fontWeight: fontWeight,
-                      textAlign: TextAlign.center,
-                      color: textColor,
-                      size: fontSize,
-                    ),
+                if (leadingIcon != null) const SizedBox(width: 5.0),
+                Expanded(
+                  child:
+                      child ??
+                      TextWidget(
+                        text: text,
+                        fontWeight: fontWeight,
+                        textAlign: TextAlign.center,
+                        color: textColor,
+                        size: fontSize,
+                      ),
+                ),
               ],
             ),
           ),
