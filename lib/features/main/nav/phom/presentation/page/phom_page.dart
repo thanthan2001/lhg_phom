@@ -10,7 +10,7 @@ class PhomPage extends GetView<PhomController> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Column(children: [Center(child: Text('Phom Page'))]),
+        child: Column(children: [Center(child: Text('Phoâm Page'))]),
       ),
     );
   }
