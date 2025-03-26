@@ -8,4 +8,13 @@ const Map<String, String> en = {
   'forgot_password': 'Forgot Password?',
   'login': 'Login',
   'version': 'Version 1.0.0',
+  //user
+  'information': 'Information',
+  'setting': 'Setting',
+  'user_information': 'User information',
+  'date_joined': 'Date joined',
+  'language': 'Language',
+  'change_password': 'Change password',
+  'dark_mode': 'Dark mode',
+  'logout': 'Logout',
 };
