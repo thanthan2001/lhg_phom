@@ -33,7 +33,9 @@ class TextWidget extends StatelessWidget {
     return Text(
       text.tr,
       maxLines: maxLines,
-      textAlign: textAlign,
+      softWrap: true,
+      overflow: TextOverflow.visible,
+      textAlign: textAlign ?? TextAlign.center,
       style: GoogleFonts.roboto(
         textStyle: TextStyle(
           color: color,

@@ -18,6 +18,7 @@ class LoginPage extends GetView<LoginController> {
         FocusScope.of(context).unfocus(); // Hide keyboard
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             Container(
