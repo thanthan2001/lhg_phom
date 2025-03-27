@@ -10,4 +10,7 @@ abstract class Routes {
   static const shelf = "/shelf";
   static const lend = "/lend";
   static const user = "/user";
+  static const settingLanguage = "/settingLanguage";
+  static const changePassword = "/changePassword";
+  static const informationUser = "/informationUser";
 }

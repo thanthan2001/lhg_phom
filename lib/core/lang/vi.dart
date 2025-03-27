@@ -8,4 +8,14 @@ const Map<String, String> vi = {
   'forgot_password': 'Quên mật khẩu?',
   'login': 'Đăng nhập',
   'version': 'Phiên bản 1.0.0',
+  // user
+  'information': 'Thông tin',
+  'setting': 'Cài đặt',
+  'user_information': 'Thông tin người dùng',
+  'date_joined': 'Ngày vào công ty',
+  'language': 'Ngôn ngữ',
+  'change_password': 'Đổi mật khẩu',
+  'dark_mode': 'Chế độ tối',
+  'logout': 'Đăng xuất',
 };
+

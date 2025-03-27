@@ -24,7 +24,7 @@ class ButtonWidget extends StatelessWidget {
     this.fontWeight = FontWeight.w600,
     required this.ontap,
     required this.text,
-    this.height = 48.0,
+    this.height = 56.0,
     this.width = double.infinity,
     this.isBorder = false,
     this.borderColor,
@@ -56,6 +56,14 @@ class ButtonWidget extends StatelessWidget {
                     : null,
             color: backgroundColor,
             borderRadius: BorderRadius.circular(borderRadius!),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                spreadRadius: 1, // Bán kính lan rộng
+                blurRadius: 6, // Độ mờ của bóng
+                offset: const Offset(0, 2), // Độ dịch chuyển theo trục X,Y
+              ),
+            ],
           ),
           child: Center(
             child: Row(
