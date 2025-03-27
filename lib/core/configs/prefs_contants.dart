@@ -10,4 +10,5 @@ class PrefsConstants {
   static const String isFirstLaunch = "isFirstLaunch";
   static const String idAccountwaitingVerify = "idAccountwaitingVerify";
   static const String languageCode = "languageCode";
+  static const String darkMode = "darkMode";
 }
