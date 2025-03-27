@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/configs/app_colors.dart';
 import '../controller/login_controller.dart';
 
 class FactorySelectionWidget extends GetView<LoginController> {
@@ -40,7 +41,7 @@ class FactorySelectionWidget extends GetView<LoginController> {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       title: Text(
-        "Factory",
+        "factory".tr,
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       ),
@@ -51,14 +52,20 @@ class FactorySelectionWidget extends GetView<LoginController> {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Color(0xFFBCE6FF),
+                color: AppColors.primary2,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: TextField(
                 decoration: InputDecoration(
                   hintText: "Search",
+                  hintStyle: TextStyle(
+                    color: AppColors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w300,
+                    decoration: TextDecoration.underline,
+                  ),
                   border: InputBorder.none,
-                  prefixIcon: Icon(Icons.search, color: Colors.blueGrey),
+                  prefixIcon: Icon(Icons.search, color: AppColors.primary1),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 15,
                     horizontal: 10,
@@ -91,7 +98,7 @@ class FactorySelectionWidget extends GetView<LoginController> {
                                 value == true ? factory : "";
                             print(selectedFactory);
                           },
-                          activeColor: Colors.blueAccent,
+                          activeColor: AppColors.primary1,
                         ),
                         Text(factory),
                       ],
@@ -101,25 +108,13 @@ class FactorySelectionWidget extends GetView<LoginController> {
               ),
             ),
             Center(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Color(0xff5790AB)),
-                  borderRadius: BorderRadius.circular(10),
-                  color: Color(0xffCAEAFF),
-                ),
-                child: TextButton(
-                  child: Text(
-                    "Done",
-                    style: TextStyle(color: Colors.blueAccent),
-                  ),
-                  onPressed: () {
-                    // Update the LoginController's selectedFactory
-                    loginController.selectedFactory.value =
-                        selectedFactory.value;
-                    Get.back();
-                  },
-                ),
+              child: TextButton(
+                child: Text("Done", style: TextStyle(color: AppColors.primary)),
+                onPressed: () {
+                  // Update the LoginController's selectedFactory
+                  loginController.selectedFactory.value = selectedFactory.value;
+                  Get.back();
+                },
               ),
             ),
           ],
