@@ -44,6 +44,7 @@ class TextWidget extends StatelessWidget {
           shadows: listShadow,
           fontWeight: fontWeight,
           decoration: textDecoration,
+          decorationColor: color,
           // overflow: TextOverflow.ellipsis,
         ),
       ),

@@ -7,6 +7,6 @@ class InformationUserBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => Prefs(), fenix: true);
-    Get.lazyPut(() => InformationUserController());
+    Get.lazyPut(() => InformationUserController(Get.find()));
   }
 }

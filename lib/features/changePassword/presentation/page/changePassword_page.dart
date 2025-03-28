@@ -23,26 +23,26 @@ class ChangePasswordPage extends GetView<ChangePasswordController> {
               children: [
                 const SizedBox(height: 20),
                 _passwordField(
-                  hintText: "Current password",
+                  hintText: "current_password".tr,
                   isHidden: controller.isPasswordHidden,
                   onToggle: controller.togglePasswordVisibility,
                 ),
                 const SizedBox(height: 10),
                 _passwordField(
-                  hintText: "New password",
+                  hintText: "new_password".tr,
                   isHidden: controller.isPasswordHidden,
                   onToggle: controller.togglePasswordVisibility,
                 ),
                 const SizedBox(height: 10),
                 _passwordField(
-                  hintText: "Confirm password",
+                  hintText: "confirm_password".tr,
                   isHidden: controller.isPasswordHidden,
                   onToggle: controller.togglePasswordVisibility,
                 ),
                 SizedBox(height: Get.height * 0.5),
                 ButtonWidget(
                   ontap: () {}, 
-                  text: "Save",
+                  text: "save".tr,
                 ),
               ],
             ),
@@ -79,7 +79,7 @@ class ChangePasswordPage extends GetView<ChangePasswordController> {
     return AppBar(
       backgroundColor: AppColors.primary,
       centerTitle: true,
-      title: const TextWidget(text: "Đổi mật khẩu", color: AppColors.white),
+      title: TextWidget(text: "change_password".tr, color: AppColors.white),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios, color: AppColors.white),
         onPressed: () => Get.back(),

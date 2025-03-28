@@ -114,7 +114,7 @@ class UserPage extends GetView<UserController> {
         () => _buildMenuItem(
           Icons.language,
           controller.language.value,
-          leadingIcon: Image.asset(controller.languageIcon.value, width: 30),
+          leadingIcon: Image.asset(controller.languageIcon.value, width: 30,),
           onTap: () {
             Get.toNamed(Routes.settingLanguage);
             controller.loadLanguage();
