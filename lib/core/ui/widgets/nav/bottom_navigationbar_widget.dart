@@ -19,7 +19,7 @@ class BottomNavigationBarWidget extends StatelessWidget {
     return CurvedNavigationBar(
       index: currentIndex,
       height: 60,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.transparent,
       color: AppColors.primary,
       animationDuration: const Duration(milliseconds: 300),
       onTap: allowSelect ? onPageChanged : null,

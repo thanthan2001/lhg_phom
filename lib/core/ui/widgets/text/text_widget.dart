@@ -22,8 +22,8 @@ class TextWidget extends StatelessWidget {
     this.maxLines = 1000,
     required this.text,
     this.color = AppColors.black,
-    this.size = AppDimens.textSize18,
-    this.fontWeight = FontWeight.normal,
+    this.size = AppDimens.textSize15,
+    this.fontWeight = FontWeight.w300,
     this.fontStyle = FontStyle.normal,
     this.textDecoration = TextDecoration.none,
   });

@@ -1,28 +1,34 @@
 import 'package:get/get.dart';
 
-import '../../../../../../core/services/model/lend_model.dart';
-
 class LendController extends GetxController {
-  var lendItems = <LendItemModel>[].obs;
+  var registerlendItems = <Map<String, dynamic>>[].obs;
+  var formlendItems = <Map<String, dynamic>>[].obs; 
 
   @override
   void onInit() {
     super.onInit();
-    fetchLendItems();
+    registerLend();
+    formLend();
   }
 
-  void fetchLendItems() {
-    lendItems.assignAll([
-      LendItemModel(maPhom: "ADGGG", tenPhom: "ADDGG", soThe: "45647", ngayMuon: "19/2/2002", ngayTra: "Chưa trả"),
-      LendItemModel(maPhom: "BDHJK", tenPhom: "BDHGG", soThe: "12345", ngayMuon: "20/2/2002", ngayTra: "25/2/2002"),
-      LendItemModel(maPhom: "BDHJK", tenPhom: "BDHGG", soThe: "12345", ngayMuon: "20/2/2002", ngayTra: "25/2/2002"),
-      LendItemModel(maPhom: "BDHJK", tenPhom: "BDHGG", soThe: "12345", ngayMuon: "20/2/2002", ngayTra: "25/2/2002"),
-      LendItemModel(maPhom: "BDHJK", tenPhom: "BDHGG", soThe: "12345", ngayMuon: "20/2/2002", ngayTra: "25/2/2002"),
-      LendItemModel(maPhom: "BDHJK", tenPhom: "BDHGG", soThe: "12345", ngayMuon: "20/2/2002", ngayTra: "25/2/2002"),
-      LendItemModel(maPhom: "BDHJK", tenPhom: "BDHGG", soThe: "12345", ngayMuon: "20/2/2002", ngayTra: "25/2/2002"),
-      LendItemModel(maPhom: "BDHJK", tenPhom: "BDHGG", soThe: "12345", ngayMuon: "20/2/2002", ngayTra: "25/2/2002"),
-      LendItemModel(maPhom: "BDHJK", tenPhom: "BDHGG", soThe: "12345", ngayMuon: "20/2/2002", ngayTra: "25/2/2002"),
-      // Thêm dữ liệu mẫu nếu cần
-    ]);
+  // Dữ liệu mẫu
+  void registerLend() {
+    registerlendItems.value = [
+      {"nguoiMuon": "Nguyễn Văn A", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+      {"nguoiMuon": "Nguyễn Văn B", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+      {"nguoiMuon": "Nguyễn Văn N", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+      {"nguoiMuon": "Nguyễn Văn A", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+    ];
+  }
+
+  void formLend() {
+    formlendItems.value = [
+      {"nguoiMuon": "Nguyễn Văn B", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+      {"nguoiMuon": "Nguyễn Văn B", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+      {"nguoiMuon": "Nguyễn Văn V", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+      {"nguoiMuon": "Nguyễn Văn V", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+      {"nguoiMuon": "Nguyễn Văn C", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+      {"nguoiMuon": "Nguyễn Văn C", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
+    ];
   }
 }

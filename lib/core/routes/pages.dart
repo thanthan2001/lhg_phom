@@ -1,11 +1,19 @@
 import 'package:get/get.dart';
 
+import '../../features/bindingPhom/di/bindingPhom_binding.dart';
+import '../../features/bindingPhom/presentation/page/bindingPhom_page.dart';
 import '../../features/changePassword/di/changePassword_binding.dart';
 import '../../features/changePassword/presentation/page/changePassword_page.dart';
+import '../../features/forgotPassword/di/forgotPassord_binding.dart';
+import '../../features/forgotPassword/presentation/page/forgotPassword_page.dart';
 import '../../features/informationUser/di/informationUser_binding.dart';
 import '../../features/informationUser/presentation/page/informationUser_page.dart';
 import '../../features/languageSetting/di/languageSetting_binding.dart';
 import '../../features/languageSetting/presentation/page/languageSetting_page.dart';
+import '../../features/lendGive/di/lendGive_binding.dart';
+import '../../features/lendGive/presentation/page/lendGive_page.dart';
+import '../../features/lendReturn/di/lendReturn_binding.dart';
+import '../../features/lendReturn/presentation/page/lendReturn_page.dart';
 import '../../features/login/di/login_binding.dart';
 import '../../features/login/presentation/page/login_page.dart';
 import '../../features/main/di/main_binding.dart';
@@ -58,6 +66,34 @@ class Pages {
       name: Routes.changePassword,
       page: () => const ChangePasswordPage(),
       binding: ChangePasswordBinding(),
+    ),
+
+    // trang quên mật khẩu
+    GetPage(
+      name: Routes.forgotPassword,
+      page: () => const ForgotPasswordPage(),
+      binding: ForgotPasswordBinding(),
+    ),
+
+    //trang trang binding phom
+    GetPage(
+      name: Routes.bindingPhom,
+      page: () => const BindingPhomPage(),
+      binding: BindingPhomBinding(),
+    ),
+
+    //trang trả phom
+    GetPage(
+      name: Routes.lendReturn,
+      page: () => const LendReturnPage(),
+      binding: LendReturnBinding(),
+    ),
+
+    //trang phát cho mượn
+    GetPage(
+      name: Routes.lendGive,
+      page: () => const LendGivePage(),
+      binding: LendGiveBinding(),
     ),
   ];
 }
