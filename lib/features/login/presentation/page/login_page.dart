@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
+import '../../../../core/routes/routes.dart';
 import '../controller/login_controller.dart';
 import '../../../../core/configs/app_colors.dart';
 import '../../../../core/configs/app_dimens.dart';
@@ -112,7 +113,9 @@ class LoginPage extends GetView<LoginController> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Get.toNamed(Routes.forgotPassword);
+                              },
                               child: TextWidget(
                                 text: "forgot_password".tr,
                                 color: AppColors.grey,
@@ -137,7 +140,7 @@ class LoginPage extends GetView<LoginController> {
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: EdgeInsets.only(bottom: 40),
+                padding: EdgeInsets.only(bottom: 10),
                 child: Text("version".tr),
               ),
             ),

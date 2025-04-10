@@ -2,6 +2,7 @@
 class AppImagesString {
   // default 
   static const String fBgLogin = "assets/images/bg_login.jpg";
+  static const String fLogo = "assets/images/logo.png";
 
   // flag
   static const String fVi = "assets/images/vi.png";
