@@ -30,6 +30,8 @@ class AppColors {
 
   static const Color yellow = Color(0xFFFFD600);
 
+  static const Color purple = Color.fromARGB(255, 143, 78, 168);
+
   static const transparent = Colors.transparent;
   static const error = Color(0xFFF83758);
   static const colorPink = Color(0xFFF83758);

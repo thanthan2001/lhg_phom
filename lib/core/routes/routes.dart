@@ -17,4 +17,7 @@ abstract class Routes {
   static const lendGive = "/lend/give";
   static const lendReturn = "/lend/return";
   static const lendOthers = "/lend/others";
+  static const lendDetails = "/lendDetails";
+  static const lendRegister = "/lendRegister";
+  static const lendAll = "/lendAll";
 }

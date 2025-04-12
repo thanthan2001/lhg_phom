@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
 import '../../../../../../core/configs/app_colors.dart';
 import '../../../../../../core/routes/routes.dart';
 import '../../../../../../core/ui/widgets/text/text_widget.dart';
-import '../controller/lend_controller.dart';
 import '../../../../../../core/services/model/lend_model.dart';
+import '../controller/lendRegister_controller.dart';
 
-class LendPage extends GetView<LendController> {
-  const LendPage({super.key});
+class LendRegisterPage extends GetView<LendRegisterController> {
+  const LendRegisterPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,33 +17,37 @@ class LendPage extends GetView<LendController> {
       },
       child: SafeArea(
         child: Scaffold(
+          appBar: _buildAppBar(),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(10.0),
             child: Column(
               children: [
-                _buildButtonRow(),
-                const SizedBox(height: 10),
                 _searchBar(),
-                _buildSection(
-                  title: "Danh sách đăng ký mượn",
-                  onViewAll: () {
-                    Get.toNamed(Routes.lendRegister);
-                  },
-                  items: controller.registerlendItems,
-                  cardColor: AppColors.primary3,
-                ),
-                _buildSection(
-                  title: "Danh sách cho mượn",
-                  onViewAll: () {
-                    Get.toNamed(Routes.lendAll);
-                  },
-                  items: controller.formlendItems,
-                  cardColor: AppColors.secondary,
+                const SizedBox(height: 10),
+                _buildLendList(
+                  controller.registerlendItems,
+                  AppColors.primary3,
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: const TextWidget(
+        text: "Danh sách đăng ký mượn",
+        color: AppColors.white,
+        size: 18,
+      ),
+      backgroundColor: AppColors.primary,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: AppColors.white),
+        onPressed: Get.back,
       ),
     );
   }
@@ -78,76 +81,6 @@ class LendPage extends GetView<LendController> {
           onPressed: () {},
           icon: Icon(Icons.tune, size: 40, color: AppColors.black),
         ),
-      ],
-    );
-  }
-
-  Widget _buildButtonRow() {
-    return Row(
-      children: [
-        _buildButton("Phát cho mượn", AppColors.blue, Routes.lendGive),
-        const SizedBox(width: 10),
-        _buildButton("Trả phom", AppColors.yellow, Routes.lendReturn),
-        const SizedBox(width: 10),
-        _buildButton(
-          "Mượn từ nhà máy khác",
-          AppColors.red,
-          Routes.lendOthers,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildButton(String text, Color color, String route) {
-    return Expanded(
-      child: ButtonWidget(
-        width: (Get.width - 20) / 3,
-        height: 80,
-        text: text,
-        backgroundColor: color,
-        textColor: AppColors.black,
-        ontap: () => Get.toNamed(route),
-      ),
-    );
-  }
-
-  Widget _buildSection({
-    required String title,
-    required VoidCallback onViewAll,
-    required RxList<LendItemModel> items,
-    required Color cardColor,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            TextWidget(
-              text: title,
-              size: 16,
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
-            const Spacer(),
-            TextButton(
-              onPressed: onViewAll,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 0),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: TextWidget(
-                text: "Xem tất cả",
-                size: 14,
-                color: AppColors.primary1,
-                textDecoration: TextDecoration.underline,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        _buildLendList(items, cardColor),
       ],
     );
   }
