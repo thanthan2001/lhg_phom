@@ -10,8 +10,14 @@ import '../../features/informationUser/di/informationUser_binding.dart';
 import '../../features/informationUser/presentation/page/informationUser_page.dart';
 import '../../features/languageSetting/di/languageSetting_binding.dart';
 import '../../features/languageSetting/presentation/page/languageSetting_page.dart';
+import '../../features/lendAll/di/lendAll_binding.dart';
+import '../../features/lendAll/presentation/page/lendAll_page.dart';
+import '../../features/lendDetails/di/lendDetails_binding.dart';
+import '../../features/lendDetails/presentation/page/lendDetails_page.dart';
 import '../../features/lendGive/di/lendGive_binding.dart';
 import '../../features/lendGive/presentation/page/lendGive_page.dart';
+import '../../features/lendRegister/di/lendRegister_binding.dart';
+import '../../features/lendRegister/presentation/page/lendRegister_page.dart';
 import '../../features/lendReturn/di/lendReturn_binding.dart';
 import '../../features/lendReturn/presentation/page/lendReturn_page.dart';
 import '../../features/login/di/login_binding.dart';
@@ -94,6 +100,27 @@ class Pages {
       name: Routes.lendGive,
       page: () => const LendGivePage(),
       binding: LendGiveBinding(),
+    ),
+
+    //trang chi tiết cho mượn
+    GetPage(
+      name: Routes.lendDetails,
+      page: () => const LendDetailsPage(),
+      binding: LendDetailsBinding(),
+    ),
+
+    //trang đăng ký cho mượn
+    GetPage(
+      name: Routes.lendRegister,
+      page: () => const LendRegisterPage(),
+      binding: LendRegisterBinding(),
+    ),
+
+    //trang tất cả cho mượn
+    GetPage(
+      name: Routes.lendAll,
+      page: () => const LendAllPage(),
+      binding: LendAllBinding(),
     ),
   ];
 }

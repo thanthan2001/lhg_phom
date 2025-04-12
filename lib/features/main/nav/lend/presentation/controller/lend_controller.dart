@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 
+import '../../../../../../core/services/model/lend_model.dart';
+
 class LendController extends GetxController {
-  var registerlendItems = <Map<String, dynamic>>[].obs;
-  var formlendItems = <Map<String, dynamic>>[].obs; 
+  var registerlendItems = <LendItemModel>[].obs;
+  var formlendItems = <LendItemModel>[].obs; 
 
   @override
   void onInit() {
@@ -12,23 +14,14 @@ class LendController extends GetxController {
   }
 
   // Dữ liệu mẫu
-  void registerLend() {
-    registerlendItems.value = [
-      {"nguoiMuon": "Nguyễn Văn A", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-      {"nguoiMuon": "Nguyễn Văn B", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-      {"nguoiMuon": "Nguyễn Văn N", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-      {"nguoiMuon": "Nguyễn Văn A", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-    ];
+ void registerLend() {
+    registerlendItems.value =
+        exampleLendItems.where((item) => item.trangThai == 'đăng ký mượn').toList();
   }
 
-  void formLend() {
-    formlendItems.value = [
-      {"nguoiMuon": "Nguyễn Văn B", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-      {"nguoiMuon": "Nguyễn Văn B", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-      {"nguoiMuon": "Nguyễn Văn V", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-      {"nguoiMuon": "Nguyễn Văn V", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-      {"nguoiMuon": "Nguyễn Văn C", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-      {"nguoiMuon": "Nguyễn Văn C", "donVi": "ADDGG", "ngayMuon": "19/2/2002" },
-    ];
+ void formLend() {
+    formlendItems.value =
+        exampleLendItems.where((item) => item.trangThai != 'đăng ký mượn').toList();
   }
+
 }

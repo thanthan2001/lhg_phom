@@ -1,7 +1,7 @@
 
 class UserModel {
-  final String idUser;
-  final String email;
+  final String userId;
+  final String password;
   final String? userName;
   final String? phoneNumbers;
    String? avatar;
@@ -10,13 +10,12 @@ class UserModel {
   final List<String>? cccdImg;
   final String? gender;
   final DateTime? dateOfBirth;
-  final int coins;
   final String role; 
   final bool isActive;
 
   UserModel({
-    required this.idUser,
-    required this.email,
+    required this.userId,
+    required this.password,
     this.userName,
     this.phoneNumbers,
     this.avatar,
@@ -25,15 +24,14 @@ class UserModel {
     this.cccdImg,
     this.gender,
     this.dateOfBirth,
-    this.coins = 0,
     this.role = 'user',
     this.isActive = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      idUser: json['idUser'],
-      email: json['email'],
+      userId: json['userId'],
+      password: json['password'],
       userName: json['userName'],
       phoneNumbers: json['phoneNumbers'],
       avatar: json['avatar'],
@@ -45,7 +43,6 @@ class UserModel {
       dateOfBirth: json['dateOfBirth'] != null
           ? DateTime.parse(json['dateOfBirth'])
           : null,
-      coins: json['coins'] ?? 0,
       role: json['role'] ?? 'user',
       isActive: json['isActive'] ?? false,
     );
@@ -53,8 +50,8 @@ class UserModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'idUser': idUser,
-      'email': email,
+      'userId': userId,
+      'password': password,
       'userName': userName,
       'phoneNumbers': phoneNumbers,
       'avatar': avatar,
@@ -63,7 +60,6 @@ class UserModel {
       'CCCD_img': cccdImg,
       'gender': gender,
       'dateOfBirth': dateOfBirth?.toIso8601String(),
-      'coins': coins,
       'role': role,
       'isActive': isActive,
     };

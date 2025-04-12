@@ -5,38 +5,44 @@ import '../../../../../../core/configs/app_colors.dart';
 import '../../../../../../core/routes/routes.dart';
 import '../../../../../../core/ui/widgets/text/text_widget.dart';
 import '../controller/lend_controller.dart';
+import '../../../../../../core/services/model/lend_model.dart';
 
 class LendPage extends GetView<LendController> {
   const LendPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
-            children: [
-              _buildButtonRow(),
-              const SizedBox(height: 10),
-              _searchBar(),
-              _buildSection(
-                title: "Danh sách đăng ký mượn",
-                onViewAll: () {
-                  // Get.toNamed(Routes.lendRegister);
-                },
-                items: controller.registerlendItems,
-                cardColor: AppColors.primary3,
-              ),
-              _buildSection(
-                title: "Danh sách cho mượn",
-                onViewAll: () {
-                  // Get.toNamed(Routes.lendGive);
-                },
-                items: controller.formlendItems,
-                cardColor: AppColors.secondary,
-              ),
-            ],
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: SafeArea(
+        child: Scaffold(
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(10.0),
+            child: Column(
+              children: [
+                _buildButtonRow(),
+                const SizedBox(height: 10),
+                _searchBar(),
+                _buildSection(
+                  title: "Danh sách đăng ký mượn",
+                  onViewAll: () {
+                    Get.toNamed(Routes.lendRegister);
+                  },
+                  items: controller.registerlendItems,
+                  cardColor: AppColors.primary3,
+                ),
+                _buildSection(
+                  title: "Danh sách cho mượn",
+                  onViewAll: () {
+                    Get.toNamed(Routes.lendAll);
+                  },
+                  items: controller.formlendItems,
+                  cardColor: AppColors.secondary,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -108,7 +114,7 @@ class LendPage extends GetView<LendController> {
   Widget _buildSection({
     required String title,
     required VoidCallback onViewAll,
-    required RxList<Map<String, dynamic>> items,
+    required RxList<LendItemModel> items,
     required Color cardColor,
   }) {
     return Column(
@@ -127,13 +133,9 @@ class LendPage extends GetView<LendController> {
             TextButton(
               onPressed: onViewAll,
               style: TextButton.styleFrom(
-                padding: EdgeInsets.zero, 
-                minimumSize: Size(
-                  0,
-                  0,
-                ), 
-                tapTargetSize:
-                    MaterialTapTargetSize.shrinkWrap, 
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: TextWidget(
                 text: "Xem tất cả",
@@ -150,7 +152,7 @@ class LendPage extends GetView<LendController> {
     );
   }
 
-  Widget _buildLendList(RxList<Map<String, dynamic>> items, Color cardColor) {
+  Widget _buildLendList(RxList<LendItemModel> items, Color cardColor) {
     return Obx(
       () => ListView.separated(
         shrinkWrap: true,
@@ -165,11 +167,13 @@ class LendPage extends GetView<LendController> {
     );
   }
 
-  Widget _buildLendItem(Map<String, dynamic> item, Color cardColor) {
+  Widget _buildLendItem(LendItemModel item, Color cardColor) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Get.toNamed(Routes.lendDetails, arguments: item.idMuon);
+      },
       child: Container(
-        padding: const EdgeInsets.all(13),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           // ignore: deprecated_member_use
           color: cardColor.withOpacity(0.1),
@@ -179,9 +183,9 @@ class LendPage extends GetView<LendController> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildColumn("Người mượn", item["nguoiMuon"]),
-            _buildColumn("Đơn vị", item["donVi"]),
-            _buildColumn("Ngày mượn", item["ngayMuon"]),
+            _buildColumn("Người mượn", item.idNguoiMuon?.userName ?? '---'),
+            _buildColumn("Đơn vị", item.donVi ?? '---'),
+            _buildColumn("Ngày mượn", item.ngayMuon ?? '---'),
           ],
         ),
       ),
