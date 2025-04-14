@@ -10,7 +10,6 @@ class LendRegisterController extends GetxController {
   var searchQuery = ''.obs;
 
   // Bộ lọc
-  var selectedTrangThai = ''.obs;
   var selectedNgayMuon = ''.obs;
   var selectedDonVi = ''.obs;
   var selectedMaPhom = ''.obs;
@@ -44,7 +43,6 @@ class LendRegisterController extends GetxController {
     final donVi = item.donVi?.toLowerCase() ?? '';
     final ngayMuonStr = item.ngayMuon ?? '';
     final maPhom = item.maPhom?.toLowerCase() ?? '';
-    final trangThai = item.trangThai?.toLowerCase() ?? '';
 
     DateTime? itemDate;
     try {
@@ -59,7 +57,6 @@ class LendRegisterController extends GetxController {
         (selectedDateTo.value == null || itemDate.isBefore(selectedDateTo.value!.add(const Duration(days: 1))));
 
     final matches = 
-        (selectedTrangThai.value.isEmpty || trangThai == selectedTrangThai.value.toLowerCase()) &&
         (selectedDonVi.value.isEmpty || donVi == selectedDonVi.value.toLowerCase()) &&
         (selectedMaPhom.value.isEmpty || maPhom.contains(selectedMaPhom.value.toLowerCase())) &&
         (selectedUserName.value.isEmpty || name.contains(selectedUserName.value.toLowerCase())) &&
@@ -70,9 +67,7 @@ class LendRegisterController extends GetxController {
 }
 
 
-
   void resetFilters() {
-  selectedTrangThai.value = '';
   selectedDonVi.value = '';
   selectedMaPhom.value = '';
   selectedUserName.value = '';

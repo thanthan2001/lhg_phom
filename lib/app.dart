@@ -13,7 +13,7 @@ class App extends StatelessWidget {
 
   Future<Locale> _getSavedLocale() async {
     String? savedLanguage = await Prefs.preferences.getLanguage();
-    return Locale(savedLanguage ?? 'vi');
+    return Locale(savedLanguage ?? 'en');
   }
 
   @override
@@ -38,8 +38,8 @@ class App extends StatelessWidget {
             scaffoldBackgroundColor: AppColors.white,
           ),
           translations: TranslationService(),
-          locale: snapshot.data, // Dữ liệu từ FutureBuilder
-          fallbackLocale: const Locale('vi'),
+          locale: snapshot.data, 
+          fallbackLocale: const Locale('en'),
         );
       },
     );
