@@ -30,8 +30,8 @@ class LendItemModel {
   factory LendItemModel.fromJson(Map<String, dynamic> json) {
     return LendItemModel(
       idMuon: json['idMuon'] ?? '',
-      idNguoiMuon: json['nguoiMuon'] != null
-        ? UserModel.fromJson(json['nguoiMuon'])
+      idNguoiMuon: json['idNguoiMuon'] != null
+        ? UserModel.fromJson(json['idNguoiMuon'])
         : null,
       donVi: json['donVi'] ?? '',
       maPhom: json['maPhom']  ?? '',
@@ -50,7 +50,7 @@ class LendItemModel {
   Map<String, dynamic> toJson() {
     return {
       'idMuon': idMuon,
-      'nguoiMuon': idNguoiMuon,
+      'idnguoiMuon': idNguoiMuon,
       'donVi': donVi,
       'maPhom': maPhom,
       'tenPhom': tenPhom,

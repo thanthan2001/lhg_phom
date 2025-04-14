@@ -24,7 +24,6 @@ class LendPage extends GetView<LendController> {
               children: [
                 _buildButtonRow(),
                 const SizedBox(height: 10),
-                _searchBar(),
                 _buildSection(
                   title: "Danh sách đăng ký mượn",
                   onViewAll: () {
@@ -46,39 +45,6 @@ class LendPage extends GetView<LendController> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _searchBar() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: "Nhập để tìm kiếm...",
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.primary1,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.search, size: 30, color: AppColors.white),
-          ),
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: Icon(Icons.tune, size: 40, color: AppColors.black),
-        ),
-      ],
     );
   }
 

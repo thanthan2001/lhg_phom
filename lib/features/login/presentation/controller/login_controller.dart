@@ -7,7 +7,7 @@ import 'package:lhg_phom/core/services/model/user/domain/usecase/save_user_use_c
 import 'package:lhg_phom/features/login/presentation/widgets/factory_selection.dart';
 
 class LoginController extends GetxController {
-  final Prefs prefs = Prefs.preferences; // Thêm Prefs để lưu/truy xuất dữ liệu
+  final Prefs prefs = Prefs.preferences; 
   final SaveUserUseCase _saveUserUseCase;
   LoginController(this._saveUserUseCase);
 
