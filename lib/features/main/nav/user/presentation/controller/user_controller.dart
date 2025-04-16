@@ -66,5 +66,4 @@ class UserController extends GetxController {
     super.onInit();
     loadLanguage();
   }
-
 }
