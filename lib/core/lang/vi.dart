@@ -17,5 +17,15 @@ const Map<String, String> vi = {
   'change_password': 'Đổi mật khẩu',
   'dark_mode': 'Chế độ tối',
   'logout': 'Đăng xuất',
+  'department': 'Đơn vị',
+  'full_name': 'Họ và tên',
+  'birth_date': 'Ngày sinh',
+  'phone_number': 'Số điện thoại',
+  'hometown': 'Quê quán',
+  'factory': 'Nhà máy',
+  'current_password': 'Mật khẩu hiện tại',
+  'new_password': 'Mật khẩu mới',
+  'confirm_password': 'Xác nhận mật khẩu',
+  'save': 'Lưu',
 };
 

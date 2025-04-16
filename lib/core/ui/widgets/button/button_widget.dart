@@ -15,7 +15,8 @@ class ButtonWidget extends StatelessWidget {
   final FontWeight? fontWeight;
   final bool? isBorder;
   final Color? borderColor;
-  final SvgPicture? leadingIcon;
+  final Widget? leadingIcon;
+  final Widget? icon;
   final double? borderRadius;
   final Widget? child;
 
@@ -31,6 +32,7 @@ class ButtonWidget extends StatelessWidget {
     this.textColor = AppColors.white,
     this.backgroundColor = AppColors.primary,
     this.leadingIcon,
+    this.icon,
     this.child,
     this.borderRadius = 10.0,
     this.fontSize,
@@ -58,7 +60,7 @@ class ButtonWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(borderRadius!),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withOpacity(0.15),
                 spreadRadius: 1, // Bán kính lan rộng
                 blurRadius: 6, // Độ mờ của bóng
                 offset: const Offset(0, 2), // Độ dịch chuyển theo trục X,Y
@@ -70,9 +72,8 @@ class ButtonWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (leadingIcon != null) leadingIcon!,
-                if (leadingIcon != null) const SizedBox(width: 5.0),
-                Expanded(
+                
+                Flexible(
                   child:
                       child ??
                       TextWidget(
@@ -83,6 +84,8 @@ class ButtonWidget extends StatelessWidget {
                         size: fontSize,
                       ),
                 ),
+                if (leadingIcon != null) const SizedBox(width: 2.0),
+                if (leadingIcon != null) leadingIcon!,
               ],
             ),
           ),

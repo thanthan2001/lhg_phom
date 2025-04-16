@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../../../core/configs/app_images_string.dart';
 import '../../../../../../core/data/pref/prefs.dart';
 import '../../../../../../core/routes/routes.dart';
 import '../../../../../../core/services/model/user/domain/usecase/get_user_use_case.dart';
@@ -14,7 +15,7 @@ class UserController extends GetxController {
 
   var isDarkMode = false.obs;
   var language = "English".obs;
-  var languageIcon = "assets/images/ic_en.png".obs;
+  var languageIcon = AppImagesString.fEn.obs;
 
   /// **Chuyển đổi giữa dark mode và light mode**
   void toggleDarkMode() {
@@ -38,23 +39,23 @@ class UserController extends GetxController {
     switch (langCode) {
       case 'vi':
         language.value = "Tiếng Việt";
-        languageIcon.value = "assets/images/ic_vn.png";
+        languageIcon.value = AppImagesString.fVi;
         Get.updateLocale(const Locale('vi'));
         break;
       case 'en':
         language.value = "English";
-        languageIcon.value = "assets/images/ic_en.png";
+        languageIcon.value = AppImagesString.fEn;
         Get.updateLocale(const Locale('en'));
         break;
       case 'zh':
         language.value = "中文";
-        languageIcon.value = "assets/images/ic_zh.png";
+        languageIcon.value = AppImagesString.fZh;
         Get.updateLocale(const Locale('zh'));
         break;
       case 'my':
         language.value = "မြန်မာဘာသာ";
         Get.updateLocale(const Locale('my'));
-        languageIcon.value = "assets/images/ic_my.png";
+        languageIcon.value = AppImagesString.fMy;
         break;
     }
     Get.updateLocale(Locale(langCode));

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
 import '../../../../../../core/configs/app_colors.dart';
 import '../controller/languageSetting_controller.dart';
@@ -25,10 +26,10 @@ class LanguageSettingPage extends GetView<LanguageSettingController> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              _buildLanguageTile("English", "en", "assets/images/ic_en.png"),
-              _buildLanguageTile("Tiếng Việt", "vi", "assets/images/ic_vn.png"),
-              _buildLanguageTile("中文", "zh", "assets/images/ic_zh.png"),
-              _buildLanguageTile("မြန်မာဘာသာ", "my", "assets/images/ic_my.png"),
+              _buildLanguageTile("English", "en", AppImagesString.fEn),
+              _buildLanguageTile("Tiếng Việt", "vi", AppImagesString.fVi),
+              _buildLanguageTile("中文", "zh", AppImagesString.fZh),
+              _buildLanguageTile("မြန်မာဘာသာ", "my", AppImagesString.fMy),
             ],
           ),
         ),
@@ -39,7 +40,7 @@ class LanguageSettingPage extends GetView<LanguageSettingController> {
   Widget _buildLanguageTile(String language, String code, String iconPath) {
     return Obx(() {
       return ListTile(
-        leading: Image.asset(iconPath, width: 30),
+        leading: Image.asset(iconPath, width: 40, height: 28, fit: BoxFit.cover),
         title: Text(language),
         trailing:
             controller.language.value == language

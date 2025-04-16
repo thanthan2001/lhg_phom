@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_colors.dart';
-import 'package:lhg_phom/core/ui/widgets/text/text_colum_widget.dart';
+import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/text/text_pand_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
 import 'package:lhg_phom/features/main/nav/home/presentation/controller/home_controller.dart';
-import 'package:get/get.dart';
 
 class HomePage extends GetView<HomeController> {
   const HomePage({super.key});
@@ -15,246 +15,237 @@ class HomePage extends GetView<HomeController> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [_buildAppBar(), _buildBody()],
+          children: [
+            _buildAppBar(),
+            _searchBar(),
+            Expanded(
+              child: ListView.builder(
+                itemCount: controller.items.length,
+                itemBuilder:
+                    (context, index) =>
+                        _buildExpandableCard(controller.items[index], index),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Expanded _buildBody() {
-    return Expanded(
-      child: ListView.builder(
-        itemCount: controller.items.length,
-        itemBuilder: (context, index) {
-          final item = controller.items[index];
-          return _buildExpandableCard(item, index);
-        },
-      ),
-    );
-  }
-
-  // Build Card Phom
+  // Card Phom
   Widget _buildExpandableCard(Map<String, dynamic> item, int index) {
     return Obx(() {
-      bool isExpanded = controller.expandedIndex.value == index;
-      return Card(
-        color: isExpanded ? AppColors.primary : Colors.white,
+      final isExpanded = controller.expandedIndex.value == index;
+      final textColor = _getColorBasedOnExpand(isExpanded);
+
+      return Container(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isExpanded ? AppColors.primary : AppColors.white,
+          border: Border.all(color: AppColors.primary, width: 1),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Column(
           children: [
             GestureDetector(
               onTap: () => controller.toggleExpand(index),
-              child: ListTile(
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      flex: 6,
-                      child: TextColumWidget(
-                        text1: 'Mã phom',
-                        text2: '${item['code']}',
-                        textColor1:
-                            isExpanded ? AppColors.white : AppColors.black,
-                        textColor2:
-                            isExpanded ? AppColors.white : AppColors.black,
-                        fontWeight1: FontWeight.bold,
-                      ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildInfoTextColumn(
+                          'Mã phom',
+                          '${item['code']}',
+                          textColor,
+                        ),
+                        _buildInfoTextColumn(
+                          'Tên phom',
+                          '${item['name']}',
+                          textColor,
+                        ),
+                        _buildInfoTextColumn(
+                          'Chất liệu',
+                          '${item['material']}',
+                          textColor,
+                        ),
+                        _buildInfoTextColumn(
+                          'Tổng số',
+                          '${_calculateTotal(item['details'])}',
+                          textColor,
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      flex: 6,
-                      child: TextColumWidget(
-                        text1: 'Tên phom',
-                        text2: '${item['name']}',
-                        textColor1:
-                            isExpanded ? AppColors.white : AppColors.black,
-                        textColor2:
-                            isExpanded ? AppColors.white : AppColors.black,
-                        fontWeight1: FontWeight.bold,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 6,
-                      child: TextColumWidget(
-                        text1: 'Chất liệu',
-                        text2: '${item['material']}',
-                        textColor1:
-                            isExpanded ? AppColors.white : AppColors.black,
-                        textColor2:
-                            isExpanded ? AppColors.white : AppColors.black,
-                        fontWeight1: FontWeight.bold,
-                      ),
-                      // Text("Chất liệu: ${item['material']}"),
-                    ),
-                    Expanded(
-                      flex: 6,
-                      child: TextColumWidget(
-                        text1: 'Tổng số',
-                        text2: '${_calculateTotal(item['details'])}',
-                        textColor1:
-                            isExpanded ? AppColors.white : AppColors.black,
-                        textColor2:
-                            isExpanded ? AppColors.white : AppColors.black,
-                        fontWeight1: FontWeight.bold,
-                      ),
-                      // Text(
-                      //   "Tổng số: ${_calculateTotal(item['details'])}",
-                      // ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Icon(
-                        color: isExpanded ? AppColors.white : AppColors.black,
-                        isExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                      ),
-                      // onPressed: () => controller.toggleExpand(index),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 5),
+                  Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_down
+                        : Icons.arrow_forward_ios_rounded,
+                    color: textColor,
+                    size: 24,
+                  ),
+                ],
               ),
             ),
-            if (isExpanded) _buildExpandedDetails(item['details'], isExpanded),
+            if (isExpanded) _buildExpandedDetails(item['details']),
           ],
         ),
       );
     });
   }
 
-  // Build Details Card Phom
-  Widget _buildExpandedDetails(
-    List<Map<String, dynamic>> details,
-    bool isExpanded,
-  ) {
+  Widget _searchBar() {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      child: Row(
         children: [
-          Container(
-            // color: AppColors.white,
-            padding: EdgeInsets.all(10),
-
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
+          Expanded(
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: "Nhập để tìm kiếm...",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
               ),
-              color: AppColors.white,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    "Size số",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isExpanded ? AppColors.black : AppColors.black,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    "Số lượng",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    "Tồn kho",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
             ),
           ),
-          ...details.map(
-            (detail) => Container(
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
-                ),
-                border: Border(
-                  top: BorderSide(color: AppColors.primary),
-                  // top: BorderSide(color: AppColors.primary),
-                  // right: BorderSide(color: AppColors.primary),
-                  // left: BorderSide(color: AppColors.primary),
-                ),
-              ),
-
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(child: Text("${detail['size']}")),
-                  Expanded(child: Text("${detail['quantity']}")),
-                  Expanded(child: Text("${detail['stock']}")),
-                ],
-              ),
-            ),
+          const SizedBox(width: 10),
+          ButtonWidget(
+            borderRadius: 5,
+            height: 48,
+            width: 100,
+            backgroundColor: AppColors.primary1,
+            text: "Tìm kiếm",
+            ontap: () {},
           ),
         ],
       ),
     );
   }
 
-  // Calculate Total
+  Widget _buildInfoTextColumn(String label, String value, Color color) {
+    return Column(
+      children: [
+        TextWidget(text: label, fontWeight: FontWeight.bold, color: color),
+        TextWidget(text: value, color: color),
+      ],
+    );
+  }
+
+  Color _getColorBasedOnExpand(bool isExpanded) =>
+      isExpanded ? AppColors.white : AppColors.black;
+
+  Widget _buildExpandedDetails(List<Map<String, dynamic>> details) {
+    return Column(
+      children:
+          details.map((detail) {
+            return Container(
+              margin: const EdgeInsets.symmetric(vertical: 5),
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildDetailColumn("Size", "${detail['size']}"),
+                  _buildDetailColumn("Số lượng", "${detail['quantity']}"),
+                  _buildDetailColumn("Tồn kho", "${detail['stock']}"),
+                ],
+              ),
+            );
+          }).toList(),
+    );
+  }
+
+  Widget _buildDetailColumn(String label, String value) {
+    return Column(
+      children: [
+        TextWidget(text: label, fontWeight: FontWeight.bold),
+        TextWidget(text: value),
+      ],
+    );
+  }
+
   int _calculateTotal(List<Map<String, dynamic>> details) {
     return details.fold<int>(0, (sum, item) => sum + (item['quantity'] as int));
   }
+
+  // AppBar
+  Widget _buildAppBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: const BoxDecoration(color: AppColors.primary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const TextSpanWidget(
+            text1: "Hello! - ",
+            text2: "LHG",
+            fontWeight2: FontWeight.bold,
+            textColor1: Colors.white,
+            textColor2: Colors.white,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: const [
+              _HomeInfo(
+                icon: Icons.insert_drive_file,
+                title: "Tổng số phom",
+                value: "19.000",
+              ),
+              _HomeInfo(
+                icon: Icons.grid_view,
+                title: "Tổng số loại",
+                value: "300",
+              ),
+              _HomeInfo(
+                icon: Icons.warehouse,
+                title: "Tổng tồn kho",
+                value: "15.000",
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-//Build Appbar
-Container _buildAppBar() {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: AppColors.primary, // Thêm màu nền cho container
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+class _HomeInfo extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+
+  const _HomeInfo({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
       children: [
-        TextSpanWidget(
-          text1: "Hello! - ",
-          text2: "LHG",
-          fontWeight2: FontWeight.bold,
-          textColor1: Colors.white,
-          textColor2: Colors.white,
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildInfoColumn(Icons.insert_drive_file, "Tổng số phom", "19.000"),
-            _buildInfoColumn(Icons.grid_view, "Tổng số loại", "300"),
-            _buildInfoColumn(Icons.warehouse, "Tổng tồn kho", "15.000"),
-          ],
+        Icon(icon, color: Colors.white, size: 30),
+        const SizedBox(height: 5),
+        Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
-    ),
-  );
-}
-
-// HEADER Info
-Widget _buildInfoColumn(IconData icon, String title, String value) {
-  return Column(
-    children: [
-      Icon(icon, color: Colors.white, size: 30),
-      const SizedBox(height: 5),
-      Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
-      Text(
-        value,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ],
-  );
+    );
+  }
 }

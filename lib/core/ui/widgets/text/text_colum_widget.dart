@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
 
 import '../../../configs/app_colors.dart';
 
@@ -31,24 +32,19 @@ class TextColumWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start, // Canh trái
       children: [
-        Text(
-          text1.tr,
-          style: GoogleFonts.nunitoSans(
-            fontSize: size,
+        TextWidget(
+          text: text1.tr,
+          size: size,
             fontWeight: fontWeight1,
             color: textColor1,
           ),
-          textAlign: textAlign,
-        ),
-        Text(
-          text2.tr,
-          style: GoogleFonts.nunitoSans(
-            fontSize: size,
-            fontWeight: fontWeight2,
+        const SizedBox(height: 5),
+        TextWidget(
+          text: text2.tr,
+          size: size,
+            fontWeight: fontWeight1,
             color: textColor2,
           ),
-          textAlign: textAlign,
-        ),
       ],
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
+import '../../../../core/routes/routes.dart';
 import '../controller/login_controller.dart';
 import '../../../../core/configs/app_colors.dart';
 import '../../../../core/configs/app_dimens.dart';
@@ -24,7 +26,7 @@ class LoginPage extends GetView<LoginController> {
             Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/images/bg_login.jpg'),
+                  image: AssetImage(AppImagesString.fBgLogin),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -111,8 +113,15 @@ class LoginPage extends GetView<LoginController> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             TextButton(
-                              onPressed: () {},
-                              child: Text("forgot_password".tr),
+                              onPressed: () {
+                                Get.toNamed(Routes.forgotPassword);
+                              },
+                              child: TextWidget(
+                                text: "forgot_password".tr,
+                                color: AppColors.grey,
+                                size: 14,
+                                textDecoration: TextDecoration.underline,
+                              ),
                             ),
                           ],
                         ),
@@ -131,7 +140,7 @@ class LoginPage extends GetView<LoginController> {
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: EdgeInsets.only(bottom: 40),
+                padding: EdgeInsets.only(bottom: 10),
                 child: Text("version".tr),
               ),
             ),
@@ -143,11 +152,25 @@ class LoginPage extends GetView<LoginController> {
 }
 
 class LanguageSelector extends GetView<LoginController> {
-  // Accessing the LoginController (where we'll manage isExpanded)
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => Column(
+    return Obx(() {
+      // Danh sách các ngôn ngữ có sẵn
+      final List<Map<String, String>> languages = [
+        {'code': 'en', 'flag': AppImagesString.fEn},
+        {'code': 'vi', 'flag': AppImagesString.fVi},
+        {'code': 'zh', 'flag': AppImagesString.fZh},
+        {'code': 'my', 'flag': AppImagesString.fMy},
+      ];
+
+      // Xác định ngôn ngữ hiện tại
+      final String currentFlag = controller.currentFlag.value;
+
+      // Lọc ra 3 ngôn ngữ còn lại
+      final List<Map<String, String>> otherLanguages =
+          languages.where((lang) => lang['flag'] != currentFlag).toList();
+
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
@@ -155,20 +178,15 @@ class LanguageSelector extends GetView<LoginController> {
               controller.toggleLanguageSelector();
             },
             child: Container(
-              // Added Container to wrap Image.asset for rounded border
               decoration: BoxDecoration(
-                shape: BoxShape.circle, // Make it a circle
-                border: Border.all(
-                  color: Colors.white, // Change to desired border color
-                  width: 2.0, // Adjust border width as needed
-                ),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2.0),
               ),
               child: ClipOval(
-                // Clip the image to make it circular
                 child: Image.asset(
-                  controller.currentFlag.value, // Use observable currentFlag
-                  width: 32, // Adjust size as needed
-                  height: 32,
+                  currentFlag,
+                  width: 36,
+                  height: 36,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -177,47 +195,39 @@ class LanguageSelector extends GetView<LoginController> {
           if (controller.isLanguageSelectorExpanded.value)
             Column(
               children: [
-                _buildLanguageOption('assets/images/ic_en.png', 'en'),
-                _buildLanguageOption('assets/images/ic_vn.png', 'vn'),
-                _buildLanguageOption('assets/images/ic_zh.png', 'zh'),
-                _buildLanguageOption('assets/images/ic_my.png', 'my'),
+                for (var lang in otherLanguages)
+                  _buildLanguageOption(lang['flag']!, lang['code']!),
               ],
             ),
         ],
-      ),
-    );
+      );
+    });
   }
 
-  Widget _buildLanguageOption(String imagePath, String languageName) {
+  Widget _buildLanguageOption(String imagePath, String languageCode) {
     return GestureDetector(
       onTap: () {
-        controller.selectLanguage(languageName);
+        controller.selectLanguage(languageCode);
       },
       child: Padding(
         padding: const EdgeInsets.only(top: 8.0),
         child: Row(
           children: [
             Container(
-              // Added Container to wrap Image.asset for rounded border
               decoration: BoxDecoration(
-                shape: BoxShape.circle, // Make it a circle
-                border: Border.all(
-                  color: Colors.white, // Change to desired border color
-                  width: 1.0, // Adjust border width as needed
-                ),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2.0),
               ),
               child: ClipOval(
-                // Clip the image to make it circular
                 child: Image.asset(
                   imagePath,
-                  width: 24,
-                  height: 24,
+                  width: 36,
+                  height: 36,
                   fit: BoxFit.cover,
                 ),
               ),
             ),
-            SizedBox(width: 8),
-            // Text(languageName),
+            SizedBox(width: 5),
           ],
         ),
       ),

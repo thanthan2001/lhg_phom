@@ -46,6 +46,33 @@ class HomeController extends GetxController {
             {'size': 39, 'quantity': 1100, 'stock': 700},
           ],
         },
+        {
+          'code': 'JDF123',
+          'name': 'JDF123',
+          'material': 'Nhựa',
+          'details': [
+            {'size': 36, 'quantity': 1200, 'stock': 1000},
+            {'size': 37, 'quantity': 1500, 'stock': 1100},
+          ],
+        },
+        {
+          'code': 'JDF124',
+          'name': 'JDF124',
+          'material': 'Kim loại',
+          'details': [
+            {'size': 38, 'quantity': 1300, 'stock': 900},
+            {'size': 39, 'quantity': 1100, 'stock': 700},
+          ],
+        },
+        {
+          'code': 'JDF123',
+          'name': 'JDF123',
+          'material': 'Nhựa',
+          'details': [
+            {'size': 36, 'quantity': 1200, 'stock': 1000},
+            {'size': 37, 'quantity': 1500, 'stock': 1100},
+          ],
+        },
       ].obs;
 
   void toggleExpand(int index) {
