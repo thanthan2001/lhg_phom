@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
-
 import 'app_binding.dart';
 import 'core/configs/app_colors.dart';
 import 'core/lang/translation_service.dart';
@@ -34,7 +33,7 @@ class App extends StatelessWidget {
           getPages: Pages.routes,
           initialBinding: AppBinding(),
           theme: ThemeData(
-            appBarTheme: const AppBarTheme(backgroundColor: AppColors.white),
+            appBarTheme: const AppBarTheme(backgroundColor: AppColors.primary),
             scaffoldBackgroundColor: AppColors.white,
           ),
           translations: TranslationService(),

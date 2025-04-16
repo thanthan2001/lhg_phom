@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:get/get.dart';
+import 'package:lhg_phom/features/main/nav/user/presentation/controller/user_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/configs/prefs_contants.dart';
 
@@ -23,6 +24,10 @@ class LanguageSettingController extends GetxController {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString(PrefsConstants.languageCode, langCode);
     updateLanguage(langCode);
+
+    // Cập nhật languageIcon trong UserController
+    final userController = Get.find<UserController>();
+    userController.updateLanguage(langCode);
   }
 
   void updateLanguage(String langCode) {
