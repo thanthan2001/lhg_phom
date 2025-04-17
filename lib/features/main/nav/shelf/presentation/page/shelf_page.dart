@@ -22,7 +22,7 @@ class ShelfPage extends GetView<ShelfController> {
   // AppBar widget
   AppBar _buildAppBar() {
     return AppBar(
-      title: const TextWidget(text: "Danh sách kệ", size: 18, color: AppColors.white),
+      title: TextWidget(text: "list_shelf".tr, size: 18, color: AppColors.white),
       centerTitle: true,
       backgroundColor: AppColors.primary,
       actions: [
@@ -66,9 +66,9 @@ class ShelfPage extends GetView<ShelfController> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildColumn("Mã kệ", shelf["shelfCode"]),
-            _buildColumn("Tên kệ", shelf["shelfName"]),
-            _buildColumn("Tổng số phom", shelf["totalForms"].toString()),
+            _buildColumn("shelf_code".tr, shelf["shelfCode"]),
+            _buildColumn("shelf_name".tr, shelf["shelfName"]),
+            _buildColumn("total_phom".tr, shelf["totalForms"].toString()),
           ],
         ),
       ),

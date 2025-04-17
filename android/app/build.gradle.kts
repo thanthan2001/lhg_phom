@@ -37,6 +37,16 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    repositories {
+        flatDir {
+            dirs("libs")
+        }
+    }
+}
+
+dependencies {
+    implementation(mapOf("name" to "rfiddrive-release", "ext" to "aar"))
 }
 
 flutter {

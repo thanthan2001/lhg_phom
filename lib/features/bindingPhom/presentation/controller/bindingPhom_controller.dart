@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/services/rfid_service.dart';
+
 class BindingPhomController extends GetxController {
   // Text Controllers
   final materialCodeController = TextEditingController();
@@ -36,9 +38,15 @@ class BindingPhomController extends GetxController {
     isShowingDetail.value = false;
   }
 
-  void onScan() {
+  void onScan() async {
+  final epc = await RFIDService.scanRFID();
+  if (epc != null && epc.isNotEmpty) {
+    rfidController.text = epc;
     isShowingDetail.value = true;
+  } else {
+    Get.snackbar('Lỗi', 'Không đọc được thẻ');
   }
+}
 
   void onSelectLeft() {
     isLeftSide.value = true;

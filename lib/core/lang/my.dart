@@ -7,6 +7,8 @@ const Map<String, String> my = {
   'choose_factory': 'စက်ရုံကို ရွေးပါ',
   'forgot_password': 'စကားဝှက်မေ့သွားသည်?',
   'version': 'ဗားရှင်း 1.0.0',
+  'hello': 'မင်္ဂလာပါ - ',
+
   // user
   'information': 'အချက်အလက်',
   'setting': 'ဆက်တင်များ',
@@ -26,4 +28,41 @@ const Map<String, String> my = {
   'new_password': 'စကားဝှက်အသစ်',
   'confirm_password': 'စကားဝှက်အတည်ပြုပါ',
   'save': 'သိမ်းပါ',
+  'search': 'ရှာဖွေရန်',
+  'input_to_search': 'ရှာဖွေရန် ရိုက်ထည့်ပါ...',
+  'no_data': 'ဒေတာမရှိပါ',
+
+  // Lend
+  'lend': 'ချေးပေးရန်',
+  'lend_register': 'ချေးပေးရန် မှတ်ပုံတင်ပါ',
+  'lend_all': 'အားလုံး',
+  'lend_give': 'ချေးပေးရန် ပေးပါ',
+  'lend_return': 'ချေးပေးရန် ပြန်လည်ပေးပါ',
+  'lend_others': 'အခြားစက်ရုံမှ ချေးပေးရန်',
+  'lend_register_list': 'ချေးပေးရန် မှတ်ပုံတင်ထားသော စာရင်း',
+  'lend_give_list': 'ချေးပေးရန် ပေးထားသော စာရင်း',
+  'borrower': 'ချေးယူသူ',
+  'returner': 'ပြန်လည်ပေးသူ',
+  'lend_date': 'ချေးပေးရန် ရက်စွဲ',
+  'return_date': 'ပြန်လည်ပေးရန် ရက်စွဲ',
+  'lend_status': 'ချေးပေးရန် အခြေအနေ',
+
+  // Phom
+  'press_to_add_phom': 'Phom ထည့်ရန် နှိပ်ပါ',
+  'phom_code': 'Phom ကုဒ်',
+  'phom_name': 'Phom အမည်',
+  'material': 'ပစ္စည်း',
+  'total': 'စုစုပေါင်း',
+  'phom': 'Phom',
+  'size': 'အရွယ်အစား',
+  'quantity': 'အရေအတွက်',
+  'inventory': 'ကုန်ပစ္စည်းစာရင်း',
+  'total_phom': 'စုစုပေါင်း Phom အရေအတွက်',
+  'total_phom_code': 'စုစုပေါင်း Phom ကုဒ်အရေအတွက်',
+  'total_inventory': 'စုစုပေါင်း ကုန်ပစ္စည်းစာရင်း',
+
+  // shelf
+  'list_shelf': 'Shelf စာရင်း',
+  'shelf_code': 'Shelf ကုဒ်',
+  'shelf_name': 'Shelf အမည်',
 };
