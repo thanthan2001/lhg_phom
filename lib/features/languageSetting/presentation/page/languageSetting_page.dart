@@ -18,7 +18,7 @@ class LanguageSettingPage extends GetView<LanguageSettingController> {
           title: const TextWidget(text: "language", color: AppColors.white),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios, color: AppColors.white),
-            onPressed: () => Get.back(result: controller.language.value),
+            onPressed: () => Get.back(result: true),
           ),
         ),
         backgroundColor: AppColors.white,
@@ -42,9 +42,10 @@ class LanguageSettingPage extends GetView<LanguageSettingController> {
       return ListTile(
         leading: Image.asset(iconPath, width: 40, height: 28, fit: BoxFit.cover),
         title: Text(language),
-        trailing: controller.language.value == language
-            ? const Icon(Icons.check, color: AppColors.primary)
-            : null,
+        trailing:
+            controller.language.value == language
+                ? const Icon(Icons.check, color: AppColors.primary)
+                : null,
         onTap: () => controller.changeLanguage(code),
       );
     });
