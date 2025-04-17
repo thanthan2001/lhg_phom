@@ -57,22 +57,22 @@ class HomePage extends GetView<HomeController> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildInfoTextColumn(
-                          'Mã phom',
+                          'phom_code'.tr,
                           '${item['code']}',
                           textColor,
                         ),
                         _buildInfoTextColumn(
-                          'Tên phom',
+                          'phom_name'.tr,
                           '${item['name']}',
                           textColor,
                         ),
                         _buildInfoTextColumn(
-                          'Chất liệu',
+                          'material'.tr,
                           '${item['material']}',
                           textColor,
                         ),
                         _buildInfoTextColumn(
-                          'Tổng số',
+                          'total'.tr,
                           '${_calculateTotal(item['details'])}',
                           textColor,
                         ),
@@ -105,7 +105,7 @@ class HomePage extends GetView<HomeController> {
           Expanded(
             child: TextField(
               decoration: InputDecoration(
-                hintText: "Nhập để tìm kiếm...",
+                hintText: "input_to_search".tr,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -119,7 +119,7 @@ class HomePage extends GetView<HomeController> {
             height: 48,
             width: 100,
             backgroundColor: AppColors.primary1,
-            text: "Tìm kiếm",
+            text: "search".tr,
             ontap: () {},
           ),
         ],
@@ -153,9 +153,9 @@ class HomePage extends GetView<HomeController> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildDetailColumn("Size", "${detail['size']}"),
-                  _buildDetailColumn("Số lượng", "${detail['quantity']}"),
-                  _buildDetailColumn("Tồn kho", "${detail['stock']}"),
+                  _buildDetailColumn("size".tr, "${detail['size']}"),
+                  _buildDetailColumn("quantity".tr, "${detail['quantity']}"),
+                  _buildDetailColumn("inventory".tr, "${detail['stock']}"),
                 ],
               ),
             );
@@ -185,8 +185,8 @@ class HomePage extends GetView<HomeController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const TextSpanWidget(
-            text1: "Hello! - ",
+          TextSpanWidget(
+            text1: "hello".tr,
             text2: "LHG",
             fontWeight2: FontWeight.bold,
             textColor1: Colors.white,
@@ -195,20 +195,20 @@ class HomePage extends GetView<HomeController> {
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const [
+            children: [
               _HomeInfo(
                 icon: Icons.insert_drive_file,
-                title: "Tổng số phom",
+                title: "total_phom".tr,
                 value: "19.000",
               ),
               _HomeInfo(
                 icon: Icons.grid_view,
-                title: "Tổng số loại",
+                title: "total_phom_code".tr,
                 value: "300",
               ),
               _HomeInfo(
                 icon: Icons.warehouse,
-                title: "Tổng tồn kho",
+                title: "total_inventory".tr,
                 value: "15.000",
               ),
             ],

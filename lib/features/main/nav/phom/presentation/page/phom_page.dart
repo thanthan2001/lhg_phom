@@ -21,7 +21,7 @@ class PhomPage extends GetView<PhomController> {
               child: ButtonWidget(
                 height: 70,
                 backgroundColor: AppColors.primary1,
-                text: "Nhấn để thêm phom",
+                text: "press_to_add_phom".tr,
                 fontSize: 16,
                 ontap: () {
                   Get.toNamed(Routes.bindingPhom);
@@ -56,10 +56,10 @@ class PhomPage extends GetView<PhomController> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  _buildColumnData("Mã phom", phom["phomCode"]),
-                                  _buildColumnData("Tên phom", phom["phomName"]),
-                                  _buildColumnData("Chất liệu", phom["material"]),
-                                  _buildColumnData("Tổng số", phom["total"].toString()),
+                                  _buildColumnData("phom_code".tr, phom["phomCode"]),
+                                  _buildColumnData("phom_name".tr, phom["phomName"]),
+                                  _buildColumnData("material".tr, phom["material"]),
+                                  _buildColumnData("total".tr, phom["total"].toString()),
                                 ],
                               ),
                             ),

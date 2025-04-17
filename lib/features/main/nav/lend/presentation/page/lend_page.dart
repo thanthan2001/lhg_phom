@@ -25,7 +25,7 @@ class LendPage extends GetView<LendController> {
                 _buildButtonRow(),
                 const SizedBox(height: 10),
                 _buildSection(
-                  title: "Danh sách đăng ký mượn",
+                  title: "lend_register_list".tr,
                   onViewAll: () {
                     Get.toNamed(Routes.lendRegister);
                   },
@@ -33,7 +33,7 @@ class LendPage extends GetView<LendController> {
                   cardColor: AppColors.primary3,
                 ),
                 _buildSection(
-                  title: "Danh sách cho mượn",
+                  title: "lend_give_list".tr,
                   onViewAll: () {
                     Get.toNamed(Routes.lendAll);
                   },
@@ -51,12 +51,12 @@ class LendPage extends GetView<LendController> {
   Widget _buildButtonRow() {
     return Row(
       children: [
-        _buildButton("Phát cho mượn", AppColors.blue, Routes.lendGive),
+        _buildButton("lend_give".tr, AppColors.blue, Routes.lendGive),
         const SizedBox(width: 10),
-        _buildButton("Trả phom", AppColors.yellow, Routes.lendReturn),
+        _buildButton("lend_return".tr, AppColors.yellow, Routes.lendReturn),
         const SizedBox(width: 10),
         _buildButton(
-          "Mượn từ nhà máy khác",
+          "lend_others".tr,
           AppColors.red,
           Routes.lendOthers,
         ),
@@ -104,7 +104,7 @@ class LendPage extends GetView<LendController> {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: TextWidget(
-                text: "Xem tất cả",
+                text: "lend_all".tr,
                 size: 14,
                 color: AppColors.primary1,
                 textDecoration: TextDecoration.underline,
@@ -149,9 +149,9 @@ class LendPage extends GetView<LendController> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildColumn("Người mượn", item.idNguoiMuon?.userName ?? '---'),
-            _buildColumn("Đơn vị", item.donVi ?? '---'),
-            _buildColumn("Ngày mượn", item.ngayMuon ?? '---'),
+            _buildColumn("borrower".tr, item.idNguoiMuon?.userName ?? '---'),
+            _buildColumn("department".tr, item.donVi ?? '---'),
+            _buildColumn("lend_date".tr, item.ngayMuon ?? '---'),
           ],
         ),
       ),

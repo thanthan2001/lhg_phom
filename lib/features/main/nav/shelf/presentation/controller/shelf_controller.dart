@@ -1,4 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../../../core/configs/prefs_contants.dart';
 
 class ShelfController extends GetxController {
   // Danh sách dữ liệu mẫu đa dạng hơn
@@ -7,6 +11,7 @@ class ShelfController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    loadLanguage();
     fetchShelves();
   }
 
@@ -19,5 +24,29 @@ class ShelfController extends GetxController {
       {"shelfCode": "M4N5O6", "shelfName": "Kệ H", "totalForms": 21050},
       {"shelfCode": "P7Q8R9", "shelfName": "Kệ F", "totalForms": 18900},
     ];
+  }
+
+  Future<void> loadLanguage() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String langCode = prefs.getString(PrefsConstants.languageCode) ?? "en";
+    updateLanguage(langCode);
+  }
+
+  void updateLanguage(String langCode) {
+    switch (langCode) {
+      case 'vi':
+        Get.updateLocale(const Locale('vi'));
+        break;
+      case 'en':
+        Get.updateLocale(const Locale('en'));
+        break;
+      case 'zh':
+        Get.updateLocale(const Locale('zh'));
+        break;
+      case 'my':
+        Get.updateLocale(const Locale('my'));
+        break;
+    }
+    Get.updateLocale(Locale(langCode));
   }
 }
