@@ -178,7 +178,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     );
   }
 
-  Row _buildRfidScan() {
+  Widget _buildRfidScan() {
     return Row(
       children: [
         Expanded(
@@ -204,34 +204,14 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                     height: 48,
                     child: Center(child: CircularProgressIndicator()),
                   )
-                  : Column(
-                    children: [
-                      ButtonWidget(
-                        width: 100,
-                        height: 38,
-                        backgroundColor: AppColors.primary1,
-                        textColor: Colors.white,
-                        ontap: controller.onScan,
-                        text: "Scan",
-                        borderRadius: 5,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(
-                              Icons.play_arrow,
-                              color: Colors.green,
-                            ),
-                            onPressed: controller.onStartRead,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.stop, color: Colors.red),
-                            onPressed: controller.onStopRead,
-                          ),
-                        ],
-                      ),
-                    ],
+                  : ButtonWidget(
+                    width: 100,
+                    height: 48,
+                    backgroundColor: AppColors.primary1,
+                    textColor: Colors.white,
+                    ontap: controller.onScan,
+                    text: "Scan",
+                    borderRadius: 5,
                   ),
         ),
       ],

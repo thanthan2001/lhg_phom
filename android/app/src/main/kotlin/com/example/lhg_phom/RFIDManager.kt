@@ -1,43 +1,36 @@
+package com.example.lhg_phom
+
 import android.content.Context
-import android.util.Log
-import com.rfid.trans.Reader
+import com.rfid.trans.ReaderHelp
 import com.rfid.trans.ReadTag
 import com.rfid.trans.TagCallback
 
 object RFIDManager {
-    fun init(context: Context) {
-        Reader.rrlib?.PowerControll(context, true)
-        Log.d("RFIDManager", "RFID Powered ON")
+    private var reader: ReaderHelp? = null
+
+    fun initialize(context: Context) {
+        reader = ReaderHelp()
+        reader?.PowerControll(context, true)
     }
 
-    fun stop(context: Context) {
-        Reader.rrlib?.PowerControll(context, false)
-        Log.d("RFIDManager", "RFID Powered OFF")
+    fun destroy(context: Context) {
+        reader?.PowerControll(context, false)
     }
 
-    fun scanOnce(): Boolean {
-        return try {
-            Reader.rrlib?.ScanRfid()
-            Log.d("RFIDManager", "ScanRfid() called")
-            true
-        } catch (e: Exception) {
-            Log.e("RFIDManager", "ScanRfid() failed: ${e.message}")
-            false
+    fun scanOnce(): String? {
+        val tagList = mutableListOf<ReadTag>()
+        val status = reader?.InventoryOnce(
+            0x00, 0x04, 0x00, 0x00,
+            0x80.toByte(), 0x00, 10, tagList
+        )
+        return if (status == 0 && tagList.isNotEmpty()) {
+            tagList[0].epcId
+        } else {
+            null
         }
     }
 
-    fun startRead() {
-        Reader.rrlib?.StartRead()
-        Log.d("RFIDManager", "StartRead() called")
-    }
-
-    fun stopRead() {
-        Reader.rrlib?.StopRead()
-        Log.d("RFIDManager", "StopRead() called")
-    }
-
     fun setCallback(callback: TagCallback) {
-        Reader.rrlib?.SetCallBack(callback)
-        Log.d("RFIDManager", "Callback set")
+        reader?.SetCallBack(callback)
     }
 }

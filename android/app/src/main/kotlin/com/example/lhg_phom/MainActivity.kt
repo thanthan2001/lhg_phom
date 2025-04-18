@@ -14,48 +14,35 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
-        // Khởi tạo RFID
-        RFIDManager.init(this)
+        // Khởi tạo thiết bị
+        RFIDManager.initialize(this)
 
-        // Đăng ký callback để nhận EPC khi đang quét liên tục
+        // Đăng ký callback nhận thẻ
         RFIDManager.setCallback(object : TagCallback {
             override fun tagCallback(tag: ReadTag) {
-                Log.d("RFID_TAG", "Callback EPC: ${tag.epcId}")
+                Log.d("RFID_TAG", "Đã đọc thẻ: ${tag.epcId}")
             }
 
             override fun StopReadCallBack() {
-                Log.d("RFID_TAG", "Đã dừng quét")
+                Log.d("RFID_TAG", "Đã dừng đọc")
             }
         })
 
-        // Lắng nghe các phương thức từ Flutter
+        // Xử lý lệnh từ Flutter
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "scanRFID" -> {
-                        val success = RFIDManager.scanOnce()
-                        result.success(
-                            if (success) "Đang quét..." else "Lỗi khi gọi ScanRfid"
-                        )
+                        val epc = RFIDManager.scanOnce()
+                        result.success(epc ?: "Không tìm thấy thẻ")
                     }
-
-                    "startRead" -> {
-                        RFIDManager.startRead()
-                        result.success("Đã bắt đầu quét liên tục")
-                    }
-
-                    "stopRead" -> {
-                        RFIDManager.stopRead()
-                        result.success("Đã dừng quét liên tục")
-                    }
-
                     else -> result.notImplemented()
                 }
             }
     }
 
     override fun onDestroy() {
-        RFIDManager.stop(this)
+        RFIDManager.destroy(this)
         super.onDestroy()
     }
 }
