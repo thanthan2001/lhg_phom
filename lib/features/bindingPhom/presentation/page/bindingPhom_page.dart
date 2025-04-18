@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_colors.dart';
@@ -17,9 +16,9 @@ class BindingPhomPage extends GetView<BindingPhomController> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-  FocusScope.of(context).unfocus();
-  controller.selectedRowIndex.value = -1; 
-},
+        FocusScope.of(context).unfocus();
+        controller.selectedRowIndex.value = -1;
+      },
       child: SafeArea(
         child: Scaffold(appBar: _buildAppBar(), body: _buildBody()),
       ),
@@ -82,20 +81,21 @@ class BindingPhomPage extends GetView<BindingPhomController> {
         ),
         const SizedBox(width: 10),
         Expanded(
-  child: Obx(
-    () => CustomDropdownField(
-      labelText: 'Loại phom:',
-      selectedValue: controller.selectedPhomType.value,
-      onTap: () => showSearchableSelectionDialog(
-        title: 'Chọn loại phom',
-        itemList: controller.phomTypeList,
-        selectedItem: controller.selectedPhomType.value,
-        onSelected: (val) => controller.selectedPhomType.value = val,
-      ),
-    ),
-  ),
-),
-
+          child: Obx(
+            () => CustomDropdownField(
+              labelText: 'Loại phom:',
+              selectedValue: controller.selectedPhomType.value,
+              onTap:
+                  () => showSearchableSelectionDialog(
+                    title: 'Chọn loại phom',
+                    itemList: controller.phomTypeList,
+                    selectedItem: controller.selectedPhomType.value,
+                    onSelected:
+                        (val) => controller.selectedPhomType.value = val,
+                  ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -133,16 +133,16 @@ class BindingPhomPage extends GetView<BindingPhomController> {
   Widget _buildShelfDropdown() {
     return Obx(
       () => CustomDropdownField(
-  labelText: 'Kệ:',
-  selectedValue: controller.selectedShelf.value,
-  onTap: () => showSearchableSelectionDialog(
-    title: 'Chọn kệ',
-    itemList: controller.shelfList,
-    selectedItem: controller.selectedShelf.value,
-    onSelected: (val) => controller.selectedShelf.value = val,
-  ),
-),
-
+        labelText: 'Kệ:',
+        selectedValue: controller.selectedShelf.value,
+        onTap:
+            () => showSearchableSelectionDialog(
+              title: 'Chọn kệ',
+              itemList: controller.shelfList,
+              selectedItem: controller.selectedShelf.value,
+              onSelected: (val) => controller.selectedShelf.value = val,
+            ),
+      ),
     );
   }
 
@@ -170,14 +170,15 @@ class BindingPhomPage extends GetView<BindingPhomController> {
         isBorder: true,
         borderColor: isSelected ? AppColors.primary1 : AppColors.primary2,
         borderRadius: 5,
-        leadingIcon: isSelected
-            ? const Icon(Icons.check, color: AppColors.green)
-            : const SizedBox(),
+        leadingIcon:
+            isSelected
+                ? const Icon(Icons.check, color: AppColors.green)
+                : const SizedBox(),
       ),
     );
   }
 
-  Widget _buildRfidScan() {
+  Row _buildRfidScan() {
     return Row(
       children: [
         Expanded(
@@ -195,14 +196,43 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           ),
         ),
         const SizedBox(width: 10),
-        ButtonWidget(
-          width: 100,
-          height: 48,
-          backgroundColor: AppColors.primary1,
-          textColor: Colors.white,
-          ontap: controller.onScan,
-          text: "Scan",
-          borderRadius: 5,
+        Obx(
+          () =>
+              controller.isLoading.value
+                  ? const SizedBox(
+                    width: 100,
+                    height: 48,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                  : Column(
+                    children: [
+                      ButtonWidget(
+                        width: 100,
+                        height: 38,
+                        backgroundColor: AppColors.primary1,
+                        textColor: Colors.white,
+                        ontap: controller.onScan,
+                        text: "Scan",
+                        borderRadius: 5,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.play_arrow,
+                              color: Colors.green,
+                            ),
+                            onPressed: controller.onStartRead,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.stop, color: Colors.red),
+                            onPressed: controller.onStopRead,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
         ),
       ],
     );
@@ -219,7 +249,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     );
   }
 
-Widget _buildTable() {
+  Widget _buildTable() {
     return RawScrollbar(
       controller: controller.tableScrollController,
       thumbVisibility: true,
@@ -244,22 +274,18 @@ Widget _buildTable() {
                 ),
                 defaultColumnWidth: const IntrinsicColumnWidth(),
                 children: [
-                  _buildTableRow(
-                    ['Mã vật tư',
-                  'Tên phom',
-                  'Size',
-                  'Tồn kho',
-                  'Trái',
-                  'Phải',
-                  'Đã quét',],
-                    isHeader: true,
-                  ),
+                  _buildTableRow([
+                    'Mã vật tư',
+                    'Tên phom',
+                    'Size',
+                    'Tồn kho',
+                    'Trái',
+                    'Phải',
+                    'Đã quét',
+                  ], isHeader: true),
                   ...controller.inventoryData.asMap().entries.map(
-                        (entry) => _buildTableRow(
-                          entry.value,
-                          index: entry.key,
-                        ),
-                      ),
+                    (entry) => _buildTableRow(entry.value, index: entry.key),
+                  ),
                 ],
               ),
             ),
@@ -269,37 +295,41 @@ Widget _buildTable() {
     );
   }
 
-
-  TableRow _buildTableRow(List<String> values,
-      {bool isHeader = false, int? index}) {
+  TableRow _buildTableRow(
+    List<String> values, {
+    bool isHeader = false,
+    int? index,
+  }) {
     final isSelected =
         index != null && controller.selectedRowIndex.value == index;
 
     return TableRow(
       decoration: BoxDecoration(
-        color: isHeader
-            ? AppColors.grey3
-            : isSelected
+        color:
+            isHeader
+                ? AppColors.grey3
+                : isSelected
                 ? AppColors.primary2.withOpacity(0.3)
                 : null,
       ),
-      children: values.map((value) {
-        final cell = Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextWidget(
-            text: value,
-            size: 14,
-            fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-          ),
-        );
+      children:
+          values.map((value) {
+            final cell = Padding(
+              padding: const EdgeInsets.all(12),
+              child: TextWidget(
+                text: value,
+                size: 14,
+                fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+              ),
+            );
 
-        return isHeader
-            ? cell
-            : GestureDetector(
-                onTap: () => controller.selectedRowIndex.value = index,
-                child: cell,
-              );
-      }).toList(),
+            return isHeader
+                ? cell
+                : GestureDetector(
+                  onTap: () => controller.selectedRowIndex.value = index,
+                  child: cell,
+                );
+          }).toList(),
     );
   }
 }
