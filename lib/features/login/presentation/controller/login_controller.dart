@@ -1,12 +1,13 @@
 // login_controller.dart - Không thay đổi
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
 import 'package:lhg_phom/core/services/model/user/domain/usecase/save_user_use_case.dart';
 import 'package:lhg_phom/features/login/presentation/widgets/factory_selection.dart';
 
 class LoginController extends GetxController {
-  final Prefs prefs = Prefs.preferences; // Thêm Prefs để lưu/truy xuất dữ liệu
+  final Prefs prefs = Prefs.preferences; 
   final SaveUserUseCase _saveUserUseCase;
   LoginController(this._saveUserUseCase);
 
@@ -17,7 +18,7 @@ class LoginController extends GetxController {
 
   //Expanded Select Language
   final isLanguageSelectorExpanded = false.obs; // NEW: Language Selector
-  final currentFlag = 'assets/images/ic_vn.png'.obs;
+  final currentFlag = AppImagesString.fEn.obs;
 
   @override
   void onInit() {
@@ -41,24 +42,20 @@ class LoginController extends GetxController {
   void selectLanguage(String languageName, {bool save = true}) {
     switch (languageName) {
       case 'en':
-        currentFlag.value = 'assets/images/ic_en.png';
+        currentFlag.value = AppImagesString.fEn;
         Get.updateLocale(Locale('en'));
         break;
       case 'vi':
-        currentFlag.value = 'assets/images/ic_vn.png';
+        currentFlag.value = AppImagesString.fVi;
         Get.updateLocale(Locale('vi'));
         break;
       case 'zh':
-        currentFlag.value = 'assets/images/ic_zh.png';
+        currentFlag.value = AppImagesString.fZh;
         Get.updateLocale(Locale('zh'));
         break;
       case 'my':
-        currentFlag.value = 'assets/images/ic_my.png';
+        currentFlag.value = AppImagesString.fMy;
         Get.updateLocale(Locale('my'));
-        break;
-      default:
-        currentFlag.value = 'assets/images/ic_vn.png';
-        Get.updateLocale(Locale('vi'));
         break;
     }
 
@@ -83,6 +80,6 @@ class LoginController extends GetxController {
 
   void login() {
     print("Login button clicked"); // Debug xem hàm có chạy không
-    // Thêm logic xử lý đăng nhập tại đây
+    Get.offAllNamed('/main'); // Chuyển sang màng hình home
   }
 }

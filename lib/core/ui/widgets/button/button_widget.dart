@@ -15,7 +15,8 @@ class ButtonWidget extends StatelessWidget {
   final FontWeight? fontWeight;
   final bool? isBorder;
   final Color? borderColor;
-  final SvgPicture? leadingIcon;
+  final Widget? leadingIcon;
+  final Widget? icon;
   final double? borderRadius;
   final Widget? child;
 
@@ -24,13 +25,14 @@ class ButtonWidget extends StatelessWidget {
     this.fontWeight = FontWeight.w600,
     required this.ontap,
     required this.text,
-    this.height = 48.0,
+    this.height = 56.0,
     this.width = double.infinity,
     this.isBorder = false,
     this.borderColor,
     this.textColor = AppColors.white,
     this.backgroundColor = AppColors.primary,
     this.leadingIcon,
+    this.icon,
     this.child,
     this.borderRadius = 10.0,
     this.fontSize,
@@ -56,21 +58,34 @@ class ButtonWidget extends StatelessWidget {
                     : null,
             color: backgroundColor,
             borderRadius: BorderRadius.circular(borderRadius!),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                spreadRadius: 1, // Bán kính lan rộng
+                blurRadius: 6, // Độ mờ của bóng
+                offset: const Offset(0, 2), // Độ dịch chuyển theo trục X,Y
+              ),
+            ],
           ),
           child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
+                
+                Flexible(
+                  child:
+                      child ??
+                      TextWidget(
+                        text: text,
+                        fontWeight: fontWeight,
+                        textAlign: TextAlign.center,
+                        color: textColor,
+                        size: fontSize,
+                      ),
+                ),
+                if (leadingIcon != null) const SizedBox(width: 2.0),
                 if (leadingIcon != null) leadingIcon!,
-                if (leadingIcon != null) const SizedBox(width: 10.0),
-                child ??
-                    TextWidget(
-                      text: text,
-                      fontWeight: fontWeight,
-                      textAlign: TextAlign.center,
-                      color: textColor,
-                      size: fontSize,
-                    ),
               ],
             ),
           ),

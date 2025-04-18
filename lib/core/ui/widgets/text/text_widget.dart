@@ -22,8 +22,8 @@ class TextWidget extends StatelessWidget {
     this.maxLines = 1000,
     required this.text,
     this.color = AppColors.black,
-    this.size = AppDimens.textSize18,
-    this.fontWeight = FontWeight.normal,
+    this.size = AppDimens.textSize15,
+    this.fontWeight = FontWeight.w300,
     this.fontStyle = FontStyle.normal,
     this.textDecoration = TextDecoration.none,
   });
@@ -33,7 +33,9 @@ class TextWidget extends StatelessWidget {
     return Text(
       text.tr,
       maxLines: maxLines,
-      textAlign: textAlign,
+      softWrap: true,
+      overflow: TextOverflow.visible,
+      textAlign: textAlign ?? TextAlign.center,
       style: GoogleFonts.roboto(
         textStyle: TextStyle(
           color: color,
@@ -42,6 +44,7 @@ class TextWidget extends StatelessWidget {
           shadows: listShadow,
           fontWeight: fontWeight,
           decoration: textDecoration,
+          decorationColor: color,
           // overflow: TextOverflow.ellipsis,
         ),
       ),
