@@ -1,31 +1,58 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 
 class RFIDService {
   static const MethodChannel _channel = MethodChannel('rfid_channel');
 
+  // Kết nối thiết bị
+  static Future<bool> connect() async {
+    return await _channel.invokeMethod('connectRFID');
+  }
+
+  // Ngắt kết nối thiết bị
+  static Future<void> disconnect() async {
+    await _channel.invokeMethod('disconnectRFID');
+  }
+
+  // Quét liên tục (callback cho mỗi tag)
+  static Future<void> startRead(Function(String epc) onScan) async {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'onTagScanned') {
+        onScan(call.arguments as String);
+      }
+    });
+
+    await _channel.invokeMethod('startScan');
+  }
+
+  // Dừng quét liên tục
+  static Future<void> stopScan() async {
+    await _channel.invokeMethod('stopScan');
+  }
+
+  // Quét 1 lần, đợi kết quả qua callback đầu tiên
   static Future<String?> scanRFID() async {
-    try {
-      final String? result = await _channel.invokeMethod<String>('scanRFID');
-      return result;
-    } on PlatformException catch (e) {
-      print('Lỗi platform khi quét RFID: ${e.message}');
-      return null;
-    }
-  }
+    String? scannedEpc;
 
-  static Future<void> startRead() async {
-    try {
-      await _channel.invokeMethod('startRead');
-    } catch (e) {
-      print('Lỗi khi startRead: $e');
-    }
-  }
+    final completer = Completer<String>();
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'onTagScanned') {
+        scannedEpc = call.arguments as String;
+        if (!completer.isCompleted) completer.complete(scannedEpc);
+      }
+    });
 
-  static Future<void> stopRead() async {
-    try {
-      await _channel.invokeMethod('stopRead');
-    } catch (e) {
-      print('Lỗi khi stopRead: $e');
-    }
+    await _channel.invokeMethod('startScan');
+
+    // Dừng sau 2 giây để tránh quét mã tiếp theo
+    Future.delayed(const Duration(seconds: 2), () async {
+      await stopScan();
+    });
+
+    return completer.future.timeout(
+      const Duration(seconds: 3),
+      onTimeout: () => '',
+    );
   }
 }

@@ -41,7 +41,10 @@ class BindingPhomController extends GetxController {
 
   void onStartRead() async {
     try {
-      await RFIDService.startRead();
+      await RFIDService.startRead((epc) {
+        rfidController.text = epc;
+        print('📡 EPC liên tục: $epc');
+      });
       print('▶️ Bắt đầu đọc liên tục');
     } catch (e) {
       print('❌ Lỗi khi StartRead: $e');
@@ -50,7 +53,7 @@ class BindingPhomController extends GetxController {
 
   void onStopRead() async {
     try {
-      await RFIDService.stopRead();
+      await RFIDService.stopScan();
       print('⏹️ Dừng đọc liên tục');
     } catch (e) {
       print('❌ Lỗi khi StopRead: $e');
@@ -65,16 +68,16 @@ class BindingPhomController extends GetxController {
       final epc = await RFIDService.scanRFID();
 
       if (epc != null && epc.isNotEmpty) {
-        rfidController.text = epc; // hiển thị trên màn hình
-        print('EPC đã quét được: $epc'); // in ra console
+        rfidController.text = epc;
+        print('✅ EPC đã quét được: $epc');
         isShowingDetail.value = true;
       } else {
         Get.snackbar('Lỗi', 'Không đọc được thẻ');
-        print('Không đọc được thẻ');
+        print('⚠️ Không đọc được thẻ');
       }
     } catch (e) {
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi: $e');
-      print('Lỗi khi quét RFID: $e');
+      print('❌ Lỗi khi quét RFID: $e');
     } finally {
       isLoading.value = false;
     }
@@ -114,10 +117,27 @@ class BindingPhomController extends GetxController {
     });
   }
 
+  void _connectRFID() async {
+    try {
+      final connected = await RFIDService.connect();
+      if (connected) {
+        print('✅ Kết nối RFID thành công');
+      } else {
+        Get.snackbar('Lỗi', 'Không thể kết nối thiết bị RFID');
+      }
+    } catch (e) {
+      print('❌ Lỗi kết nối RFID: $e');
+      Get.snackbar('Lỗi', 'Không thể kết nối RFID: $e');
+    }
+  }
+
   @override
   void onInit() {
     _syncScrollControllers();
+    _connectRFID();
     super.onInit();
+
+    _connectRFID();
   }
 
   @override
