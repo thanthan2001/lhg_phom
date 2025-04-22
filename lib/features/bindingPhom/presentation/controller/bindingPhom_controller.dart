@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../../core/services/rfid_service.dart';
 
 class BindingPhomController extends GetxController {
@@ -15,12 +14,14 @@ class BindingPhomController extends GetxController {
 
   // State
   final isLoading = false.obs;
+  final isLoadingStop = false.obs;
+
   final selectedPhomType = ''.obs;
   final selectedShelf = ''.obs;
   final isLeftSide = true.obs;
   final isShowingDetail = false.obs;
   final scrollProgress = 0.0.obs;
-  var selectedRowIndex = Rx<int?>(null);
+  final selectedRowIndex = Rx<int?>(null);
 
   // Dropdown data
   final phomTypeList = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
@@ -34,109 +35,109 @@ class BindingPhomController extends GetxController {
         ['VH36274', 'GF27883', '3.0', '1800', '6', '4', '1'],
       ].obs;
 
-  // Logic
-  void onSearch() {
-    isShowingDetail.value = false;
+  // ==================== RFID LOGIC ====================
+
+  /// Kết nối thiết bị RFID
+  Future<void> _connectRFID() async {
+    try {
+      final connected = await RFIDService.connect();
+      if (connected) {
+        print('✅💕 Đã kết nối RFID thành công');
+      } else {
+        Get.snackbar('Lỗi', 'Không thể kết nối thiết bị RFID');
+      }
+    } catch (e) {
+      print('❌ Lỗi kết nối RFID: $e');
+      Get.snackbar('Lỗi', 'Kết nối RFID thất bại: $e');
+    }
   }
 
-  void onStartRead() async {
+  /// Ngắt kết nối khi đóng controller
+  Future<void> _disconnectRFID() async {
     try {
-      await RFIDService.startRead((epc) {
+      await RFIDService.disconnect();
+      print('✅ Ngắt kết nối RFID');
+    } catch (e) {
+      print('❌ Lỗi ngắt kết nối: $e');
+    }
+  }
+
+  /// Bắt đầu đọc liên tục
+  Future<void> onStartRead() async {
+    try {
+      await RFIDService.scanContinuous((epc) {
         rfidController.text = epc;
-        print('📡 EPC liên tục: $epc');
+        print('📡 EPC quét liên tục: $epc');
       });
-      print('▶️ Bắt đầu đọc liên tục');
+      print('▶️ Đang quét liên tục...');
     } catch (e) {
-      print('❌ Lỗi khi StartRead: $e');
+      print('❌ Lỗi startRead: $e');
     }
   }
 
-  void onStopRead() async {
+  /// Dừng đọc liên tục
+  Future<void> onStopRead() async {
     try {
+      isLoadingStop.value = true;
       await RFIDService.stopScan();
-      print('⏹️ Dừng đọc liên tục');
+      print('⏹️ Dừng quét liên tục');
     } catch (e) {
-      print('❌ Lỗi khi StopRead: $e');
+      print('❌ Lỗi stopRead: $e');
+    } finally {
+      isLoadingStop.value = false;
     }
   }
 
-  void onScan() async {
+  /// Quét 1 lần
+  Future<void> onScan() async {
     isLoading.value = true;
     isShowingDetail.value = false;
 
     try {
-      final epc = await RFIDService.scanRFID();
-
+      final epc = await RFIDService.scanSingleTag();
       if (epc != null && epc.isNotEmpty) {
         rfidController.text = epc;
-        print('✅ EPC đã quét được: $epc');
+        print('✅ EPC đã quét: $epc');
         isShowingDetail.value = true;
       } else {
         Get.snackbar('Lỗi', 'Không đọc được thẻ');
-        print('⚠️ Không đọc được thẻ');
+        print('⚠️ Không có dữ liệu');
       }
     } catch (e) {
-      Get.snackbar('Lỗi', 'Đã xảy ra lỗi: $e');
-      print('❌ Lỗi khi quét RFID: $e');
+      print('❌ Lỗi quét RFID: $e');
+      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét RFID: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  void onSelectLeft() {
-    isLeftSide.value = true;
-  }
+  // ==================== UI LOGIC ====================
 
-  void onSelectRight() {
-    isLeftSide.value = false;
-  }
-
-  void onFinish() {
-    Get.back();
-  }
+  void onSearch() => isShowingDetail.value = false;
+  void onSelectLeft() => isLeftSide.value = true;
+  void onSelectRight() => isLeftSide.value = false;
+  void onFinish() => Get.back();
 
   void _syncScrollControllers() {
     bool isSyncing = false;
-
     tableScrollController.addListener(() {
-      if (isSyncing) return;
-      if (!scrollbarController.hasClients) return;
-
+      if (isSyncing || !scrollbarController.hasClients) return;
       isSyncing = true;
       scrollbarController.jumpTo(tableScrollController.offset);
       isSyncing = false;
     });
-
     scrollbarController.addListener(() {
-      if (isSyncing) return;
-      if (!tableScrollController.hasClients) return;
-
+      if (isSyncing || !tableScrollController.hasClients) return;
       isSyncing = true;
       tableScrollController.jumpTo(scrollbarController.offset);
       isSyncing = false;
     });
   }
 
-  void _connectRFID() async {
-    try {
-      final connected = await RFIDService.connect();
-      if (connected) {
-        print('✅ Kết nối RFID thành công');
-      } else {
-        Get.snackbar('Lỗi', 'Không thể kết nối thiết bị RFID');
-      }
-    } catch (e) {
-      print('❌ Lỗi kết nối RFID: $e');
-      Get.snackbar('Lỗi', 'Không thể kết nối RFID: $e');
-    }
-  }
-
   @override
   void onInit() {
-    _syncScrollControllers();
-    _connectRFID();
     super.onInit();
-
+    _syncScrollControllers();
     _connectRFID();
   }
 
@@ -147,6 +148,7 @@ class BindingPhomController extends GetxController {
     rfidController.dispose();
     tableScrollController.dispose();
     scrollbarController.dispose();
+    _disconnectRFID();
     super.onClose();
   }
 }
