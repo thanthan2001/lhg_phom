@@ -1,58 +1,56 @@
 import 'dart:async';
-
 import 'package:flutter/services.dart';
 
 class RFIDService {
   static const MethodChannel _channel = MethodChannel('rfid_channel');
 
-  // Kết nối thiết bị
+  static Function(String epc)? _onScanCallback;
+
+  /// Kết nối đến thiết bị RFID
   static Future<bool> connect() async {
     return await _channel.invokeMethod('connectRFID');
   }
 
-  // Ngắt kết nối thiết bị
+  /// Ngắt kết nối với thiết bị
   static Future<void> disconnect() async {
     await _channel.invokeMethod('disconnectRFID');
   }
 
-  // Quét liên tục (callback cho mỗi tag)
-  static Future<void> startRead(Function(String epc) onScan) async {
+  /// Đăng ký xử lý phản hồi từ native
+  static void _registerMethodCallHandler() {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'onTagScanned') {
-        onScan(call.arguments as String);
+        final epc = call.arguments as String;
+        _onScanCallback?.call(epc);
       }
     });
-
-    await _channel.invokeMethod('startScan');
   }
 
-  // Dừng quét liên tục
+  /// Bắt đầu quét liên tục, truyền callback mỗi khi có tag
+  static Future<void> scanContinuous(Function(String epc) onScan) async {
+    _onScanCallback = onScan;
+    _registerMethodCallHandler();
+    await _channel.invokeMethod('scanRFID', {'mode': 1});
+  }
+
+  /// Dừng quét liên tục
   static Future<void> stopScan() async {
     await _channel.invokeMethod('stopScan');
+    _onScanCallback = null;
   }
 
-  // Quét 1 lần, đợi kết quả qua callback đầu tiên
-  static Future<String?> scanRFID() async {
-    String? scannedEpc;
-
+  /// Quét 1 lần, trả về EPC đầu tiên quét được
+  static Future<String?> scanSingleTag({
+    Duration timeout = const Duration(seconds: 3),
+  }) async {
     final completer = Completer<String>();
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'onTagScanned') {
-        scannedEpc = call.arguments as String;
-        if (!completer.isCompleted) completer.complete(scannedEpc);
-      }
-    });
+    _onScanCallback = (epc) {
+      if (!completer.isCompleted) completer.complete(epc);
+    };
 
-    await _channel.invokeMethod('startScan');
+    _registerMethodCallHandler();
+    await _channel.invokeMethod('scanRFID', {'mode': 0});
 
-    // Dừng sau 2 giây để tránh quét mã tiếp theo
-    Future.delayed(const Duration(seconds: 2), () async {
-      await stopScan();
-    });
-
-    return completer.future.timeout(
-      const Duration(seconds: 3),
-      onTimeout: () => '',
-    );
+    return completer.future.timeout(timeout, onTimeout: () => '');
   }
 }

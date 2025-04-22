@@ -56,6 +56,8 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           const SizedBox(height: 10),
           _buildRfidScan(),
           const SizedBox(height: 10),
+          _buildRfidStopScan(),
+          const SizedBox(height: 10),
           _buildTable(),
           const SizedBox(height: 30),
           _buildDoneButton(),
@@ -175,6 +177,31 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                 ? const Icon(Icons.check, color: AppColors.green)
                 : const SizedBox(),
       ),
+    );
+  }
+
+  Widget _buildRfidStopScan() {
+    return Row(
+      children: [
+        Obx(
+          () =>
+              controller.isLoadingStop.value
+                  ? const SizedBox(
+                    width: 100,
+                    height: 48,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                  : ButtonWidget(
+                    width: 100,
+                    height: 48,
+                    backgroundColor: AppColors.primary1,
+                    textColor: Colors.white,
+                    ontap: controller.onStopRead,
+                    text: "STOP",
+                    borderRadius: 5,
+                  ),
+        ),
+      ],
     );
   }
 
