@@ -22,7 +22,7 @@ class BindingPhomController extends GetxController {
   final isShowingDetail = false.obs;
   final scrollProgress = 0.0.obs;
   final selectedRowIndex = Rx<int?>(null);
-
+  var listTagRFID = [];
   // Dropdown data
   final phomTypeList = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
   final shelfList = ['K1', 'K2', 'K3'];
@@ -75,19 +75,6 @@ class BindingPhomController extends GetxController {
     }
   }
 
-  /// Dừng đọc liên tục
-  Future<void> onStopRead() async {
-    try {
-      isLoadingStop.value = true;
-      await RFIDService.stopScan();
-      print('⏹️ Dừng quét liên tục');
-    } catch (e) {
-      print('❌ Lỗi stopRead: $e');
-    } finally {
-      isLoadingStop.value = false;
-    }
-  }
-
   /// Quét 1 lần
   Future<void> onScan() async {
     isLoading.value = true;
@@ -101,6 +88,7 @@ class BindingPhomController extends GetxController {
         isShowingDetail.value = true;
       } else {
         Get.snackbar('Lỗi', 'Không đọc được thẻ');
+        rfidController.text = 'fails';
         print('⚠️ Không có dữ liệu');
       }
     } catch (e) {
@@ -132,6 +120,28 @@ class BindingPhomController extends GetxController {
       tableScrollController.jumpTo(scrollbarController.offset);
       isSyncing = false;
     });
+  }
+
+  Future<void> onScanMultipleTags() async {
+    isLoading.value = true;
+    try {
+      final tags = await RFIDService.scanSingleTagMultiple(
+        timeout: Duration(milliseconds: 100),
+      );
+      if (tags.isNotEmpty) {
+        listTagRFID = tags;
+        print('listTagRFID: $listTagRFID + ${listTagRFID.length}');
+
+        // print('✅ Đã quét được: $tags');
+        rfidController.text = tags.join(', ');
+      } else {
+        Get.snackbar('Lỗi', 'Không tìm thấy thẻ nào');
+      }
+    } catch (e) {
+      Get.snackbar('Lỗi', 'Đã xảy ra lỗi: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   @override

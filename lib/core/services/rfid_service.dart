@@ -3,12 +3,47 @@ import 'package:flutter/services.dart';
 
 class RFIDService {
   static const MethodChannel _channel = MethodChannel('rfid_channel');
-
   static Function(String epc)? _onScanCallback;
+  static bool _handlerInitialized = false;
+
+  /// Chỉ gọi 1 lần để đăng ký nhận từ native
+  static void _registerHandlerOnce() {
+    if (_handlerInitialized) return;
+    _channel.setMethodCallHandler((call) async {
+      switch (call.method) {
+        case 'onTagScanned':
+          final epc = call.arguments as String;
+          _onScanCallback?.call(epc);
+          break;
+        case 'onConnected':
+          print('✅ Native báo đã kết nối thành công');
+          break;
+        case 'onError':
+          print('❌ Native báo lỗi: ${call.arguments}');
+          break;
+        case 'onContinuousScanStart':
+          print('🔁 Native báo đã bắt đầu quét liên tục');
+          break;
+        case 'onScanStopped':
+          print('🛑 Native báo đã dừng quét');
+          break;
+        default:
+          print('⚠️ Không nhận diện method native: ${call.method}');
+      }
+    });
+    _handlerInitialized = true;
+  }
 
   /// Kết nối đến thiết bị RFID
   static Future<bool> connect() async {
-    return await _channel.invokeMethod('connectRFID');
+    _registerHandlerOnce();
+    try {
+      final result = await _channel.invokeMethod<bool>('connectRFID');
+      return result ?? false;
+    } catch (e) {
+      print('❌ Lỗi khi connect: $e');
+      return false;
+    }
   }
 
   /// Ngắt kết nối với thiết bị
@@ -16,21 +51,18 @@ class RFIDService {
     await _channel.invokeMethod('disconnectRFID');
   }
 
-  /// Đăng ký xử lý phản hồi từ native
-  static void _registerMethodCallHandler() {
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'onTagScanned') {
-        final epc = call.arguments as String;
-        _onScanCallback?.call(epc);
-      }
-    });
-  }
-
   /// Bắt đầu quét liên tục, truyền callback mỗi khi có tag
-  static Future<void> scanContinuous(Function(String epc) onScan) async {
+  static Future<bool> scanContinuous(Function(String epc) onScan) async {
+    _registerHandlerOnce();
     _onScanCallback = onScan;
-    _registerMethodCallHandler();
-    await _channel.invokeMethod('scanRFID', {'mode': 1});
+
+    try {
+      await _channel.invokeMethod('scanRFID', {'mode': 1});
+      return true;
+    } catch (e) {
+      print('❌ scanContinuous lỗi: $e');
+      return false;
+    }
   }
 
   /// Dừng quét liên tục
@@ -44,13 +76,42 @@ class RFIDService {
     Duration timeout = const Duration(seconds: 3),
   }) async {
     final completer = Completer<String>();
+    _registerHandlerOnce();
+
     _onScanCallback = (epc) {
       if (!completer.isCompleted) completer.complete(epc);
     };
 
-    _registerMethodCallHandler();
-    await _channel.invokeMethod('scanRFID', {'mode': 0});
+    try {
+      await _channel.invokeMethod('scanRFID', {'mode': 0});
+      return await completer.future.timeout(timeout);
+    } catch (e) {
+      print('❌ Timeout hoặc lỗi khi quét 1 lần: $e');
+      return null;
+    }
+  }
 
-    return completer.future.timeout(timeout, onTimeout: () => '');
+  static Future<List<String>> scanSingleTagMultiple({
+    Duration timeout = const Duration(milliseconds: 100),
+  }) async {
+    final Set<String> uniqueEPCs = {}; // Tránh trùng lặp
+    final completer = Completer<List<String>>();
+
+    _registerHandlerOnce();
+    _onScanCallback = (epc) {
+      uniqueEPCs.add(epc);
+    };
+
+    try {
+      await _channel.invokeMethod('scanRFID', {'mode': 0});
+      Future.delayed(timeout, () async {
+        await stopScan();
+        completer.complete(uniqueEPCs.toList());
+      });
+      return completer.future;
+    } catch (e) {
+      print('❌ Lỗi quét nhiều EPC: \$e');
+      return [];
+    }
   }
 }

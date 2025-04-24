@@ -17,28 +17,23 @@ class MainActivity : FlutterActivity() {
         methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "connectRFID" -> result.success(rfidHandler?.connect())
-
                 "scanRFID" -> {
                     val mode = (call.arguments as? Map<*, *>)?.get("mode") as? Int ?: 0
                     rfidHandler?.scanRFID(mode)
                     result.success(true)
                 }
-
                 "startScan" -> {
                     rfidHandler?.scanRFID(1)
                     result.success(true)
                 }
-
                 "stopScan" -> {
                     rfidHandler?.stopScan()
                     result.success(true)
                 }
-
                 "disconnectRFID" -> {
                     rfidHandler?.disconnect()
                     result.success(true)
                 }
-
                 else -> result.notImplemented()
             }
         }
