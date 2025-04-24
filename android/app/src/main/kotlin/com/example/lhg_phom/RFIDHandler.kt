@@ -16,7 +16,6 @@ class RFIDHandler(
     private var soundPool: SoundPool? = null
     private var soundId: Int? = null
 
-    // 🔊 Khởi tạo âm thanh
     private fun initSound() {
         soundPool = SoundPool(1, AudioManager.STREAM_MUSIC, 0)
         soundId = soundPool?.load(context, R.raw.barcodebeep, 1)
@@ -27,10 +26,9 @@ class RFIDHandler(
         } ?: Log.w("RFID", "⚠️ Sound init failed")
     }
 
-    // 🔌 Kết nối RFID
     fun connect(): Boolean {
         try {
-            Reader.rrlib.PowerControll(null, true)
+            // Reader.rrlib.PowerControll(null, true)
             Thread.sleep(1500)
             Log.d("RFID", "🔌 PowerOn success")
         } catch (e: Exception) {
@@ -38,10 +36,9 @@ class RFIDHandler(
         }
 
         val result = Reader.rrlib.Connect("/dev/ttyHSL0", 115200, 0)
-
         return if (result == 0) {
+            // initSound()
             Log.d("RFID", "✅ Connected successfully")
-            initSound()
             channel.invokeMethod("onConnected", null)
             true
         } else {
@@ -51,19 +48,17 @@ class RFIDHandler(
         }
     }
 
-    // 🔌 Ngắt kết nối
     fun disconnect() {
         try {
-            Reader.rrlib.PowerControll(null, false)
+            Reader.rrlib.StopRead()
+            // Reader.rrlib.PowerControll(null, false)
+            Reader.rrlib.DisConnect()
+            Log.d("RFID", "🔌 Disconnected")
         } catch (e: Exception) {
-            Log.w("RFID", "⚠️ PowerOff failed: ${e.message}")
+            Log.w("RFID", "⚠️ Disconnect failed: ${e.message}")
         }
-
-        Reader.rrlib.DisConnect()
-        Log.d("RFID", "🔌 Disconnected")
     }
 
-    // 📡 Quét RFID
     fun scanRFID(mode: Int) {
         Reader.rrlib.SetCallBack(object : TagCallback {
             override fun tagCallback(tag: ReadTag?) {
@@ -104,7 +99,6 @@ class RFIDHandler(
         }
     }
 
-    // ⏹️ Dừng quét
     fun stopScan() {
         Reader.rrlib.StopRead()
         Log.d("RFID", "⏹️ Scan stopped by user")

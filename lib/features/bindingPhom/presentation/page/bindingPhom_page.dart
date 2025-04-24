@@ -53,10 +53,10 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           _buildShelfDropdown(),
           const SizedBox(height: 10),
           _buildLeftRightButtons(),
-          const SizedBox(height: 10),
+          const Divider(color: AppColors.grey, thickness: 1),
           _buildRfidScan(),
           const SizedBox(height: 10),
-          _buildRfidStopScan(),
+          _buildListRfidScan(),
           const SizedBox(height: 10),
           _buildTable(),
           const SizedBox(height: 30),
@@ -180,68 +180,104 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     );
   }
 
-  Widget _buildRfidStopScan() {
-    return Row(
-      children: [
-        Obx(
-          () =>
-              controller.isLoadingStop.value
-                  ? const SizedBox(
-                    width: 100,
-                    height: 48,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                  : ButtonWidget(
-                    width: 100,
-                    height: 48,
-                    backgroundColor: AppColors.primary1,
-                    textColor: Colors.white,
-                    ontap: controller.onStopRead,
-                    text: "STOP",
-                    borderRadius: 5,
-                  ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildRfidScan() {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: CustomTextFieldWidget(
-            enableColor: AppColors.grey2,
-            backgroundColor: AppColors.grey1,
-            height: 40,
-            labelText: "RFID:",
-            labelColor: AppColors.black,
-            controller: controller.rfidController,
-            obscureText: false,
-            borderRadius: 5,
-            textColor: AppColors.black,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Obx(
-          () =>
-              controller.isLoading.value
-                  ? const SizedBox(
-                    width: 100,
-                    height: 48,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                  : ButtonWidget(
-                    width: 100,
-                    height: 48,
+    return Obx(() {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          controller.isLoading.value
+              ? const SizedBox(
+                height: 50,
+                width: 100,
+                child: Center(child: CircularProgressIndicator()),
+              )
+              : Expanded(
+                child: SizedBox(
+                  height: 50,
+                  width: 100,
+                  child: ButtonWidget(
                     backgroundColor: AppColors.primary1,
-                    textColor: Colors.white,
-                    ontap: controller.onScan,
+                    textColor: AppColors.white,
+                    ontap: controller.onScanMultipleTags,
                     text: "Scan",
                     borderRadius: 5,
+                    fontSize: 16,
                   ),
-        ),
-      ],
+                ),
+              ),
+
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              children: [
+                TextWidget(
+                  text: "Thực hiện quét RFID",
+                  size: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                TextWidget(
+                  text:
+                      controller.listTagRFID.isEmpty
+                          ? "Chưa quét.."
+                          : "Đã quét: ${controller.listTagRFID.length} thẻ",
+                  size: 16,
+                  color: AppColors.black,
+                  fontWeight: FontWeight.w400,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildListRfidScan() {
+    return Obx(
+      () => Container(
+        constraints: const BoxConstraints(maxHeight: 400),
+        padding: const EdgeInsets.all(0),
+        child:
+            controller.isLoading.value
+                ? SizedBox(child: CircularProgressIndicator())
+                : controller.listTagRFID.isEmpty
+                ? const SizedBox()
+                : Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: AppColors.grey, width: 0.5),
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: controller.listTagRFID.length,
+                    itemBuilder: (context, index) {
+                      return Card(
+                        color: AppColors.grey3,
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 5,
+                          horizontal: 5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 10,
+                          ),
+                          child: TextWidget(
+                            text: controller.listTagRFID[index],
+                            size: 15,
+                            color: AppColors.black,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+      ),
     );
   }
 
