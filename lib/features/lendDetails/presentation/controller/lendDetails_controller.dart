@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lhg_phom/core/services/model/lend_model.dart';
+import 'package:lhg_phom/core/services/models/lend_model.dart';
 
 class LendDetailsController extends GetxController {
   late String idMuon;

@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../../core/services/model/lend_model.dart';
+import '../../../../core/services/models/lend_model.dart';
 
 class LendRegisterController extends GetxController {
   var registerlendItems = <LendItemModel>[].obs;

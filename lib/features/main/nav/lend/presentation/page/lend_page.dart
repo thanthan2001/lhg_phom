@@ -5,7 +5,7 @@ import '../../../../../../core/configs/app_colors.dart';
 import '../../../../../../core/routes/routes.dart';
 import '../../../../../../core/ui/widgets/text/text_widget.dart';
 import '../controller/lend_controller.dart';
-import '../../../../../../core/services/model/lend_model.dart';
+import '../../../../../../core/services/models/lend_model.dart';
 
 class LendPage extends GetView<LendController> {
   const LendPage({super.key});

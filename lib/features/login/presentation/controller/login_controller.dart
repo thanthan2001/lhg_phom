@@ -4,12 +4,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
-import 'package:lhg_phom/core/services/model/user/domain/usecase/save_user_use_case.dart';
+import 'package:lhg_phom/core/services/models/user/domain/usecase/save_user_use_case.dart';
 import 'package:lhg_phom/features/login/presentation/widgets/factory_selection.dart';
 import 'package:dio/dio.dart';
 
 import '../../../../core/services/dio.api.service.dart';
-import '../../../../core/services/model/user/models/user.dart';
+import '../../../../core/services/models/user/model/user_model.dart';
+
 
 class LoginController extends GetxController {
   final Prefs prefs = Prefs.preferences;
@@ -125,7 +126,7 @@ class LoginController extends GetxController {
       try {
         var response = await ApiService(baseUrl).post('/auth/login', data);
         if (response.statusCode == 200) {
-          var user = User.fromJson(response.data);
+          var user = UserModel.fromJson(response.data);
           await _saveUserUseCase.userSave(user); // Lưu thông tin người dùng
           Get.offAllNamed('/main'); // Chuyển sang màng hình home
         } else {
