@@ -5,7 +5,7 @@ import '../../../../../../core/configs/app_colors.dart';
 import '../../../../../../core/routes/routes.dart';
 import '../../../../../../core/ui/widgets/text/text_widget.dart';
 import '../controller/lendAll_controller.dart';
-import '../../../../../../core/services/model/lend_model.dart';
+import '../../../../core/services/models/lend_model.dart';
 
 class LendAllPage extends GetView<LendAllController> {
   const LendAllPage({super.key});

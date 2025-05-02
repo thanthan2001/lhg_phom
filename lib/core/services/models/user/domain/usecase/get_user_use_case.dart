@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import '../../../../../configs/prefs_contants.dart';
 import '../../../../../data/pref/prefs.dart';
-import '../../models/auth_model.dart';
-import '../../models/user_model.dart';
+import '../../model/auth_model.dart';
+import '../../model/user_model.dart';
 
 
 class GetuserUseCase {

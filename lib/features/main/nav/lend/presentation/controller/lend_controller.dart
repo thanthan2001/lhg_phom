@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../../core/configs/prefs_contants.dart';
-import '../../../../../../core/services/model/lend_model.dart';
+import '../../../../../../core/services/models/lend_model.dart';
 
 class LendController extends GetxController {
   var registerlendItems = <LendItemModel>[].obs;

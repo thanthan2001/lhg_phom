@@ -1,9 +1,8 @@
 import 'package:lhg_phom/core/configs/prefs_contants.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
-import 'package:lhg_phom/core/services/model/user/models/auth_model.dart';
-import 'package:lhg_phom/core/services/model/user/models/user_model.dart';
+import 'package:lhg_phom/core/services/models/user/model/auth_model.dart';
 
-import '../../models/user.dart';
+import '../../model/user_model.dart';
 
 class SaveUserUseCase {
   final Prefs _prefs;
@@ -14,7 +13,7 @@ class SaveUserUseCase {
     await _prefs.set(PrefsConstants.user, user);
   }
 
-  Future userSave(User user) async {
+  Future userSave(UserModel user) async {
     await _prefs.set(PrefsConstants.user, user);
   }
 
