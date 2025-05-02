@@ -1,13 +1,18 @@
 // login_controller.dart - Không thay đổi
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
 import 'package:lhg_phom/core/services/model/user/domain/usecase/save_user_use_case.dart';
 import 'package:lhg_phom/features/login/presentation/widgets/factory_selection.dart';
+import 'package:dio/dio.dart';
+
+import '../../../../core/services/dio.api.service.dart';
+import '../../../../core/services/model/user/models/user.dart';
 
 class LoginController extends GetxController {
-  final Prefs prefs = Prefs.preferences; 
+  final Prefs prefs = Prefs.preferences;
   final SaveUserUseCase _saveUserUseCase;
   LoginController(this._saveUserUseCase);
 
@@ -19,7 +24,7 @@ class LoginController extends GetxController {
   //Expanded Select Language
   final isLanguageSelectorExpanded = false.obs; // NEW: Language Selector
   final currentFlag = AppImagesString.fEn.obs;
-
+  final String baseUrl = dotenv.env['BASE_URL'] ?? '';
   @override
   void onInit() {
     super.onInit();
@@ -78,8 +83,68 @@ class LoginController extends GetxController {
     );
   }
 
-  void login() {
+  bool verifyInputLogin(userID, pwd, selectedFactory) {
+    if (userID.text.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please enter your User ID",
+        snackPosition: SnackPosition.TOP,
+      );
+      return false;
+    }
+    if (pwd.text.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please enter your Password",
+        snackPosition: SnackPosition.TOP,
+      );
+      return false;
+    }
+    if (selectedFactory.value.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please select a factory",
+        snackPosition: SnackPosition.TOP,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> login() async {
     print("Login button clicked"); // Debug xem hàm có chạy không
-    Get.offAllNamed('/main'); // Chuyển sang màng hình home
+    var data = {
+      "userID": userID.text,
+      "pwd": pwd.text,
+      "companyName": selectedFactory.value.toLowerCase(),
+    };
+    print("Data to be sent: $data"); // Debug xem dữ liệu gửi đi
+    print("BAseUrl: $baseUrl"); // Debug xem baseUrl
+    verifyInputLogin(userID, pwd, selectedFactory);
+    if (verifyInputLogin(userID, pwd, selectedFactory)) {
+      try {
+        var response = await ApiService(baseUrl).post('/auth/login', data);
+        if (response.statusCode == 200) {
+          var user = User.fromJson(response.data);
+          await _saveUserUseCase.userSave(user); // Lưu thông tin người dùng
+          Get.offAllNamed('/main'); // Chuyển sang màng hình home
+        } else {
+          print("Login failed: ${response.statusMessage}"); // Debug xem lỗi gì
+          Get.snackbar(
+            "Error",
+            "Login failed: ${response.statusMessage}",
+            snackPosition: SnackPosition.TOP,
+          );
+        }
+      } catch (e) {
+        print("Error: $e"); // Debug xem lỗi gì
+        Get.snackbar(
+          "Error",
+          "An error occurred: $e",
+          snackPosition: SnackPosition.TOP,
+        );
+      }
+    }
+    // Get.offAllNamed('/main');
   }
 }

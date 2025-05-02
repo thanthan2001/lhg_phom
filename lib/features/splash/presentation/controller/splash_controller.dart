@@ -10,7 +10,7 @@ class SplashController extends GetxController {
   final GetuserUseCase _getuserUseCase;
   SplashController(this._getuserUseCase, this.prefs);
   RxDouble loadingProgress = 0.0.obs;
-  RxDouble loadingValue = 0.0.obs; 
+  RxDouble loadingValue = 0.0.obs;
 
   @override
   void onInit() {
@@ -35,10 +35,11 @@ class SplashController extends GetxController {
     await Future.delayed(const Duration(seconds: 3));
     var user = await _getuserUseCase.getUser();
     if (user != null) {
-          Get.offNamed(Routes.main);
-        } else {
-          Get.offNamed(Routes.login);
-          //Get.offNamed(Routes.settingInfomation);
-    };
+      Get.offNamed(Routes.main);
+    } else {
+      Get.offNamed(Routes.login);
+      //Get.offNamed(Routes.settingInfomation);
+    }
+    ;
   }
 }
