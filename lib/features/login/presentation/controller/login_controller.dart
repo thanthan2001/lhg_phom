@@ -127,6 +127,7 @@ class LoginController extends GetxController {
         var response = await ApiService(baseUrl).post('/auth/login', data);
         if (response.statusCode == 200) {
           var user = UserModel.fromJson(response.data);
+
           await _saveUserUseCase.userSave(user); // Lưu thông tin người dùng
           Get.offAllNamed('/main'); // Chuyển sang màng hình home
         } else {

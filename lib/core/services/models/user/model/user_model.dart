@@ -8,7 +8,7 @@ class UserModel {
   String? cccd;
   DateTime? dateOfBirth;
   String? role;
-  bool? isActive;
+  String? isActive;
 
   UserModel({
     this.userId,
@@ -52,7 +52,7 @@ class UserModel {
       'CCCD': cccd ?? '',
       'dateOfBirth': dateOfBirth?.toIso8601String() ?? '',
       'role': role ?? 'user',
-      'isActive': isActive ?? false,
+      'isActive': isActive ?? '',
     };
   }
 }
