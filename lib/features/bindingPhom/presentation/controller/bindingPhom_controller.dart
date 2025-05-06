@@ -1,12 +1,30 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:lhg_phom/core/services/models/phom_model.dart';
+import 'package:lhg_phom/core/services/models/user/domain/usecase/get_user_use_case.dart';
+import 'package:lhg_phom/core/services/models/user/model/user_model.dart';
+import 'package:lhg_phom/core/utils/date_time.dart';
+import '../../../../core/services/dio.api.service.dart';
 import '../../../../core/services/rfid_service.dart';
+import 'package:intl/intl.dart';
+import 'dart:convert';
 
 class BindingPhomController extends GetxController {
+  final String baseUrl = dotenv.env['BASE_URL'] ?? '';
+  final GetuserUseCase _getuserUseCase;
+  UserModel? user;
+
+  BindingPhomController(this._getuserUseCase);
+  Timer? _debounce;
   // Text Controllers
   final materialCodeController = TextEditingController();
+  final phomNameController = TextEditingController();
   final sizeController = TextEditingController();
   final rfidController = TextEditingController();
+  final phomBindingList = <PhomBindingItem>[].obs;
 
   // Scroll Controllers
   final tableScrollController = ScrollController();
@@ -16,6 +34,7 @@ class BindingPhomController extends GetxController {
   final isLoading = false.obs;
   final isLoadingStop = false.obs;
 
+  final phomName = ''.obs;
   final selectedPhomType = ''.obs;
   final selectedShelf = ''.obs;
   final isLeftSide = true.obs;
@@ -27,13 +46,10 @@ class BindingPhomController extends GetxController {
   final phomTypeList = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
   final shelfList = ['K1', 'K2', 'K3'];
 
+  final currentDate = DatetimeUtil.currentDate();
+
   // Table data
-  final inventoryData =
-      <List<String>>[
-        ['VH36272', 'GF27881', '3.5', '2000', '10', '5', '3'],
-        ['VH36273', 'GF27882', '4.0', '1500', '8', '7', '2'],
-        ['VH36274', 'GF27883', '3.0', '1800', '6', '4', '1'],
-      ].obs;
+  final inventoryData = <List<String>>[].obs;
 
   // ==================== RFID LOGIC ====================
 
@@ -104,7 +120,6 @@ class BindingPhomController extends GetxController {
   void onSearch() => isShowingDetail.value = false;
   void onSelectLeft() => isLeftSide.value = true;
   void onSelectRight() => isLeftSide.value = false;
-  void onFinish() => Get.back();
 
   void _syncScrollControllers() {
     bool isSyncing = false;
@@ -122,18 +137,54 @@ class BindingPhomController extends GetxController {
     });
   }
 
+  //check exict tag in listTagRFID
+  void checkAndAddNewTags(List<String> newTags) {
+    final uniqueTags =
+        newTags.where((tag) => !listTagRFID.contains(tag)).toList();
+
+    if (uniqueTags.isNotEmpty) {
+      listTagRFID.addAll(uniqueTags);
+      print('✅ Thêm tag mới: $uniqueTags');
+    } else {
+      print('⚠️ Tất cả tag đã tồn tại, không thêm mới');
+    }
+  }
+
   Future<void> onScanMultipleTags() async {
     isLoading.value = true;
+    final user = await _getuserUseCase.getUser();
+    print('user: ${user?.userId}');
+    print('password: ${user?.password}');
+    print('username: ${user?.userName}');
     try {
       final tags = await RFIDService.scanSingleTagMultiple(
         timeout: Duration(milliseconds: 100),
       );
-      if (tags.isNotEmpty) {
-        listTagRFID = tags;
-        print('listTagRFID: $listTagRFID + ${listTagRFID.length}');
 
-        // print('✅ Đã quét được: $tags');
-        rfidController.text = tags.join(', ');
+      if (tags.isNotEmpty) {
+        checkAndAddNewTags(tags);
+        phomBindingList.clear(); // Đảm bảo không bị cộng dồn dữ liệu cũ
+        for (var tag in listTagRFID) {
+          final item = PhomBindingItem(
+            rfid: tag,
+            lastMatNo: materialCodeController.text.trim(),
+            lastName: phomName.value.trim(),
+            lastType: inventoryData[0][2].trim(),
+            material: inventoryData[0][3].trim(),
+            lastSize: sizeController.text.trim(),
+            lastSide: isLeftSide.value ? "Left" : "Right",
+            dateIn: currentDate,
+            userID: user?.userId ?? "",
+            shelfName: selectedShelf.value.trim(),
+            companyName: user?.companyName ?? "",
+          );
+          phomBindingList.add(item);
+        }
+        print(
+          "phomBindingList: ${jsonEncode(phomBindingList.map((e) => e.toJson()).toList())}",
+        );
+        print('📋 Tổng listTagRFID: $listTagRFID + ${listTagRFID.length}');
+        rfidController.text = listTagRFID.join(', ');
       } else {
         Get.snackbar('Lỗi', 'Không tìm thấy thẻ nào');
       }
@@ -141,6 +192,139 @@ class BindingPhomController extends GetxController {
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi: $e');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> callLastName(String MaVatTu) async {
+    user = await _getuserUseCase.getUser();
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 2000), () async {
+      if (MaVatTu.trim().isNotEmpty) {
+        final companyName = user!.companyName;
+        print('Công ty: $companyName');
+        final data = {"LastMatNo": MaVatTu, "companyName": companyName};
+        try {
+          var response = await ApiService(
+            baseUrl,
+          ).post('/phom/getPhomByLastMatNo', data);
+
+          if (response.statusCode == 200) {
+            var data = response.data;
+            if (data != null && data['data']['rowCount'] != 0) {
+              print('✅ Gọi API thành công: $data');
+              phomName.value = data['data']['jsonArray'][0]['LastName'] ?? '';
+            } else {
+              print('⚠️ Không có dữ liệu từ API');
+              phomName.value = '';
+              Get.snackbar('Lỗi', 'Không có dữ liệu từ API');
+            }
+          } else {
+            print('❌ Lỗi gọi API: ${response.statusMessage}');
+            phomName.value = '';
+
+            Get.snackbar(
+              'Lỗi',
+              'Đã xảy ra lỗi khi gọi API: ${response.statusMessage}',
+            );
+          }
+        } catch (e) {
+          print('❌ Lỗi gọi API: $e');
+          Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi gọi API: $e');
+        }
+        print('Gọi API với mã vật tư: $MaVatTu');
+      }
+    });
+  }
+
+  Future<void> searchPhomBinding() async {
+    isLoading.value = true;
+    user = await _getuserUseCase.getUser();
+    final companyName = user!.companyName;
+    try {
+      final data = {
+        "companyName": companyName,
+        "MaVatTu": materialCodeController.text,
+        "TenPhom": phomName.value,
+        "SizePhom": sizeController.text,
+      };
+      var response = await ApiService(
+        baseUrl,
+      ).post('/phom/searchPhomBinding', data);
+
+      if (response.statusCode == 200) {
+        var data = response.data;
+        if (data != null && data['data']['rowCount'] != 0) {
+          print('✅ Gọi API thành công: $data');
+          final List<dynamic> jsonArray = data['data']['jsonArray'];
+          // phomName.value = data['data']['jsonArray'][0]['LastName'] ?? '';
+          inventoryData.clear();
+          for (var item in jsonArray) {
+            final row = [
+              (item['LastMatNo'] ?? '').toString().trim(),
+              (item['LastName'] ?? '').toString().trim(),
+              (item['LastType'] ?? '').toString().trim(),
+              (item['LastBrand'] ?? '').toString().trim(),
+              (item['Material'] ?? '').toString().trim(),
+              (item['LastSize'] ?? '').toString().trim(),
+              (item['LastQty'] ?? 0).toString(),
+              (item['LeftCount'] ?? 0).toString(),
+              (item['RightCount'] ?? 0).toString(),
+              (item['BindingCount'] ?? 0).toString(),
+            ];
+            inventoryData.add(row);
+          }
+          print('✅ Dữ liệu tồn kho: $inventoryData');
+        } else {
+          print('⚠️ Không có dữ liệu từ API');
+          phomName.value = '';
+          Get.snackbar('Lỗi', 'Không có dữ liệu từ API');
+        }
+      } else {
+        print('❌ Lỗi gọi API: ${response.statusMessage}');
+        phomName.value = '';
+
+        Get.snackbar(
+          'Lỗi',
+          'Đã xảy ra lỗi khi gọi API: ${response.statusMessage}',
+        );
+      }
+    } catch (e) {
+      print('❌ Lỗi gọi API: $e');
+      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi gọi API: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> onFinish() async {
+    try {
+      for (var item in phomBindingList) {
+        var data = item.toJson(); // Chuyển đổi mỗi đối tượng thành map
+
+        final response = await ApiService(baseUrl).post(
+          '/phom/bindingPhom', // Giả sử backend có endpoint này để nhận một đối tượng
+          data,
+        );
+        print(response.data);
+        if (response.data['statusCode'] == 200) {
+          print("✅ Gửi thành công: ${item.rfid}");
+          Get.snackbar('✅ Gửi thành công', "${item.rfid}");
+        } else {
+          print("❌ Gửi thất bại cho RFID: ${item.rfid}");
+          Get.snackbar(
+            "Lỗi ${response.data['message']}",
+            "Gửi thất bại cho RFID: ${item.rfid}",
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
+      }
+    } catch (e) {
+      print("❌ Lỗi khi gửi dữ liệu: $e");
+      Get.snackbar(
+        "Lỗi",
+        "Đã xảy ra lỗi: $e",
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 

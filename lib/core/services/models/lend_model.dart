@@ -1,4 +1,5 @@
-import 'package:lhg_phom/core/services/models/size_infor_model.dart' show SizeInfoModel;
+import 'package:lhg_phom/core/services/models/size_infor_model.dart'
+    show SizeInfoModel;
 
 import 'user/model/user_model.dart';
 
@@ -30,17 +31,19 @@ class LendItemModel {
   factory LendItemModel.fromJson(Map<String, dynamic> json) {
     return LendItemModel(
       idMuon: json['idMuon'] ?? '',
-      idNguoiMuon: json['idNguoiMuon'] != null
-        ? UserModel.fromJson(json['idNguoiMuon'])
-        : null,
+      idNguoiMuon:
+          json['idNguoiMuon'] != null
+              ? UserModel.fromJson(json['idNguoiMuon'])
+              : null,
       donVi: json['donVi'] ?? '',
-      maPhom: json['maPhom']  ?? '',
+      maPhom: json['maPhom'] ?? '',
       tenPhom: json['tenPhom'] ?? '',
       soThe: json['soThe'] ?? '',
       ngayMuon: json['ngayMuon'] ?? '',
       ngayTra: json['ngayTra'] ?? '',
       trangThai: json['trangThai'] ?? '',
-      sizes: (json['sizes'] as List<dynamic>?)
+      sizes:
+          (json['sizes'] as List<dynamic>?)
               ?.map((e) => SizeInfoModel.fromJson(e))
               .toList() ??
           [],
@@ -71,6 +74,7 @@ final exampleLendItems = <LendItemModel>[
       password: '123456',
       userName: 'Nguyễn Văn A',
       department: 'D01',
+      companyName: 'lhg',
     ),
     donVi: 'Xưởng A',
     maPhom: 'MP001',
@@ -80,14 +84,36 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '10/04/2025',
     trangThai: 'đăng ký mượn',
     sizes: [
-      SizeInfoModel(size: '39', soLuong: 120, trai: 60, phai: 60, daTra: 25, chuaTra: 35),
-      SizeInfoModel(size: '40', soLuong: 160, trai: 80, phai: 80, daTra: 50, chuaTra: 30),
-      SizeInfoModel(size: '41', soLuong: 180, trai: 90, phai: 90, daTra: 70, chuaTra: 20),
+      SizeInfoModel(
+        size: '39',
+        soLuong: 120,
+        trai: 60,
+        phai: 60,
+        daTra: 25,
+        chuaTra: 35,
+      ),
+      SizeInfoModel(
+        size: '40',
+        soLuong: 160,
+        trai: 80,
+        phai: 80,
+        daTra: 50,
+        chuaTra: 30,
+      ),
+      SizeInfoModel(
+        size: '41',
+        soLuong: 180,
+        trai: 90,
+        phai: 90,
+        daTra: 70,
+        chuaTra: 20,
+      ),
     ],
   ),
   LendItemModel(
     idMuon: 'b2',
     idNguoiMuon: UserModel(
+      companyName: 'lhg',
       userId: 'u2',
       password: 'abcdef',
       userName: 'Trần Thị B',
@@ -101,14 +127,36 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '13/04/2025',
     trangThai: 'đăng ký mượn',
     sizes: [
-      SizeInfoModel(size: '38', soLuong: 80, trai: 40, phai: 40, daTra: 30, chuaTra: 10),
-      SizeInfoModel(size: '39', soLuong: 100, trai: 50, phai: 50, daTra: 40, chuaTra: 10),
-      SizeInfoModel(size: '40', soLuong: 120, trai: 60, phai: 60, daTra: 45, chuaTra: 15),
+      SizeInfoModel(
+        size: '38',
+        soLuong: 80,
+        trai: 40,
+        phai: 40,
+        daTra: 30,
+        chuaTra: 10,
+      ),
+      SizeInfoModel(
+        size: '39',
+        soLuong: 100,
+        trai: 50,
+        phai: 50,
+        daTra: 40,
+        chuaTra: 10,
+      ),
+      SizeInfoModel(
+        size: '40',
+        soLuong: 120,
+        trai: 60,
+        phai: 60,
+        daTra: 45,
+        chuaTra: 15,
+      ),
     ],
   ),
   LendItemModel(
     idMuon: 'c3',
     idNguoiMuon: UserModel(
+      companyName: 'lhg',
       userId: 'u3',
       password: '123abc',
       userName: 'Lê Văn C',
@@ -122,13 +170,28 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '15/04/2025',
     trangThai: 'đang mượn',
     sizes: [
-      SizeInfoModel(size: '41', soLuong: 200, trai: 100, phai: 100, daTra: 60, chuaTra: 40),
-      SizeInfoModel(size: '42', soLuong: 180, trai: 90, phai: 90, daTra: 70, chuaTra: 20),
+      SizeInfoModel(
+        size: '41',
+        soLuong: 200,
+        trai: 100,
+        phai: 100,
+        daTra: 60,
+        chuaTra: 40,
+      ),
+      SizeInfoModel(
+        size: '42',
+        soLuong: 180,
+        trai: 90,
+        phai: 90,
+        daTra: 70,
+        chuaTra: 20,
+      ),
     ],
   ),
   LendItemModel(
     idMuon: 'a4',
     idNguoiMuon: UserModel(
+      companyName: 'lhg',
       userId: 'u4',
       password: 'xyz123',
       userName: 'Phạm Thị D',
@@ -142,13 +205,28 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '16/04/2025',
     trangThai: 'đang mượn',
     sizes: [
-      SizeInfoModel(size: '37', soLuong: 90, trai: 45, phai: 45, daTra: 20, chuaTra: 25),
-      SizeInfoModel(size: '38', soLuong: 120, trai: 60, phai: 60, daTra: 35, chuaTra: 25),
+      SizeInfoModel(
+        size: '37',
+        soLuong: 90,
+        trai: 45,
+        phai: 45,
+        daTra: 20,
+        chuaTra: 25,
+      ),
+      SizeInfoModel(
+        size: '38',
+        soLuong: 120,
+        trai: 60,
+        phai: 60,
+        daTra: 35,
+        chuaTra: 25,
+      ),
     ],
   ),
   LendItemModel(
     idMuon: 'd5',
     idNguoiMuon: UserModel(
+      companyName: 'lhg',
       userId: 'u5',
       password: 'qwerty',
       userName: 'Đỗ Văn E',
@@ -162,13 +240,28 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '17/04/2025',
     trangThai: 'đã trả',
     sizes: [
-      SizeInfoModel(size: '43', soLuong: 150, trai: 75, phai: 75, daTra: 75, chuaTra: 0),
-      SizeInfoModel(size: '44', soLuong: 100, trai: 50, phai: 50, daTra: 50, chuaTra: 0),
+      SizeInfoModel(
+        size: '43',
+        soLuong: 150,
+        trai: 75,
+        phai: 75,
+        daTra: 75,
+        chuaTra: 0,
+      ),
+      SizeInfoModel(
+        size: '44',
+        soLuong: 100,
+        trai: 50,
+        phai: 50,
+        daTra: 50,
+        chuaTra: 0,
+      ),
     ],
   ),
   LendItemModel(
     idMuon: 'd6',
     idNguoiMuon: UserModel(
+      companyName: 'lhg',
       userId: 'u6',
       password: '654321',
       userName: 'Nguyễn Thị F',
@@ -182,13 +275,28 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '18/04/2025',
     trangThai: 'đã trả',
     sizes: [
-      SizeInfoModel(size: '36', soLuong: 60, trai: 30, phai: 30, daTra: 30, chuaTra: 0),
-      SizeInfoModel(size: '37', soLuong: 80, trai: 40, phai: 40, daTra: 40, chuaTra: 0),
+      SizeInfoModel(
+        size: '36',
+        soLuong: 60,
+        trai: 30,
+        phai: 30,
+        daTra: 30,
+        chuaTra: 0,
+      ),
+      SizeInfoModel(
+        size: '37',
+        soLuong: 80,
+        trai: 40,
+        phai: 40,
+        daTra: 40,
+        chuaTra: 0,
+      ),
     ],
   ),
   LendItemModel(
     idMuon: 's7',
     idNguoiMuon: UserModel(
+      companyName: 'lhg',
       userId: 'u7',
       password: 'mypass',
       userName: 'Trần Văn G',
@@ -202,13 +310,28 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '19/04/2025',
     trangThai: 'trả chưa đủ',
     sizes: [
-      SizeInfoModel(size: '40', soLuong: 120, trai: 60, phai: 60, daTra: 50, chuaTra: 10),
-      SizeInfoModel(size: '41', soLuong: 140, trai: 70, phai: 70, daTra: 65, chuaTra: 5),
+      SizeInfoModel(
+        size: '40',
+        soLuong: 120,
+        trai: 60,
+        phai: 60,
+        daTra: 50,
+        chuaTra: 10,
+      ),
+      SizeInfoModel(
+        size: '41',
+        soLuong: 140,
+        trai: 70,
+        phai: 70,
+        daTra: 65,
+        chuaTra: 5,
+      ),
     ],
   ),
   LendItemModel(
     idMuon: 'a8',
     idNguoiMuon: UserModel(
+      companyName: 'lhg',
       userId: 'u8',
       password: '321321',
       userName: 'Lê Thị H',
@@ -222,13 +345,28 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '20/04/2025',
     trangThai: 'trả chưa đủ',
     sizes: [
-      SizeInfoModel(size: '38', soLuong: 100, trai: 50, phai: 50, daTra: 48, chuaTra: 2),
-      SizeInfoModel(size: '39', soLuong: 120, trai: 60, phai: 60, daTra: 55, chuaTra: 5),
+      SizeInfoModel(
+        size: '38',
+        soLuong: 100,
+        trai: 50,
+        phai: 50,
+        daTra: 48,
+        chuaTra: 2,
+      ),
+      SizeInfoModel(
+        size: '39',
+        soLuong: 120,
+        trai: 60,
+        phai: 60,
+        daTra: 55,
+        chuaTra: 5,
+      ),
     ],
   ),
   LendItemModel(
     idMuon: 'b9',
     idNguoiMuon: UserModel(
+      companyName: 'lhg',
       userId: 'u9',
       password: 'zxcvbn',
       userName: 'Phan Văn I',
@@ -242,13 +380,28 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '21/04/2025',
     trangThai: 'đăng ký mượn',
     sizes: [
-      SizeInfoModel(size: '42', soLuong: 160, trai: 80, phai: 80, daTra: 60, chuaTra: 20),
-      SizeInfoModel(size: '43', soLuong: 180, trai: 90, phai: 90, daTra: 85, chuaTra: 5),
+      SizeInfoModel(
+        size: '42',
+        soLuong: 160,
+        trai: 80,
+        phai: 80,
+        daTra: 60,
+        chuaTra: 20,
+      ),
+      SizeInfoModel(
+        size: '43',
+        soLuong: 180,
+        trai: 90,
+        phai: 90,
+        daTra: 85,
+        chuaTra: 5,
+      ),
     ],
   ),
   LendItemModel(
     idMuon: 'q10',
     idNguoiMuon: UserModel(
+      companyName: 'lhg',
       userId: 'u10',
       password: 'hello123',
       userName: 'Đặng Thị J',
@@ -262,8 +415,22 @@ final exampleLendItems = <LendItemModel>[
     ngayTra: '22/04/2025',
     trangThai: 'chưa trả',
     sizes: [
-      SizeInfoModel(size: '37', soLuong: 100, trai: 50, phai: 50, daTra: 0, chuaTra: 50),
-      SizeInfoModel(size: '38', soLuong: 120, trai: 60, phai: 60, daTra: 0, chuaTra: 60),
+      SizeInfoModel(
+        size: '37',
+        soLuong: 100,
+        trai: 50,
+        phai: 50,
+        daTra: 0,
+        chuaTra: 50,
+      ),
+      SizeInfoModel(
+        size: '38',
+        soLuong: 120,
+        trai: 60,
+        phai: 60,
+        daTra: 0,
+        chuaTra: 60,
+      ),
     ],
   ),
 ];

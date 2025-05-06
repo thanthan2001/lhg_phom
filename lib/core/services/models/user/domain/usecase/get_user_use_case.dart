@@ -5,7 +5,6 @@ import '../../../../../data/pref/prefs.dart';
 import '../../model/auth_model.dart';
 import '../../model/user_model.dart';
 
-
 class GetuserUseCase {
   final Prefs _prefs;
 

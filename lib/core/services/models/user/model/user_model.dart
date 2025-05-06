@@ -6,9 +6,9 @@ class UserModel {
   String? department;
   String? address;
   String? cccd;
-  DateTime? dateOfBirth;
   String? role;
   String? isActive;
+  String? companyName;
 
   UserModel({
     this.userId,
@@ -18,9 +18,9 @@ class UserModel {
     this.department,
     this.address,
     this.cccd,
-    this.dateOfBirth,
     this.role,
-    this.isActive ,
+    this.isActive,
+    this.companyName,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -32,12 +32,9 @@ class UserModel {
       department: json['department'] ?? '',
       address: json['address'] ?? '',
       cccd: json['CCCD'] ?? '',
-      dateOfBirth:
-          json['dateOfBirth'] != null
-              ? DateTime.parse(json['dateOfBirth'])
-              : null,
       role: json['role'] ?? '',
       isActive: json['isActive'] ?? '',
+      companyName: json['companyName'] ?? '',
     );
   }
 
@@ -50,9 +47,9 @@ class UserModel {
       'department': department ?? '',
       'address': address ?? '',
       'CCCD': cccd ?? '',
-      'dateOfBirth': dateOfBirth?.toIso8601String() ?? '',
       'role': role ?? 'user',
       'isActive': isActive ?? '',
+      'companyName': companyName ?? '',
     };
   }
 }
