@@ -103,6 +103,7 @@ class _CustomTextFieldWidgetState extends State<CustomTextFieldWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextFormField(
+            
             enabled: widget.enable,
             maxLength: widget.maxLength,
             keyboardType: widget.keyboardType,

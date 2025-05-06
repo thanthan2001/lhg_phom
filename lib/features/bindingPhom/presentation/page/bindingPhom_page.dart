@@ -79,23 +79,32 @@ class BindingPhomPage extends GetView<BindingPhomController> {
             obscureText: false,
             borderRadius: 5,
             textColor: AppColors.black,
+            onChanged: (value) {
+              controller.callLastName(value);
+            },
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Obx(
-            () => CustomDropdownField(
-              labelText: 'Loại phom:',
-              selectedValue: controller.selectedPhomType.value,
-              onTap:
-                  () => showSearchableSelectionDialog(
-                    title: 'Chọn loại phom',
-                    itemList: controller.phomTypeList,
-                    selectedItem: controller.selectedPhomType.value,
-                    onSelected:
-                        (val) => controller.selectedPhomType.value = val,
-                  ),
-            ),
+          child: Column(
+            children: [
+              TextWidget(
+                text: "Tên phom:",
+                size: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              Obx(
+                () => TextWidget(
+                  text:
+                      controller.phomName.value.isEmpty
+                          ? "Chưa chọn phom"
+                          : controller.phomName.value,
+                  size: 16,
+                  color: AppColors.black,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -122,7 +131,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           child: ButtonWidget(
             height: 48,
             text: "Tìm kiếm",
-            ontap: controller.onSearch,
+            ontap: controller.searchPhomBinding,
             backgroundColor: Colors.green,
             textColor: Colors.white,
             borderRadius: 5,
@@ -320,8 +329,11 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                   _buildTableRow([
                     'Mã vật tư',
                     'Tên phom',
-                    'Size',
-                    'Tồn kho',
+                    'Loại Phom',
+                    'Thương hiệu',
+                    'Chất liệu',
+                    'Kích thước',
+                    'Số lượng',
                     'Trái',
                     'Phải',
                     'Đã quét',

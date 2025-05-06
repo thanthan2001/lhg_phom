@@ -11,7 +11,6 @@ import 'package:dio/dio.dart';
 import '../../../../core/services/dio.api.service.dart';
 import '../../../../core/services/models/user/model/user_model.dart';
 
-
 class LoginController extends GetxController {
   final Prefs prefs = Prefs.preferences;
   final SaveUserUseCase _saveUserUseCase;
@@ -126,9 +125,16 @@ class LoginController extends GetxController {
       try {
         var response = await ApiService(baseUrl).post('/auth/login', data);
         if (response.statusCode == 200) {
-          var user = UserModel.fromJson(response.data);
-
+          var user = UserModel.fromJson(
+            response.data['data'],
+          ); // Chuyển đổi dữ liệu thành UserModel
+          user.companyName =
+              selectedFactory.value.toLowerCase(); // Lưu tên nhà máy vào user
           await _saveUserUseCase.userSave(user); // Lưu thông tin người dùng
+
+          print(
+            "Login successful: ${user.toJson()}",
+          ); // Debug xem thông tin người dùng
           Get.offAllNamed('/main'); // Chuyển sang màng hình home
         } else {
           print("Login failed: ${response.statusMessage}"); // Debug xem lỗi gì
