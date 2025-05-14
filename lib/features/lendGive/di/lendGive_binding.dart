@@ -7,6 +7,6 @@ class LendGiveBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => Prefs(), fenix: true);
-    Get.lazyPut(() => LendGiveController());
+    Get.lazyPut(() => LendGiveController(Get.find()));
   }
 }
