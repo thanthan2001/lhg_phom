@@ -124,10 +124,19 @@ class LoginController extends GetxController {
     if (verifyInputLogin(userID, pwd, selectedFactory)) {
       try {
         var response = await ApiService(baseUrl).post('/auth/login', data);
+        print(
+          "111"
+        );
         if (response.statusCode == 200) {
+             print(
+          "2"
+        );
           var user = UserModel.fromJson(
             response.data['data'],
           ); // Chuyển đổi dữ liệu thành UserModel
+             print(
+          "333"
+        );
           user.companyName =
               selectedFactory.value.toLowerCase(); // Lưu tên nhà máy vào user
           await _saveUserUseCase.userSave(user); // Lưu thông tin người dùng

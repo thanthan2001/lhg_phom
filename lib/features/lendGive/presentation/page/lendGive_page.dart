@@ -20,32 +20,101 @@ class LendGivePage extends GetView<LendGiveController> {
       },
       child: SafeArea(
         child: Scaffold(
-  appBar: _buildAppBar(),
-  body: SingleChildScrollView(
-    padding: const EdgeInsets.all(10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabelTextField("Số thẻ người mượn:", controller.userIDController),
-        _buildLabelTextField("Tên người mượn:", controller.userNameController),
-        const SizedBox(height: 10),
-        _buildDepartmentAndDate(),
-        const SizedBox(height: 10),
-        _buildCodePhomAndSum(),
-        const SizedBox(height: 10),
-        _buildRfidScan(),
-        const SizedBox(height: 10),
-        _buildTable(),
-        const SizedBox(height: 20),
-      ],
-    ),
-  ),
-  bottomNavigationBar: Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    child: _buildDoneButton(),
-  ),
-),
+          appBar: _buildAppBar(),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildLabelTextField(
+                  "Số thẻ người mượn:",
+                  controller.userIDController,
+                ),
+                _buildLabelTextField(
+                  "Tên người mượn:",
+                  controller.userNameController,
+                ),
+                const SizedBox(height: 10),
+                _buildDepartmentAndDate(),
+                const SizedBox(height: 10),
+                _buildCodePhomAndSum(),
+                const SizedBox(height: 10),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.end,
+                //   children: [
+                //     ButtonWidget(
+                //       width: 100,
+                //       height: 48,
+                //       backgroundColor: AppColors.primary1,
+                //       textColor: Colors.white,
+                //       ontap: controller.onSearch,
+                //       text: "Search",
+                //       borderRadius: 5,
+                //     ),
+                //   ],
+                // ),
+                const SizedBox(height: 10),
+                Obx(
+                  () => TextWidget(
+                    text: 'Tổng số lượng: ${controller.LastSum.value}',
+                    color: AppColors.black,
+                    fontWeight: FontWeight.bold,
+                    size: 16,
+                  ),
+                ),
 
+                const SizedBox(height: 10),
+
+                Obx(() => buildInventoryTable()),
+                const SizedBox(height: 20),
+
+                _buildRfidScan(),
+                const SizedBox(height: 10),
+                Obx(() {
+                  if (controller.epcDataTable.isEmpty) {
+                    return const Text('Không có dữ liệu RFID nào');
+                  }
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text('RFID')),
+                        DataColumn(label: Text('LastMatNo')),
+                        DataColumn(label: Text('LastName')),
+                        DataColumn(label: Text('LastType')),
+                        DataColumn(label: Text('Material')),
+                        DataColumn(label: Text('LastSize')),
+                        DataColumn(label: Text('LastSide')),
+                        DataColumn(label: Text('DateIn')),
+                      ],
+                      rows:
+                          controller.epcDataTable.map((item) {
+                            return DataRow(
+                              cells: [
+                                DataCell(Text(item['RFID'] ?? '')),
+                                DataCell(Text(item['LastMatNo'] ?? '')),
+                                DataCell(Text(item['LastName'] ?? '')),
+                                DataCell(Text(item['LastType'] ?? '')),
+                                DataCell(Text(item['Material'] ?? '')),
+                                DataCell(Text(item['LastSize'] ?? '')),
+                                DataCell(Text(item['LastSide'] ?? '')),
+                                DataCell(
+                                  Text(item['DateIn']?.toString() ?? ''),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          bottomNavigationBar: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: _buildDoneButton(),
+          ),
+        ),
       ),
     );
   }
@@ -98,28 +167,31 @@ class LendGivePage extends GetView<LendGiveController> {
     return Row(
       children: [
         Expanded(
-          child: Obx(() => CustomDropdownField(
-                labelText: 'Mã số phom:',
-                selectedValue: controller.selectedCodePhom.value,
-                onTap: () => showSearchableSelectionDialog(
-                  title: 'Chọn mã số phom',
-                  itemList: controller.codePhomList,
-                  selectedItem: controller.selectedCodePhom.value,
-                  onSelected: (val) => controller.selectedCodePhom.value = val,
-                ),
-              )),
+          child: Obx(
+            () => CustomDropdownField(
+              labelText: 'Mã số phom:',
+              selectedValue: controller.selectedCodePhom.value,
+              onTap:
+                  () => showSearchableSelectionDialog(
+                    title: 'Chọn mã số phom',
+                    itemList: controller.codePhomList,
+                    selectedItem: controller.selectedCodePhom.value,
+                    onSelected:
+                        (val) => controller.selectedCodePhom.value = val,
+                  ),
+            ),
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: CustomTextFieldWidget(
-            enableColor: AppColors.grey2,
-            height: 40,
-            labelText: "Tổng số lượng:",
-            labelColor: AppColors.black,
-            controller: controller.sumController,
-            obscureText: false,
+          child: ButtonWidget(
+            width: 100,
+            height: 48,
+            backgroundColor: AppColors.primary1,
+            textColor: Colors.white,
+            ontap: controller.onSearch,
+            text: "Search",
             borderRadius: 5,
-            textColor: AppColors.black,
           ),
         ),
       ],
@@ -130,17 +202,20 @@ class LendGivePage extends GetView<LendGiveController> {
     return Row(
       children: [
         Expanded(
-          child: Obx(() => CustomDropdownField(
-                labelText: 'Đơn vị:',
-                selectedValue: controller.selectedDepartment.value,
-                onTap: () => showSearchableSelectionDialog(
-                  title: 'Chọn đơn vị',
-                  itemList: controller.departmentList,
-                  selectedItem: controller.selectedDepartment.value,
-                  onSelected: (val) =>
-                      controller.selectedDepartment.value = val,
-                ),
-              )),
+          child: Obx(
+            () => CustomDropdownField(
+              labelText: 'Đơn vị:',
+              selectedValue: controller.selectedDepartment.value,
+              onTap:
+                  () => showSearchableSelectionDialog(
+                    title: 'Chọn đơn vị',
+                    itemList: controller.departmentList,
+                    selectedItem: controller.selectedDepartment.value,
+                    onSelected:
+                        (val) => controller.selectedDepartment.value = val,
+                  ),
+            ),
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -162,13 +237,16 @@ class LendGivePage extends GetView<LendGiveController> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.calendar_month_outlined,
-                    size: 30, color: AppColors.primary1),
+                icon: const Icon(
+                  Icons.calendar_month_outlined,
+                  size: 30,
+                  color: AppColors.primary1,
+                ),
                 onPressed: () async {
                   final pickedDate = await showDatePicker(
                     context: Get.context!,
                     initialDate: DateTime.now(),
-                    firstDate: DateTime.now(),
+                    firstDate: DateTime(1900),
                     lastDate: DateTime(2100),
                   );
                   if (pickedDate != null) {
@@ -188,28 +266,41 @@ class LendGivePage extends GetView<LendGiveController> {
     return Row(
       children: [
         Expanded(
-          flex: 2,
-          child: CustomTextFieldWidget(
-            enableColor: AppColors.grey2,
-            backgroundColor: AppColors.grey1,
-            height: 40,
-            labelText: "RFID:",
-            labelColor: AppColors.black,
-            controller: controller.rfidController,
-            obscureText: false,
+          child: ButtonWidget(
+            width: 100,
+            height: 48,
+            backgroundColor: AppColors.grey,
+            textColor: Colors.white,
+            ontap: controller.onClear,
+            text: "Clear",
             borderRadius: 5,
-            textColor: AppColors.black,
           ),
         ),
         const SizedBox(width: 10),
-        ButtonWidget(
-          width: 100,
-          height: 48,
-          backgroundColor: AppColors.primary1,
-          textColor: Colors.white,
-          ontap: controller.onScan,
-          text: "Scan",
-          borderRadius: 5,
+
+        Expanded(
+          flex: 1,
+          child: ButtonWidget(
+            width: 100,
+            height: 48,
+            backgroundColor: AppColors.yellow,
+            textColor: Colors.white,
+            ontap: controller.onStop,
+            text: "Stop",
+            borderRadius: 5,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: ButtonWidget(
+            width: 100,
+            height: 48,
+            backgroundColor: AppColors.primary1,
+            textColor: Colors.white,
+            ontap: controller.onScanMultipleTags,
+            text: "Scan",
+            borderRadius: 5,
+          ),
         ),
       ],
     );
@@ -226,79 +317,50 @@ class LendGivePage extends GetView<LendGiveController> {
     );
   }
 
-  Widget _buildTable() {
-    return RawScrollbar(
-      controller: controller.tableScrollController,
-      thumbVisibility: true,
-      trackVisibility: true,
-      radius: const Radius.circular(5),
-      thickness: 2,
-      thumbColor: AppColors.primary,
-      trackColor: AppColors.grey3,
-      trackBorderColor: AppColors.grey3,
-      child: SingleChildScrollView(
-        controller: controller.tableScrollController,
-        scrollDirection: Axis.horizontal,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Obx(
-            () => ConstrainedBox(
-              constraints: BoxConstraints(minWidth: Get.width - 20),
-              child: Table(
-                border: TableBorder.all(
-                  color: AppColors.grey,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-                defaultColumnWidth: const IntrinsicColumnWidth(),
-                children: [
-                  _buildTableRow(
-                    ['Size', 'Tồn kho', 'Trái', 'Phải', 'Số lượng'],
-                    isHeader: true,
-                  ),
-                  ...controller.inventoryData.asMap().entries.map(
-                        (entry) => _buildTableRow(
-                          entry.value,
-                          index: entry.key,
-                        ),
-                      ),
-                ],
-              ),
-            ),
-          ),
-        ),
+  Widget buildInventoryTable() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Table(
+        border: TableBorder.all(color: Colors.black54),
+        defaultColumnWidth: FixedColumnWidth(120.0),
+        children: [
+          _buildTableRow(controller.headers, isHeader: true),
+          ...controller.inventoryData
+              .map((row) => _buildTableRow(row))
+              .toList(),
+        ],
       ),
     );
   }
 
-  TableRow _buildTableRow(List<String> values,
-      {bool isHeader = false, int? index}) {
-    final isSelected =
-        index != null && controller.selectedRowIndex.value == index;
-
+  TableRow _buildTableRow(
+    List<String> cells, {
+    bool isHeader = false,
+    int? index,
+  }) {
     return TableRow(
       decoration: BoxDecoration(
-        color: isHeader
-            ? AppColors.grey3
-            : isSelected
-                ? AppColors.primary2.withOpacity(0.3)
-                : null,
+        color:
+            isHeader
+                ? Colors.grey[300]
+                : (index != null && index % 2 == 0
+                    ? Colors.grey[100]
+                    : Colors.transparent), // ví dụ tô màu dòng chẵn
       ),
-      children: values.map((value) {
-        final cell = Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextWidget(
-            text: value,
-            size: 14,
-            fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-          ),
-        );
-        return isHeader
-            ? cell
-            : GestureDetector(
-                onTap: () => controller.selectedRowIndex.value = index,
-                child: cell,
-              );
-      }).toList(),
+      children:
+          cells.map((cell) {
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                cell,
+                style: TextStyle(
+                  fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+                  fontSize: isHeader ? 16 : 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            );
+          }).toList(),
     );
   }
 }
