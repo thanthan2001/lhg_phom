@@ -35,6 +35,7 @@ class BindingPhomController extends GetxController {
   final isLoadingStop = false.obs;
 
   final phomName = ''.obs;
+  final lastNo = ''.obs;
   final selectedPhomType = ''.obs;
   final selectedShelf = ''.obs;
   final isLeftSide = true.obs;
@@ -51,6 +52,19 @@ class BindingPhomController extends GetxController {
   // Table data
   final inventoryData = <List<String>>[].obs;
 
+  Future<void> onClear() async {
+    materialCodeController.clear();
+    phomName.value = '';
+    sizeController.clear();
+    rfidController.clear();
+    listTagRFID.clear();
+    phomBindingList.clear();
+    inventoryData.clear();
+    isLeftSide.value = true;
+    isShowingDetail.value = false;
+    selectedRowIndex.value = null;
+    update();
+  }
   // ==================== RFID LOGIC ====================
 
   /// Kết nối thiết bị RFID
@@ -169,8 +183,9 @@ class BindingPhomController extends GetxController {
             rfid: tag,
             lastMatNo: materialCodeController.text.trim(),
             lastName: phomName.value.trim(),
-            lastType: inventoryData[0][2].trim(),
-            material: inventoryData[0][3].trim(),
+            lastno: inventoryData[0][2].trim(),
+            lastType: inventoryData[0][3].trim(),
+            material: inventoryData[0][4].trim(),
             lastSize: sizeController.text.trim(),
             lastSide: isLeftSide.value ? "Left" : "Right",
             dateIn: currentDate,
@@ -262,6 +277,7 @@ class BindingPhomController extends GetxController {
             final row = [
               (item['LastMatNo'] ?? '').toString().trim(),
               (item['LastName'] ?? '').toString().trim(),
+              (item['LastNo'] ?? '').toString().trim(),
               (item['LastType'] ?? '').toString().trim(),
               (item['LastBrand'] ?? '').toString().trim(),
               (item['Material'] ?? '').toString().trim(),

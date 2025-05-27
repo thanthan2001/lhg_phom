@@ -28,7 +28,7 @@ class RFIDHandler(
 
     fun connect(): Boolean {
         try {
-            // Reader.rrlib.PowerControll(null, true)
+            Reader.rrlib.PowerControll(null, true)
             Thread.sleep(1500)
             Log.d("RFID", "🔌 PowerOn success")
         } catch (e: Exception) {
@@ -51,7 +51,7 @@ class RFIDHandler(
     fun disconnect() {
         try {
             Reader.rrlib.StopRead()
-            // Reader.rrlib.PowerControll(null, false)
+            Reader.rrlib.PowerControll(null, false)
             Reader.rrlib.DisConnect()
             Log.d("RFID", "🔌 Disconnected")
         } catch (e: Exception) {

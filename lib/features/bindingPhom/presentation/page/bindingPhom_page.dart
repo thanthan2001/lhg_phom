@@ -214,6 +214,27 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                   ),
                 ),
               ),
+          SizedBox(width: 10),
+          controller.isLoading.value
+              ? const SizedBox(
+                height: 50,
+                width: 100,
+                child: Center(child: CircularProgressIndicator()),
+              )
+              : Expanded(
+                child: SizedBox(
+                  height: 50,
+                  width: 100,
+                  child: ButtonWidget(
+                    backgroundColor: AppColors.yellow,
+                    textColor: AppColors.white,
+                    ontap: controller.onClear,
+                    text: "Clear",
+                    borderRadius: 5,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
 
           const SizedBox(width: 10),
           Expanded(
@@ -329,6 +350,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                   _buildTableRow([
                     'Mã vật tư',
                     'Tên phom',
+                    'Mã phom',
                     'Loại Phom',
                     'Thương hiệu',
                     'Chất liệu',

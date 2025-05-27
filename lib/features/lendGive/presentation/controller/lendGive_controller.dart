@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:lhg_phom/core/services/models/user/domain/usecase/get_user_use_case.dart';
 import 'package:lhg_phom/core/services/models/user/model/user_model.dart';
-// import 'dart:convert'; // Not explicitly used in this version, can be removed if not needed elsewhere
+import 'dart:convert';
 
 import 'package:lhg_phom/core/services/rfid_service.dart';
 
@@ -16,41 +16,33 @@ class LendGiveController extends GetxController {
   final GetuserUseCase _getuserUseCase;
   LendGiveController(this._getuserUseCase);
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
-  // final List<String> scannedEPCs = []; // danh sách lưu các epc đã quét - This seems unused, consider removing if not planned for use
-  // Timer? clearEpcTimer; // timer để xóa mảng sau 10 phút - This seems unused, consider removing if not planned for use
-
-  // Text Controllers
+  final Map<String, String> depNameToIdMap = {};
   final sumController = TextEditingController();
   final dateController = TextEditingController();
   final userIDController = TextEditingController();
-  final userNameController =
-      TextEditingController(); // Seems unused, consider removing
-  final rfidController =
-      TextEditingController(); // Seems unused, consider removing
+  final userNameController = TextEditingController();
+  final rfidController = TextEditingController();
   late String? companyName;
   String? idBillFromSearch;
-  // Scroll Controllers
   final tableScrollController = ScrollController();
+  RxString selectedDepartmentId = ''.obs;
 
-  var listTagRFID = [].obs; // Stores unique EPCs scanned by the RFID reader
-  List<String> lastSizeList =
-      []; // Stores RFIDs that have matched an item in inventoryData
+  var listTagRFID = [].obs;
+  List<String> lastSizeList = [];
 
   // State
   final isLoading = false.obs;
   final selectedCodePhom = ''.obs;
   final selectedDepartment = ''.obs;
-  final isLeftSide = true.obs; // Seems unused, consider removing
+  final isLeftSide = true.obs;
   final isShowingDetail = false.obs;
-  final scrollProgress = 0.0.obs; // Seems unused, consider removing
+  final scrollProgress = 0.0.obs;
   var selectedRowIndex = Rx<int?>(null);
-  final LastSum = 0.obs; // Total sum from layphieumuon API
+  final LastSum = 0.obs;
   UserModel? user;
 
-  // Dropdown data
-  final codePhomList = <String>[].obs; // Initialize as empty, populated by API
-  final departmentList =
-      <String>[].obs; // Initialize as empty, populated by API
+  final codePhomList = <String>[].obs;
+  final departmentList = <String>[].obs;
 
   final List<String> headers = [
     'ID Bill',
@@ -62,56 +54,32 @@ class LendGiveController extends GetxController {
     'Scanned',
   ];
 
-  final epcDataTable =
-      <Map<String, dynamic>>[]
-          .obs; // Stores raw data from getphomrfid API for each EPC
+  final epcDataTable = <Map<String, dynamic>>[].obs;
 
-  // New variable to store DepID, LastMatNo, ScanDate, RFID
   final RxList<Map<String, dynamic>> scannedRfidDetailsList =
       <Map<String, dynamic>>[].obs;
 
-  // This `data` map seems to be initialized with `companyName` before `companyName` is set in `onInit`.
-  // It also uses `selectedDepartment.value` which might be empty initially.
-  // Consider initializing or updating this map when `companyName` and `selectedDepartment` are available.
-  // For now, I'll comment out its direct initialization and you can decide how to best manage it.
-  /*
-  final scanDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-  late Map<String, dynamic> data = {
-    "companyName": companyName,
-    "ScanDate": scanDate,
-    "DepID": selectedDepartment.value,
-    "StateScan": "0",
-  };
-  */
   Map<String, dynamic> get currentApiDataPayload {
     final scanDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     return {
       "companyName": companyName,
       "ScanDate": scanDate,
       "DepID": selectedDepartment.value,
-      "StateScan": "0", // Or dynamically set this based on actual state
-      // Add other relevant fields if this map is used for API calls like 'onSave'
+      "StateScan": "0",
     };
   }
 
   // Table data
-  var inventoryData =
-      <List<String>>[]
-          .obs; // Data from layphieumuon API, displayed in the table
+  var inventoryData = <List<String>>[].obs;
   var isAvalableScan = false.obs;
 
   // Logic
   void onScan() {
-    // This function currently only sets isShowingDetail.
-    // The actual scanning happens in onScanMultipleTags.
-    // If isShowingDetail controls UI visibility related to scanning, this is fine.
     isShowingDetail.value = true;
   }
 
   Future<void> onStop() async {
     await RFIDService.stopScan();
-    // Optionally, update isLoading or other states
-    // isLoading.value = false;
   }
 
   Future<void> onFinish() async {
@@ -135,15 +103,11 @@ class LendGiveController extends GetxController {
     int failureCount = 0;
     List<String> errorMessages = [];
 
-    // Common data for all requests in this batch
     final String commonCompanyName = companyName!;
     final String commonUserID = user!.userId!;
-    final String commonDateBorrow = convertDate(
-      dateController.text,
-    ); // Date of the loan slip
+    final String commonDateBorrow = convertDate(dateController.text);
 
-    String apiEndpoint =
-        '/phom/saveBill'; // As per user's previous request for the endpoint name
+    String apiEndpoint = '/phom/saveBill';
 
     print(
       "🚀 Bắt đầu gửi ${scannedRfidDetailsList.length} mục quét tuần tự...",
@@ -152,25 +116,20 @@ class LendGiveController extends GetxController {
       final Map<String, dynamic> individualPayload = {
         "companyName": commonCompanyName,
         "StateScan": 0,
-        "ID_BILL":
-            idBillFromSearch, // ID_Bill associated with this specific scanned item
+        "ID_BILL": idBillFromSearch,
         "DepID": itemDetail["DepID"],
-        "ScanDate":
-            itemDetail["ScanDate"], // The actual date this RFID was scanned and processed
+        "ScanDate": itemDetail["ScanDate"],
         "RFID": itemDetail["RFID"],
       };
 
       print("🔗 Endpoint: $baseUrl$apiEndpoint (POST)");
 
       try {
-        // IMPORTANT: Using '/phom/layphieumuon' for a POST to submit/finish a scan is unconventional.
-        // This endpoint name suggests fetching data. Please verify with your backend team.
         final response = await ApiService(
           baseUrl,
         ).post(apiEndpoint, individualPayload);
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          // Check for typical success codes
           print(
             "✅ Mục ${itemDetail['RFID']} đã được gửi. Response: ${response.data}",
           );
@@ -202,8 +161,8 @@ class LendGiveController extends GetxController {
 
     if (failureCount == 0 && successCount > 0) {
       Get.snackbar("Thành công", "$successCount mục đã được gửi thành công!");
-      await onClear(); // Clear data from the current screen after successful submission of all items
-      Get.back(); // Navigate to the previous screen
+      await onClear();
+      Get.back();
     } else if (successCount > 0 && failureCount > 0) {
       Get.snackbar(
         "Hoàn tất một phần",
@@ -212,10 +171,6 @@ class LendGiveController extends GetxController {
         backgroundColor: Colors.orange,
         colorText: Colors.white,
       );
-      // Decide if you want to clear/navigate back or allow user to retry failed items.
-      // For now, let's assume we clear if at least some were successful.
-      // await onClear();
-      // Get.back();
     } else if (failureCount > 0 && successCount == 0) {
       Get.snackbar(
         "Thất bại",
@@ -226,7 +181,6 @@ class LendGiveController extends GetxController {
       );
       if (errorMessages.isNotEmpty) {
         print("📝 Chi tiết lỗi:\n${errorMessages.join('\n')}");
-        // Optionally show a dialog with errorMessages
       }
     } else {
       // This case (successCount = 0, failureCount = 0) should not happen if scannedRfidDetailsList was not empty.
@@ -299,17 +253,6 @@ class LendGiveController extends GetxController {
       print("  - lastSizeList was already empty.");
     }
 
-    // Reset LastSum based on its original meaning (total from 'layphieumuon')
-    // If onSearch is called again, LastSum will be repopulated.
-    // If LastSum is meant to be the sum of *scanned* items, this logic needs to change.
-    // For now, assuming it's the total sum from the initial search.
-    // If you want to reflect the *currently displayed* total sum from inventoryData[5]
-    // you might recalculate it here, or reset it to 0 if clearing means no items.
-    // LastSum.value = 0; // Or re-fetch if necessary
-
-    // selectedRowIndex.value = null; // Reset selected row if applicable
-    // sumController.clear(); // Clear sum text field if it reflects scanned sum
-
     print("✅ Clear action completed.");
     Get.snackbar("Thông báo", "Đã đặt lại số lượng đã quét và danh sách thẻ.");
   }
@@ -351,9 +294,18 @@ class LendGiveController extends GetxController {
       if (response.statusCode == 200) {
         final List<dynamic>? jsonArray = response.data?["data"]?["jsonArray"];
         if (jsonArray != null) {
-          final List<String> departments =
-              jsonArray.map((e) => e['ID'].toString()).toList();
+          final List<String> departments = [];
+          final Map<String, String> map = {};
+          for (var e in jsonArray) {
+            String depName = e['DepName'].toString();
+            String id = e['ID'].toString();
+            departments.add(depName);
+            map[depName] = id;
+          }
           departmentList.assignAll(departments);
+          depNameToIdMap.clear();
+          depNameToIdMap.addAll(map);
+
           if (departments.isNotEmpty) {
             selectedDepartment.value = departments.first;
           }
@@ -361,16 +313,19 @@ class LendGiveController extends GetxController {
         } else {
           print("⚠️ Department data is null or not in expected format.");
           departmentList.clear();
+          depNameToIdMap.clear();
         }
       } else {
         print(
           '❌ Lỗi khi lấy danh sách đơn vị: ${response.statusCode} - ${response.data}',
         );
         departmentList.clear();
+        depNameToIdMap.clear();
       }
     } catch (e) {
       print('❌ Lỗi khi lấy danh sách đơn vị: $e');
       departmentList.clear();
+      depNameToIdMap.clear();
     }
   }
 
@@ -406,16 +361,11 @@ class LendGiveController extends GetxController {
           print("⚠️ Không có dữ liệu chi tiết cho EPC: $epc");
           return;
         }
-
         bool inventoryUpdated = false;
-
         for (var item in jsonList) {
           if (item is Map<String, dynamic>) {
-            // epcDataTable.add(item); // Add to raw EPC data if needed for other purposes
-
             String? epcLastMatNo = item['LastMatNo']?.toString();
-            String rfidFromApi =
-                item["RFID"]?.toString() ?? epc; // Use epc as fallback
+            String rfidFromApi = item["RFID"]?.toString() ?? epc;
             String? epcLastSize = item['LastSize']?.toString().trim();
 
             if (epcLastMatNo == null || epcLastSize == null) {
@@ -424,7 +374,6 @@ class LendGiveController extends GetxController {
               );
               continue;
             }
-
             print(
               "🔎 Đang tìm kiếm trong inventoryData cho MatNo: $epcLastMatNo, Size: $epcLastSize (RFID: $rfidFromApi)",
             );
@@ -447,50 +396,43 @@ class LendGiveController extends GetxController {
                   "✅ Tìm thấy dòng khớp tại index $i: $inventoryRow cho RFID: $rfidFromApi",
                 );
 
-                // Add RFID to lastSizeList (tracks RFIDs that resulted in an inventory update)
                 if (!lastSizeList.contains(rfidFromApi)) {
-                  // Add only if not already there, to avoid duplicates if one RFID is scanned multiple times quickly
-                  lastSizeList.add(rfidFromApi);
+                  int maxAllowedScans = int.tryParse(inventoryRow[5]) ?? 0;
+                  if (lastSizeList.length < maxAllowedScans) {
+                    lastSizeList.add(rfidFromApi);
+                  }
                 }
-
-                // Populate scannedRfidDetailsList
                 final String currentDate = DateFormat(
                   'yyyy-MM-dd',
                 ).format(DateTime.now());
-                // Check if this specific combination of DepID, LastMatNo, and RFID already exists
-                // to prevent adding duplicates to scannedRfidDetailsList if the same tag is processed multiple times
-                // for the same inventory item due to rapid re-scans before UI updates.
-                // This check assumes one RFID tag corresponds to one physical item.
-                bool alreadyExistsInDetails = scannedRfidDetailsList.any(
-                  (detail) =>
-                      detail["RFID"] == rfidFromApi &&
-                      detail["LastMatNo"] == epcLastMatNo &&
-                      detail["DepID"] == inventoryDepID,
-                );
-
-                if (!alreadyExistsInDetails) {
-                  // Only add if it's a "new" scan for this item detail
-                  scannedRfidDetailsList.add({
-                    "DepID": inventoryDepID,
-                    "LastMatNo": epcLastMatNo,
-                    "ScanDate": currentDate,
-                    "RFID": rfidFromApi,
-                  });
-                  print(
-                    "📝 Added to scannedRfidDetailsList: DepID: $inventoryDepID, LastMatNo: $epcLastMatNo, ScanDate: $currentDate, RFID: $rfidFromApi",
-                  );
-                } else {
-                  print(
-                    "ℹ️ RFID $rfidFromApi for MatNo $epcLastMatNo, DepID $inventoryDepID already in scannedRfidDetailsList. Scanned count will still increment.",
-                  );
-                }
 
                 int currentScannedCount = int.tryParse(inventoryRow[6]) ?? 0;
-                int maxAllowedScans =
-                    int.tryParse(inventoryRow[5]) ?? 0; // LastSum for this row
+                int maxAllowedScans = int.tryParse(inventoryRow[5]) ?? 0;
 
                 if (currentScannedCount < maxAllowedScans) {
                   currentScannedCount++;
+                  bool alreadyExistsInDetails = scannedRfidDetailsList.any(
+                    (detail) =>
+                        detail["RFID"] == rfidFromApi &&
+                        detail["LastMatNo"] == epcLastMatNo &&
+                        detail["DepID"] == inventoryDepID,
+                  );
+
+                  if (!alreadyExistsInDetails) {
+                    scannedRfidDetailsList.add({
+                      "DepID": inventoryDepID,
+                      "LastMatNo": epcLastMatNo,
+                      "ScanDate": currentDate,
+                      "RFID": rfidFromApi,
+                    });
+                    print(
+                      "📝 Added to scannedRfidDetailsList: DepID: $inventoryDepID, LastMatNo: $epcLastMatNo, ScanDate: $currentDate, RFID: $rfidFromApi",
+                    );
+                  } else {
+                    print(
+                      "ℹ️ RFID $rfidFromApi for MatNo $epcLastMatNo, DepID $inventoryDepID already in scannedRfidDetailsList. Scanned count will still increment.",
+                    );
+                  }
                   inventoryRow[6] = currentScannedCount.toString();
                   inventoryUpdated = true;
                   print(
@@ -501,7 +443,6 @@ class LendGiveController extends GetxController {
                     "⚠️ Số lượng quét cho dòng $i (MatNo: $inventoryMatNo, Size: $inventorySize) đã đạt tối đa: $currentScannedCount / $maxAllowedScans. Không tăng thêm.",
                   );
                 }
-                // break; // If one RFID can only match one line in inventoryData
               }
             }
           }
@@ -548,7 +489,7 @@ class LendGiveController extends GetxController {
     final searchData = {
       "companyName": companyName,
       "DateBorrow": newSelectedDate,
-      "DepID": selectedDepartment.value,
+      "DepID": selectedDepartmentId.value,
       "UserID":
           userIDController.text, // Ensure this is filled or handle if optional
       "LastMatNo":
@@ -571,12 +512,6 @@ class LendGiveController extends GetxController {
           final List<dynamic> jsonArray = responseBody["data"]["jsonArray"];
           print("✅ Data received from layphieumuon: $jsonArray");
 
-          // String? commonIdBill; // To store ID_bill if it's common for all items in this search
-          // if (jsonArray.isNotEmpty) {
-          //   commonIdBill = jsonArray[0]['ID_bill']?.toString();
-          //   // If ID_bill is needed for 'data' map later, assign it here
-          //   // data["ID_bill"] = commonIdBill;
-          // }
           idBillFromSearch = jsonArray[0]['ID_bill']?.toString();
           print('idbillFromSearch: $idBillFromSearch');
           for (var item in jsonArray) {
@@ -588,7 +523,7 @@ class LendGiveController extends GetxController {
                 item['DepID']?.toString() ?? '',
                 item['LastMatNo']?.toString() ?? '',
                 item['LastName']?.toString() ?? '',
-                item['LastSize']?.toString().trim() ?? '',
+                item['LastSize']?.toString() ?? '',
                 item['LastSum']?.toString() ?? '0', // Expected quantity
                 '0', // Scanned quantity, initialized to 0
               ]);
@@ -633,10 +568,7 @@ class LendGiveController extends GetxController {
           final List<String> codes =
               jsonArray.map((e) => e['LastMatNo'].toString()).toList();
           codePhomList.assignAll(codes);
-          if (codes.isNotEmpty) {
-            // Do not override selectedDepartment here. It should be selected by user or default from getDepartment.
-            // selectedCodePhom.value = codes.first; // Optionally set a default for codePhom
-          }
+          if (codes.isNotEmpty) {}
           print("✅ LastMatNo fetched: $codes");
         } else {
           print("⚠️ LastMatNo data is null or not in expected format.");
@@ -663,31 +595,19 @@ class LendGiveController extends GetxController {
 
     final uniqueNewTags =
         newTags.where((tag) {
-          // A tag is considered "new" for processing if it's not in listTagRFID yet.
-          // listTagRFID stores all unique tags encountered in the current session.
           bool alreadyProcessed = listTagRFID.contains(tag);
           if (!alreadyProcessed) {
-            listTagRFID.add(
-              tag,
-            ); // Add to the session's master list of scanned tags
+            listTagRFID.add(tag);
           }
-          return !alreadyProcessed; // Process only if it's truly new for this session
+          return !alreadyProcessed;
         }).toList();
 
     if (uniqueNewTags.isNotEmpty) {
-      // listTagRFID.addAll(uniqueNewTags); // Already added above
       print('✅ Thêm tag mới vào listTagRFID và gửi server: $uniqueNewTags');
       for (String epc in uniqueNewTags) {
         sendEPCToServer(epc); // This will try to match against inventoryData
       }
     } else {
-      // This means all tags in `newTags` were already in `listTagRFID`.
-      // However, we might still need to re-process them if their previous scan didn't match
-      // or if the user is re-scanning to ensure items are counted.
-      // The current logic in `sendEPCToServer` handles incrementing counts.
-      // So, it's generally okay to send them again.
-      // For better performance, if a tag is already in listTagRFID AND its corresponding item is fully scanned,
-      // you might choose to ignore it. But this adds complexity.
       print(
         'ℹ️ Các thẻ này đã được quét trong phiên này: $newTags. Sẽ được xử lý lại để cập nhật số lượng nếu cần.',
       );
@@ -713,9 +633,6 @@ class LendGiveController extends GetxController {
     }
 
     isLoading.value = true;
-    // user details are already available via this.user, no need to fetch again unless they can change mid-session
-    // final user = await _getuserUseCase.getUser(); // This is already done in onInit
-    print('Initiating scan. User: ${this.user?.userId}, Company: $companyName');
 
     try {
       // Using scanSingleTagMultiple suggests it might read multiple unique tags in one go.
@@ -738,80 +655,6 @@ class LendGiveController extends GetxController {
       isLoading.value = false;
     }
   }
-
-  // Future<void> onSave() async {
-  //   // 1. Collect all data from `scannedRfidDetailsList`
-  //   // 2. Potentially aggregate it or combine with `inventoryData` (e.g., total scanned counts per item)
-  //   // 3. Construct the payload for your save API endpoint.
-  //   // Example:
-  //   if (scannedRfidDetailsList.isEmpty && inventoryData.every((row) => (int.tryParse(row[6]) ?? 0) == 0)) {
-  //     Get.snackbar("Thông báo", "Không có gì để lưu. Chưa có thẻ nào được quét và khớp.");
-  //     return;
-  //   }
-
-  //   // This is a placeholder for what your API expects.
-  //   // You might need ID_Bill (ensure it's available, perhaps from onSearch response)
-  //   // and the list of scanned items.
-  //   final String scanDateForSave = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-  //   // String? idBill = inventoryData.isNotEmpty ? inventoryData.first[0] : null; // Example to get ID_Bill
-
-  //   List<Map<String, dynamic>> itemsToSave = [];
-  //   for (var row in inventoryData) {
-  //     int scannedCount = int.tryParse(row[6]) ?? 0;
-  //     if (scannedCount > 0) {
-  //       itemsToSave.add({
-  //         "ID_bill": row[0],
-  //         "DepID": row[1],
-  //         "LastMatNo": row[2],
-  //         "LastSize": row[4],
-  //         "ScannedQuantity": scannedCount,
-  //         // Add RFIDs for this item if your API needs them
-  //         "RFIDs": scannedRfidDetailsList
-  //             .where((detail) => detail["LastMatNo"] == row[2] && detail["DepID"] == row[1] && detail["LastSize"] == row[4] /* approximation, API might give better link */)
-  //             .map((detail) => detail["RFID"])
-  //             .toList(),
-  //       });
-  //     }
-  //   }
-  //   if (itemsToSave.isEmpty) {
-  //        Get.snackbar("Thông báo", "Không có mặt hàng nào được quét.");
-  //        return;
-  //   }
-
-  //   final saveData = {
-  //     "companyName": companyName,
-  //     "UserID": user?.userId,
-  //     "ScanDateTime": scanDateForSave,
-  //     "Items": itemsToSave, // List of items with their scanned quantities and RFIDs
-  //     // "StateScan": "1", // Or whatever state indicates completion
-  //   };
-
-  //   print("💾 Dữ liệu gửi đi để lưu: ${jsonEncode(saveData)}"); // Using jsonEncode for readability
-
-  //   isLoading.value = true;
-  //   try {
-  //     // Replace with your actual save API endpoint
-  //     // final response = await ApiService(baseUrl).post('/phom/saveScanResults', saveData);
-  //     // if (response.statusCode == 200 || response.statusCode == 201) {
-  //     //   Get.snackbar("Thành công", "Đã lưu kết quả quét.");
-  //     //   onClear(); // Optionally clear after successful save
-  //     //   Get.back(); // Navigate back
-  //     // } else {
-  //     //   Get.snackbar("Lỗi", "Lưu thất bại: ${response.statusCode} - ${response.data}");
-  //     // }
-  //     await Future.delayed(Duration(seconds: 1)); // Simulate API call
-  //     Get.snackbar("Thành công", "Đã lưu (Mô phỏng).");
-  //     print("✅ Kết quả quét đã được lưu (Mô phỏng).");
-  //     // onClear(); // Clear after save
-  //     // Get.back();
-
-  //   } catch (e) {
-  //     Get.snackbar("Lỗi", "Lỗi khi lưu: $e");
-  //     print("❌ Lỗi khi lưu kết quả quét: $e");
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
 
   @override
   void onInit() async {

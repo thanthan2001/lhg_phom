@@ -72,7 +72,7 @@ class LendGivePage extends GetView<LendGiveController> {
                 const SizedBox(height: 10),
                 Obx(() {
                   if (controller.epcDataTable.isEmpty) {
-                    return const Text('Không có dữ liệu RFID nào');
+                    return const Text('');
                   }
                   return SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -209,10 +209,18 @@ class LendGivePage extends GetView<LendGiveController> {
               onTap:
                   () => showSearchableSelectionDialog(
                     title: 'Chọn đơn vị',
-                    itemList: controller.departmentList,
+                    itemList:
+                        controller.departmentList
+                            .toList(), // Chuyển RxList thành List
                     selectedItem: controller.selectedDepartment.value,
-                    onSelected:
-                        (val) => controller.selectedDepartment.value = val,
+                    onSelected: (val) {
+                      controller.selectedDepartment.value = val;
+                      controller.selectedDepartmentId.value =
+                          controller.depNameToIdMap[val] ?? "";
+                      print(
+                        "Đơn vị được chọn: $val, ID tương ứng: ${controller.selectedDepartmentId.value}",
+                      );
+                    },
                   ),
             ),
           ),

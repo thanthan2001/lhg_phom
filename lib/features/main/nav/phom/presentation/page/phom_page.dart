@@ -11,68 +11,92 @@ class PhomPage extends GetView<PhomController> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: Column(
-          children: [
-            // Nút thêm phom
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: ButtonWidget(
-                height: 70,
-                backgroundColor: AppColors.primary1,
-                text: "press_to_add_phom".tr,
-                fontSize: 16,
-                ontap: () {
-                  Get.toNamed(Routes.bindingPhom);
-                },
-              ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Quản lí phom"),
+        centerTitle: true,
+        backgroundColor: AppColors.primary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: () {
+              Get.toNamed(Routes.updateBinding);
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Nút thêm phom
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: ButtonWidget(
+              height: 70,
+              backgroundColor: AppColors.primary1,
+              text: "press_to_add_phom".tr,
+              fontSize: 16,
+              ontap: () {
+                Get.toNamed(Routes.bindingPhom);
+              },
             ),
-            // Danh sách phom
-            Expanded(
-              child: Obx(() {
-                if (controller.phoms.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                return ListView.builder(
-                  itemCount: controller.phoms.length,
-                  itemBuilder: (context, index) {
-                    final phom = controller.phoms[index];
-                    return GestureDetector(
-                      onTap: () {
-                      
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.primary, width: 1),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _buildColumnData("phom_code".tr, phom["phomCode"]),
-                                  _buildColumnData("phom_name".tr, phom["phomName"]),
-                                  _buildColumnData("material".tr, phom["material"]),
-                                  _buildColumnData("total".tr, phom["total"].toString()),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+          ),
+          // Danh sách phom
+          Expanded(
+            child: Obx(() {
+              if (controller.phoms.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return ListView.builder(
+                itemCount: controller.phoms.length,
+                itemBuilder: (context, index) {
+                  final phom = controller.phoms[index];
+                  return GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
                       ),
-                    );
-                  },
-                );
-              }),
-            ),
-          ],
-        ),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.primary, width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildColumnData(
+                                  "phom_code".tr,
+                                  phom["phomCode"],
+                                ),
+                                _buildColumnData(
+                                  "phom_name".tr,
+                                  phom["phomName"],
+                                ),
+                                _buildColumnData(
+                                  "material".tr,
+                                  phom["material"],
+                                ),
+                                _buildColumnData(
+                                  "total".tr,
+                                  phom["total"].toString(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
@@ -82,7 +106,7 @@ class PhomPage extends GetView<PhomController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        TextWidget(text:title, fontWeight: FontWeight.bold),
+        TextWidget(text: title, fontWeight: FontWeight.bold),
         TextWidget(text: value),
       ],
     );
