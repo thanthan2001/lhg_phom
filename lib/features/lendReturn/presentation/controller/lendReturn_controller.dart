@@ -18,7 +18,7 @@ class LendReturnController extends GetxController {
   // Text Controllers
   final sumController = TextEditingController();
   final dateController = TextEditingController();
-  final userIDController = TextEditingController();
+  final bill_br_id = TextEditingController();
   final userNameController = TextEditingController();
   final rfidController = TextEditingController();
   late String? companyName;
@@ -37,6 +37,8 @@ class LendReturnController extends GetxController {
   final RxList<Map<String, dynamic>> searchResult =
       <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> returnBillData =
+      <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> LastDataBill =
       <Map<String, dynamic>>[].obs;
 
   final isLoading = false.obs; // Dùng cho onSearch và onScanMultipleTags
@@ -78,7 +80,7 @@ class LendReturnController extends GetxController {
     ScannedCount.value = 0; // Reset bộ đếm
     isAvalableScan.value = false; // Không cho phép scan nữa sau khi clear
     listFinalRFID.clear();
-    userIDController.clear();
+    bill_br_id.clear();
     userNameController.clear();
 
     final today = DateTime.now();
@@ -108,32 +110,37 @@ class LendReturnController extends GetxController {
   }
 
   Future<void> onFinish() async {
-    print(listFinalRFID);
-    final getDate = DateTime.now();
-    print(getDate);
-    final data = {
-      "companyName": companyName,
-      "ID_BILL": returnBillData[0]["ID_BILL"],
-    };
+    final data = {"companyName": companyName, "ID_BILL": bill_br_id.text};
+    final result =
+        listFinalRFID.map((rfid) {
+          return {...data, "RFID": rfid};
+        }).toList();
+    // Update the first item in LastDataBill with TotalScanOut if available
+    if (LastDataBill.isNotEmpty && searchResult.isNotEmpty) {
+      LastDataBill[0]['TotalScanOut'] = searchResult[0]['TotalScanOut'];
+    }
+
+    final updatedLastDataBillList =
+        LastDataBill.map((item) {
+          return {...item, "payloadDetails": result};
+        }).toList();
+    print('lastDataBill: ${updatedLastDataBillList}');
+
     try {
-      for (var item in listFinalRFID) {
-        final payload = Map<String, dynamic>.from(data);
-        payload["RFID"] = item; // hoặc bất kỳ key nào bạn cần
-        print(payload);
-        final response = await ApiService(
-          baseUrl,
-        ).post('/phom/submitReturnPhom', payload);
-        if (response.data["statusCode"] == 200) {
-          print(response.data["message"]);
-          Get.snackbar("Thông báo", "✅Gửi dữ liệu trả về thành công.");
-          // await onClear();
-        } else {
-          Get.snackbar(
-            "Lỗi",
-            response.data["message"],
-            snackPosition: SnackPosition.BOTTOM,
-          );
-        }
+      final response = await ApiService(baseUrl).post(
+        '/phom/submitReturnPhom',
+        {"companyName": companyName, "data": updatedLastDataBillList},
+      );
+      if (response.data["statusCode"] == 200) {
+        print("✅ Trả phiếu mượn thành công: ${response.data}");
+        Get.snackbar("Thông báo", "Trả phiếu mượn thành công.");
+      } else {
+        print("❌ Lỗi khi trả phiếu mượn: ${response.data}");
+        Get.snackbar(
+          backgroundColor: Colors.red,
+          "❌Lỗi",
+          "${response.data["message"]}",
+        );
       }
     } catch (e) {
       print('Exception ${e}');
@@ -258,10 +265,10 @@ class LendReturnController extends GetxController {
 
     final data = {
       "companyName": companyName,
-      "DepID": selectedDepartmentId.value,
-      "LastMatNo": selectedCodePhom.value,
-      "UserID": userIDController.text,
-      "DateBorrow": convertDate(dateController.text),
+      // "DepID": selectedDepartmentId.value,
+      // "LastMatNo": selectedCodePhom.value,
+      "ID_BILL": bill_br_id.text,
+      // "DateBorrow": convertDate(dateController.text),
     };
     print("Searching with data: $data from $baseUrl");
     try {
@@ -273,6 +280,11 @@ class LendReturnController extends GetxController {
         final List<dynamic>? returnBillFromApi =
             response.data?["data"]["getReturnBill"];
 
+        final List<dynamic>? lastbillresult =
+            response.data?["data"]["lastdatabill"];
+        if (lastbillresult != null && lastbillresult.isNotEmpty) {
+          LastDataBill.assignAll(lastbillresult.cast<Map<String, dynamic>>());
+        }
         if (resultsFromApi != null && resultsFromApi.isNotEmpty) {
           searchResult.assignAll(resultsFromApi.cast<Map<String, dynamic>>());
           isAvalableScan.value = true;
@@ -281,13 +293,15 @@ class LendReturnController extends GetxController {
           Get.snackbar("Thông báo", "Không tìm thấy phiếu mượn phù hợp.");
         }
 
-        if (returnBillFromApi != null) {
+        if (returnBillFromApi != null && returnBillFromApi.isNotEmpty) {
           ID_Return.value = returnBillFromApi[0]['ID_Return'].toString();
           returnBillData.assignAll(
             returnBillFromApi.cast<Map<String, dynamic>>(),
           );
         }
-
+        print(
+          "✅ Tìm kiếm thành công. Số lượng kết quả: ${LastDataBill.toList()}",
+        );
         print("✅ Controller Search result: ${searchResult.toList()}");
         print("✅ Controller returnBillData: ${returnBillData.toList()}");
       } else {
@@ -418,7 +432,7 @@ class LendReturnController extends GetxController {
     }
 
     companyName = user!.companyName;
-    userIDController.text = user!.userId ?? '';
+    bill_br_id.text = user!.userId ?? '';
     userNameController.text = user!.userName ?? '';
 
     print(
@@ -444,7 +458,7 @@ class LendReturnController extends GetxController {
     // RFIDService.disconnect();
     sumController.dispose();
     dateController.dispose();
-    userIDController.dispose();
+    bill_br_id.dispose();
     userNameController.dispose();
     rfidController.dispose();
     tableScrollController.dispose();

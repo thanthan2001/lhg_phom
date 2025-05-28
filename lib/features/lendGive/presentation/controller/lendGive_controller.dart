@@ -19,7 +19,7 @@ class LendGiveController extends GetxController {
   final Map<String, String> depNameToIdMap = {};
   final sumController = TextEditingController();
   final dateController = TextEditingController();
-  final userIDController = TextEditingController();
+  final bill_br_id = TextEditingController();
   final userNameController = TextEditingController();
   final rfidController = TextEditingController();
   late String? companyName;
@@ -85,106 +85,83 @@ class LendGiveController extends GetxController {
   Future<void> onFinish() async {
     if (scannedRfidDetailsList.isEmpty) {
       Get.snackbar("Thông báo", "Không có dữ liệu quét chi tiết để gửi đi.");
-      print("ℹ️ onFinish called but scannedRfidDetailsList is empty.");
       return;
     }
 
     if (user == null || companyName == null || companyName!.isEmpty) {
-      Get.snackbar(
-        "Lỗi",
-        "Thông tin người dùng hoặc công ty không đầy đủ để hoàn tất.",
-      );
-      print("❌ Cannot finish: User or companyName is null/empty.");
+      Get.snackbar("Lỗi", "Thông tin người dùng hoặc công ty không đầy đủ.");
       return;
     }
 
     isLoading.value = true;
-    int successCount = 0;
-    int failureCount = 0;
-    List<String> errorMessages = [];
 
+    final String apiEndpoint = '/phom/saveBill';
     final String commonCompanyName = companyName!;
     final String commonUserID = user!.userId!;
     final String commonDateBorrow = convertDate(dateController.text);
 
-    String apiEndpoint = '/phom/saveBill';
+    final List<Map<String, dynamic>> preparedList =
+        scannedRfidDetailsList.map((item) {
+          return {
+            // "companyName": commonCompanyName,
+            "StateScan": 0,
+            "ID_BILL": idBillFromSearch,
+            "DepID": item["DepID"],
+            "ScanDate": item["ScanDate"],
+            "RFID": item["RFID"],
+            "UserID": commonUserID,
+            "DateBorrow": commonDateBorrow,
+          };
+        }).toList();
 
-    print(
-      "🚀 Bắt đầu gửi ${scannedRfidDetailsList.length} mục quét tuần tự...",
-    );
-    for (var itemDetail in scannedRfidDetailsList) {
-      final Map<String, dynamic> individualPayload = {
-        "companyName": commonCompanyName,
-        "StateScan": 0,
-        "ID_BILL": idBillFromSearch,
-        "DepID": itemDetail["DepID"],
-        "ScanDate": itemDetail["ScanDate"],
-        "RFID": itemDetail["RFID"],
-      };
+    final Map<String, dynamic> payload = {
+      "companyName": commonCompanyName,
+      "scannedRfidDetailsList": preparedList,
+    };
+    print('payload for saveBill: $payload');
+    try {
+      final response = await ApiService(baseUrl).post(apiEndpoint, payload);
 
-      print("🔗 Endpoint: $baseUrl$apiEndpoint (POST)");
+      isLoading.value = false;
 
-      try {
-        final response = await ApiService(
-          baseUrl,
-        ).post(apiEndpoint, individualPayload);
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final successCount = data['successCount'] ?? 0;
+        final failureCount = data['failureCount'] ?? 0;
 
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          print(
-            "✅ Mục ${itemDetail['RFID']} đã được gửi. Response: ${response.data}",
+        if (successCount > 0 && failureCount == 0) {
+          await Get.snackbar(
+            "Thành công",
+            "$successCount mục đã được gửi thành công!",
           );
-          successCount++;
+          await onClear();
+          Get.back();
+        } else if (successCount > 0 && failureCount > 0) {
+          await Get.snackbar(
+            "Hoàn tất một phần",
+            "$successCount mục thành công, $failureCount mục thất bại.",
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+          );
+          print("🔺 Thất bại:\n${data['failedList']}");
         } else {
-          String errorMessage =
-              response.data?['message']?.toString() ??
-              response.statusMessage ??
-              "Lỗi không xác định";
-          print(
-            "❌ Lỗi gửi mục ${itemDetail['RFID']}: ${response.statusCode} - Data: ${response.data}",
-          );
-          failureCount++;
-          errorMessages.add(
-            "RFID ${itemDetail['RFID']}: Lỗi ${response.statusCode} - $errorMessage",
+          Get.snackbar(
+            "Thất bại",
+            "Tất cả đều thất bại. Vui lòng kiểm tra lại.",
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
           );
         }
-      } catch (e) {
-        print("❌ Exception khi gửi mục ${itemDetail['RFID']}: $e");
-        failureCount++;
-        errorMessages.add("RFID ${itemDetail['RFID']}: Exception - $e");
+      } else {
+        Get.snackbar(
+          "Lỗi",
+          "Không thể gửi dữ liệu. Mã lỗi: ${response.statusCode}",
+        );
       }
-    } // End of loop
-
-    isLoading.value = false;
-    print(
-      "🏁 Hoàn tất gửi tuần tự. Thành công: $successCount, Thất bại: $failureCount.",
-    );
-
-    if (failureCount == 0 && successCount > 0) {
-      Get.snackbar("Thành công", "$successCount mục đã được gửi thành công!");
-      await onClear();
-      Get.back();
-    } else if (successCount > 0 && failureCount > 0) {
-      Get.snackbar(
-        "Hoàn tất một phần",
-        "$successCount mục thành công, $failureCount mục thất bại.",
-        duration: Duration(seconds: 5),
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
-    } else if (failureCount > 0 && successCount == 0) {
-      Get.snackbar(
-        "Thất bại",
-        "Tất cả $failureCount mục không gửi được. Vui lòng thử lại.",
-        duration: Duration(seconds: 5),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      if (errorMessages.isNotEmpty) {
-        print("📝 Chi tiết lỗi:\n${errorMessages.join('\n')}");
-      }
-    } else {
-      // This case (successCount = 0, failureCount = 0) should not happen if scannedRfidDetailsList was not empty.
-      Get.snackbar("Thông báo", "Không có mục nào được xử lý.");
+    } catch (e) {
+      isLoading.value = false;
+      Get.snackbar("Lỗi hệ thống", "Không thể kết nối tới máy chủ.");
+      print("❌ Exception: $e");
     }
   }
 
@@ -200,9 +177,6 @@ class LendGiveController extends GetxController {
       final inputDate = DateTime(year, month, day);
       final now = DateTime.now();
 
-      // Allow selecting today or future dates.
-      // If you only want to allow today, change to:
-      // return inputDate.year == now.year && inputDate.month == now.month && inputDate.day == now.day;
       if (inputDate.isBefore(DateTime(now.year, now.month, now.day))) {
         return false;
       }
@@ -214,7 +188,8 @@ class LendGiveController extends GetxController {
 
   Future<void> onClear() async {
     print("Clear action triggered");
-
+    LastSum.value = 0;
+    bill_br_id.clear();
     listTagRFID.clear();
     print("  - listTagRFID cleared.");
 
@@ -223,6 +198,24 @@ class LendGiveController extends GetxController {
 
     scannedRfidDetailsList.clear(); // Clear the new list
     print("  - scannedRfidDetailsList cleared.");
+
+    if (inventoryData.isEmpty) {
+      print("  - inventoryData is already empty, nothing to clear.");
+    } else {
+      inventoryData.clear();
+      print("  - inventoryData cleared.");
+    }
+
+    selectedCodePhom.value = '';
+    print("  - selectedCodePhom reset to empty.");
+    selectedDepartment.value = '';
+    print("  - selectedDepartment reset to empty.");
+    selectedDepartmentId.value = '';
+    print("  - selectedDepartmentId reset to empty.");
+    isAvalableScan.value = false;
+    print("  - isAvalableScan set to false.");
+    isShowingDetail.value = false;
+    print("  - isShowingDetail set to false.");
 
     if (inventoryData.isNotEmpty) {
       bool changed = false;
@@ -488,13 +481,12 @@ class LendGiveController extends GetxController {
     final newSelectedDate = convertDate(dateController.text);
     final searchData = {
       "companyName": companyName,
-      "DateBorrow": newSelectedDate,
-      "DepID": selectedDepartmentId.value,
-      "UserID":
-          userIDController.text, // Ensure this is filled or handle if optional
-      "LastMatNo":
-          selectedCodePhom
-              .value, // Ensure this is selected or handle if optional
+      // "DateBorrow": newSelectedDate,
+      // "DepID": selectedDepartmentId.value,
+      "ID_BILL": bill_br_id.text, // Ensure this is filled or handle if optional
+      // "LastMatNo":
+      //     selectedCodePhom
+      //         .value, // Ensure this is selected or handle if optional
     };
     print("Searching with data: $searchData from $baseUrl/phom/layphieumuon");
 
@@ -502,15 +494,39 @@ class LendGiveController extends GetxController {
       var response = await ApiService(
         baseUrl,
       ).post('/phom/layphieumuon', searchData);
-      if (response.statusCode == 200) {
+      // print('response from layphieumuon: ${response.data["statusCode"]}');
+      if (response.data["statusCode"] == 200) {
+        if (!response.data["infoBill"]["isConfirm"]) {
+          Get.snackbar(
+            backgroundColor: Colors.yellow,
+            'Thông báo',
+            'Phiếu mượn chưa được xác nhận. Vui lòng kiểm tra lại.',
+          );
+          print('ℹ️ Phiếu mượn chưa được xác nhận.');
+          isAvalableScan.value = false;
+          isLoading.value = false;
+          return;
+        }
+        if (response.data["infoBill"]["StateLastBill"]) {
+          Get.snackbar(
+            backgroundColor: Colors.greenAccent,
+            'Thông báo',
+            '✅Đơn đã được hoàn tất. Không thể quét thêm.',
+          );
+          print('ℹ️ Đơn đã được hoàn tất. Không thể quét thêm.');
+          isAvalableScan.value = false;
+          isLoading.value = false;
+          return;
+        }
         final responseBody = response.data;
+        print(responseBody);
         if (responseBody != null &&
             responseBody["data"] != null &&
             responseBody["data"]["rowCount"] != null &&
             responseBody["data"]["rowCount"] > 0) {
           isAvalableScan.value = true;
           final List<dynamic> jsonArray = responseBody["data"]["jsonArray"];
-          print("✅ Data received from layphieumuon: $jsonArray");
+          // print("✅ Data received from layphieumuon: $jsonArray");
 
           idBillFromSearch = jsonArray[0]['ID_bill']?.toString();
           print('idbillFromSearch: $idBillFromSearch');
@@ -540,7 +556,7 @@ class LendGiveController extends GetxController {
           );
         }
       } else {
-        Get.snackbar('Lỗi', 'Không thể lấy dữ liệu: ${response.statusCode}');
+        Get.snackbar('Lỗi ❌', '${response.data['message']}');
         print(
           '❌ Lỗi khi lấy dữ liệu từ layphieumuon: ${response.statusCode} - ${response.data}',
         );
@@ -699,7 +715,7 @@ class LendGiveController extends GetxController {
   void onClose() {
     sumController.dispose();
     dateController.dispose();
-    userIDController.dispose();
+    bill_br_id.dispose();
     // userNameController.dispose(); // If used
     // rfidController.dispose(); // If used
     tableScrollController.dispose();

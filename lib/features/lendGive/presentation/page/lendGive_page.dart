@@ -26,17 +26,15 @@ class LendGivePage extends GetView<LendGiveController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildLabelTextField(
-                  "Số thẻ người mượn:",
-                  controller.userIDController,
-                ),
-                _buildLabelTextField(
-                  "Tên người mượn:",
-                  controller.userNameController,
-                ),
+                _buildLabelTextField("Mã số đơn mượn:", controller.bill_br_id),
+                // _buildLabelTextField(
+                //   "Tên người mượn:",
+                //   controller.userNameController,
+                // ),
                 const SizedBox(height: 10),
-                _buildDepartmentAndDate(),
+                // _buildDepartmentAndDate(),
                 const SizedBox(height: 10),
+
                 _buildCodePhomAndSum(),
                 const SizedBox(height: 10),
                 // Row(
@@ -166,23 +164,23 @@ class LendGivePage extends GetView<LendGiveController> {
   Widget _buildCodePhomAndSum() {
     return Row(
       children: [
-        Expanded(
-          child: Obx(
-            () => CustomDropdownField(
-              labelText: 'Mã số phom:',
-              selectedValue: controller.selectedCodePhom.value,
-              onTap:
-                  () => showSearchableSelectionDialog(
-                    title: 'Chọn mã số phom',
-                    itemList: controller.codePhomList,
-                    selectedItem: controller.selectedCodePhom.value,
-                    onSelected:
-                        (val) => controller.selectedCodePhom.value = val,
-                  ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
+        // Expanded(
+        //   child: Obx(
+        //     () => CustomDropdownField(
+        //       labelText: 'Mã số phom:',
+        //       selectedValue: controller.selectedCodePhom.value,
+        //       onTap:
+        //           () => showSearchableSelectionDialog(
+        //             title: 'Chọn mã số phom',
+        //             itemList: controller.codePhomList,
+        //             selectedItem: controller.selectedCodePhom.value,
+        //             onSelected:
+        //                 (val) => controller.selectedCodePhom.value = val,
+        //           ),
+        //     ),
+        //   ),
+        // ),
+        // const SizedBox(width: 10),
         Expanded(
           child: ButtonWidget(
             width: 100,
