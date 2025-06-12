@@ -51,6 +51,8 @@ class TransferLendPage extends GetView<TransferLendController> {
                         )
                         : Container(),
               ),
+              const SizedBox(height: 20),
+              _buildDoneButton(),
             ],
           ),
         ),
@@ -191,6 +193,17 @@ class TransferLendPage extends GetView<TransferLendController> {
               .map((row) => _buildTableRow(row))
               .toList(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDoneButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: ButtonWidget(
+        text: "Hoàn tất",
+        height: 50,
+        ontap: controller.onFinish,
       ),
     );
   }

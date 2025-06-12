@@ -1,35 +1,62 @@
-[
-  {
-    "ID_bill": "BR000000002",
-    "Userid": "04109",
-    "DepID": "LHG010110C",
-    "DateBorrow": "2025-05-27T00:00:00.000Z",
-    "DateReceive": "2025-05-27T00:00:00.000Z",
-    "LastMatNo": "V401000282",
-    "isConfirm": true,
-    "StateLastBill": true,
-    "OfficerId": 65563,
-    "payloadDetails": [
+{
+  "companyName": "lhg",
+  "userId": "04109",
+  "BILL_RETURN": [
+    {
+      "ID_BILL": "BR000000001",
+      "DepID": "LHG010110C",
+      "LastMatNo": "V401000282",
+      "LastName": "31008(L+P+SO)",
+      "LastSize": "04",
+      "LastSum": 2.0
+    },
+    {
+      "ID_BILL": "BR000000001",
+      "DepID": "LHG010110C",
+      "LastMatNo": "V401000282",
+      "LastName": "31008(L+P+SO)",
+      "LastSize": "06.5",
+      "LastSum": 3.0
+    }
+  ],
+  "BILL_BORROW": {
+    "RFIDDetails": [
       {
-        "companyName": "lhg",
-        "ID_BILL": "BR000000002",
-        "RFID": "E28068940000501DEAF1A959"
-      },
-      {
-        "companyName": "lhg",
-        "ID_BILL": "BR000000002",
-        "RFID": "E28069950000400B6E95B15D"
-      },
-      {
-        "companyName": "lhg",
-        "ID_BILL": "BR000000002",
-        "RFID": "E28068940000501DEAF4BD24"
-      },
-      {
-        "companyName": "lhg",
-        "ID_BILL": "BR000000002",
+        "DepID": "LHGBL12",
+        "LastMatNo": "V401000282",
+        "ScanDate": "2025-05-28",
         "RFID": "E28069950000400B6E90D517"
+      },
+      {
+        "DepID": "LHGBL12",
+        "LastMatNo": "V401000282",
+        "ScanDate": "2025-05-28",
+        "RFID": "E28069950000500B6E9175D1"
+      },
+      {
+        "DepID": "LHGBL12",
+        "LastMatNo": "V401000282",
+        "ScanDate": "2025-05-28",
+        "RFID": "E28069950000500B6E9889BB"
+      }
+    ],
+    "scannedRfidDetailsList": [
+      {
+        "ID_BILL": "BR000000001",
+        "DepID": "LHGBL12",
+        "LastMatNo": "V401000282",
+        "LastName": "31008(L+P+SO)",
+        "LastSize": "04",
+        "LastSum": 2.0
+      },
+      {
+        "ID_BILL": "BR000000001",
+        "DepID": "LHGBL12",
+        "LastMatNo": "V401000282",
+        "LastName": "31008(L+P+SO)",
+        "LastSize": "06.5",
+        "LastSum": 1.0
       }
     ]
   }
-]
+}

@@ -27,14 +27,6 @@ class RFIDHandler(
     }
 
     fun connect(): Boolean {
-        try {
-            Reader.rrlib.PowerControll(null, true)
-            Thread.sleep(1500)
-            Log.d("RFID", "🔌 PowerOn success")
-        } catch (e: Exception) {
-            Log.w("RFID", "⚠️ PowerControll failed: ${e.message}")
-        }
-
         val result = Reader.rrlib.Connect("/dev/ttyHSL0", 115200, 0)
         return if (result == 0) {
             // initSound()
@@ -51,7 +43,7 @@ class RFIDHandler(
     fun disconnect() {
         try {
             Reader.rrlib.StopRead()
-            Reader.rrlib.PowerControll(null, false)
+            // Reader.rrlib.PowerControll(null, false)
             Reader.rrlib.DisConnect()
             Log.d("RFID", "🔌 Disconnected")
         } catch (e: Exception) {

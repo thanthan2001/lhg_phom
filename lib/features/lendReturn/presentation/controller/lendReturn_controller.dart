@@ -323,12 +323,25 @@ class LendReturnController extends GetxController {
       final connected = await RFIDService.connect();
       if (connected) {
         print('✅💕 Đã kết nối RFID thành công');
+        Get.snackbar(
+          '✅ Kết nối thành công',
+          'Đã kết nối với thiết bị RFID',
+          backgroundColor: Colors.green.withOpacity(0.8),
+        );
       } else {
-        Get.snackbar('Lỗi', 'Không thể kết nối thiết bị RFID');
+        Get.snackbar(
+          '❌Lỗi',
+          'Kết nối RFID thất bại',
+          backgroundColor: Colors.red.withOpacity(0.8),
+        );
       }
     } catch (e) {
       print('❌ Lỗi kết nối RFID: $e');
-      Get.snackbar('Lỗi', 'Kết nối RFID thất bại: $e');
+      Get.snackbar(
+        '❌Lỗi',
+        'Kết nối RFID thất bại: $e',
+        backgroundColor: Colors.red.withOpacity(0.8),
+      );
     }
   }
 

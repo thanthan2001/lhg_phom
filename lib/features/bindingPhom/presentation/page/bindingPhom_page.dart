@@ -56,7 +56,25 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           const Divider(color: AppColors.grey, thickness: 1),
           _buildRfidScan(),
           const SizedBox(height: 10),
-          _buildListRfidScan(),
+          Column(
+            children: [
+              TextWidget(
+                text: "Thực hiện quét RFID",
+                size: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              TextWidget(
+                text:
+                    controller.totalCount.value == 0
+                        ? "Chưa quét.."
+                        : "Đã quét: ${controller.totalCount.value} thẻ",
+                size: 16,
+                color: AppColors.black,
+                fontWeight: FontWeight.w400,
+              ),
+            ],
+          ),
+          // _buildListRfidScan(),
           const SizedBox(height: 10),
           _buildTable(),
           const SizedBox(height: 30),
@@ -79,9 +97,12 @@ class BindingPhomPage extends GetView<BindingPhomController> {
             obscureText: false,
             borderRadius: 5,
             textColor: AppColors.black,
-            onChanged: (value) {
+            onCompleted: (value) {
               controller.callLastName(value);
             },
+            // onChanged: (value) {
+            //   controller.callLastName(value);
+            // },
           ),
         ),
         const SizedBox(width: 10),
@@ -115,17 +136,21 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     return Row(
       children: [
         Expanded(
-          child: CustomTextFieldWidget(
-            enableColor: AppColors.grey2,
-            height: 40,
-            labelText: "Size:",
-            labelColor: AppColors.black,
-            controller: controller.sizeController,
-            obscureText: false,
-            borderRadius: 5,
-            textColor: AppColors.black,
+          child: Obx(
+            () => CustomDropdownField(
+              labelText: 'Size số:',
+              selectedValue: controller.selectedSize.value,
+              onTap:
+                  () => showSearchableSelectionDialog(
+                    title: 'Chọn size số',
+                    itemList: controller.sizeList,
+                    selectedItem: controller.selectedSize.value,
+                    onSelected: (val) => controller.selectedSize.value = val,
+                  ),
+            ),
           ),
         ),
+        const SizedBox(width: 10),
         const SizedBox(width: 10),
         Expanded(
           child: ButtonWidget(
@@ -207,7 +232,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                   child: ButtonWidget(
                     backgroundColor: AppColors.primary1,
                     textColor: AppColors.white,
-                    ontap: controller.onScanMultipleTags,
+                    ontap: controller.onStartRead,
                     text: "Scan",
                     borderRadius: 5,
                     fontSize: 16,
@@ -235,28 +260,24 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                   ),
                 ),
               ),
+          SizedBox(width: 10),
 
-          const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              children: [
-                TextWidget(
-                  text: "Thực hiện quét RFID",
-                  size: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                TextWidget(
-                  text:
-                      controller.listTagRFID.isEmpty
-                          ? "Chưa quét.."
-                          : "Đã quét: ${controller.listTagRFID.length} thẻ",
-                  size: 16,
-                  color: AppColors.black,
-                  fontWeight: FontWeight.w400,
-                ),
-              ],
+            child: SizedBox(
+              height: 50,
+              width: 100,
+              child: ButtonWidget(
+                backgroundColor: AppColors.primary1,
+                textColor: AppColors.white,
+                ontap: controller.onStopRead,
+                text: "Stop",
+                borderRadius: 5,
+                fontSize: 16,
+              ),
             ),
           ),
+
+          const SizedBox(width: 10),
         ],
       );
     });
