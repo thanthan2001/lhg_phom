@@ -56,10 +56,11 @@ class BindingPhomController extends GetxController {
   final inventoryData = <List<String>>[].obs;
   final selectedSize = ''.obs;
   final sizeList = <String>[].obs;
-
+  final isScanning = false.obs; // <<===== THÊM BIẾN NÀY
   Future<void> onClear() async {
     totalCount.value = 0;
     isScan.value = false;
+    isScanning.value = false; // Đặt lại trạng thái quét
     materialCodeController.clear();
     phomName.value = '';
     selectedSize.value = '';
@@ -102,9 +103,12 @@ class BindingPhomController extends GetxController {
     }
   }
 
+  /// Dừng quá trình quét liên tục
   Future<void> onStopRead() async {
     try {
       await RFIDService.stopScan();
+      isScanning.value = false; // <<< CẬP NHẬT TRẠNG THÁI
+      isLoading.value = false;
       print('⏹️ Dừng quét RFID');
     } catch (e) {
       print('❌ Lỗi dừng quét: $e');
@@ -122,18 +126,18 @@ class BindingPhomController extends GetxController {
     }
   }
 
-  /// Bắt đầu đọc liên tục
-  Future<void> onStartRead() async {
-    try {
-      await RFIDService.scanContinuous((epc) {
-        rfidController.text = epc;
-        print('📡 EPC quét liên tục: $epc');
-      });
-      print('▶️ Đang quét liên tục...');
-    } catch (e) {
-      print('❌ Lỗi startRead: $e');
-    }
-  }
+  // /// Bắt đầu đọc liên tục
+  // Future<void> onStartRead() async {
+  //   try {
+  //     await RFIDService.scanContinuous((epc) {
+  //       rfidController.text = epc;
+  //       print('📡 EPC quét liên tục: $epc');
+  //     });
+  //     print('▶️ Đang quét liên tục...');
+  //   } catch (e) {
+  //     print('❌ Lỗi startRead: $e');
+  //   }
+  // }
 
   /// Quét 1 lần
   Future<void> onScan() async {
@@ -179,6 +183,75 @@ class BindingPhomController extends GetxController {
       tableScrollController.jumpTo(scrollbarController.offset);
       isSyncing = false;
     });
+  }
+
+  Future<void> onStartRead() async {
+    // 1. Kiểm tra các điều kiện ban đầu
+    if (isScanning.value) return; // Nếu đang quét rồi thì không làm gì cả
+    if (!isScan.value) {
+      Get.snackbar(
+        '⚠️Thông báo',
+        'Thực hiện tìm kiếm trước khi scan',
+        backgroundColor: AppColors.primary2,
+      );
+      return;
+    }
+
+    isLoading.value = true;
+    print('▶️ Đang chuẩn bị quét liên tục...');
+
+    try {
+      // 2. Lấy thông tin người dùng một lần
+      final user = await _getuserUseCase.getUser();
+      if (user == null) {
+        Get.snackbar('Lỗi', 'Không thể lấy thông tin người dùng.');
+        isLoading.value = false;
+        return;
+      }
+
+      // 3. Xóa dữ liệu của phiên quét cũ
+      listTagRFID.clear();
+      phomBindingList.clear();
+      rfidController.clear();
+      totalCount.value = 0;
+      update();
+
+      // 4. Bắt đầu quét liên tục và xử lý tag trong callback
+      await RFIDService.scanContinuous((epc) {
+        if (!isScanning.value)
+          return; // Chỉ xử lý khi đang trong trạng thái quét
+
+        if (!listTagRFID.contains(epc)) {
+          listTagRFID.add(epc);
+          final item = PhomBindingItem(
+            rfid: epc,
+            lastMatNo: materialCodeController.text.trim(),
+            lastName: phomName.value.trim(),
+            lastno: inventoryData[0][2].trim(),
+            lastType: inventoryData[0][3].trim(),
+            material: inventoryData[0][5].trim(),
+            lastSize: selectedSize.value.trim(),
+            lastSide: isLeftSide.value ? "Left" : "Right",
+            dateIn: currentDate,
+            userID: user.userId ?? "",
+            shelfName: selectedShelf.value.trim(),
+            companyName: user.companyName ?? "",
+          );
+          phomBindingList.add(item);
+          rfidController.text = listTagRFID.join(', ');
+          totalCount.value = listTagRFID.length;
+          print('✅ Tag mới: $epc | Tổng: ${totalCount.value}');
+        }
+      });
+
+      isScanning.value = true; // <<< CẬP NHẬT TRẠNG THÁI
+      print('▶️ Đã bắt đầu quét liên tục...');
+    } catch (e) {
+      print('❌ Lỗi khi bắt đầu quét: $e');
+      isLoading.value = false;
+      isScanning.value = false; // Đảm bảo reset trạng thái nếu có lỗi
+      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi bắt đầu quét: $e');
+    }
   }
 
   //check exict tag in listTagRFID
@@ -419,7 +492,9 @@ class BindingPhomController extends GetxController {
         "companyName": user?.companyName ?? "",
         "details": phomBindingList.map((item) => item.toJson()).toList(),
       };
-
+      print(
+        'phomBindingList: ${jsonEncode(phomBindingList.map((e) => e.toJson()).toList())}',
+      );
       final response = await ApiService(
         baseUrl,
       ).post('/phom/bindingPhom', data);
@@ -462,17 +537,35 @@ class BindingPhomController extends GetxController {
   void onInit() {
     super.onInit();
     _syncScrollControllers();
-    _connectRFID();
+    // _connectRFID();
+
+    // ĐĂNG KÝ LẮNG NGHE SỰ KIỆN NÚT CỨNG
+    RFIDService.setOnHardwareScan(() {
+      print(
+        '🔔 Nút cứng đã được bấm! Trạng thái quét hiện tại: ${isScanning.value}',
+      );
+
+      // KIỂM TRA TRẠNG THÁI VÀ GỌI HÀM TƯƠNG ỨNG
+      if (isScanning.value) {
+        onStopRead(); // Nếu đang quét, gọi hàm dừng
+      } else {
+        onStartRead(); // Nếu chưa quét, gọi hàm bắt đầu
+      }
+    });
   }
 
   @override
   void onClose() {
+    // Dừng quét trước
+    if (isScanning.value) {
+      RFIDService.stopScan();
+    }
     materialCodeController.dispose();
     sizeController.dispose();
     rfidController.dispose();
     tableScrollController.dispose();
     scrollbarController.dispose();
-    _disconnectRFID();
+    // _disconnectRFID();
     super.onClose();
   }
 }

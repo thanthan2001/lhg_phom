@@ -3,6 +3,8 @@ package com.example.lhg_phom
 import android.content.Context
 import android.media.AudioManager
 import android.media.SoundPool
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.rfid.trans.ReadTag
 import com.rfid.trans.ReaderParameter
@@ -15,6 +17,8 @@ class RFIDHandler(
 ) {
     private var soundPool: SoundPool? = null
     private var soundId: Int? = null
+
+    // Thêm import cho Handler và Looper ở trên cùng
 
     private fun initSound() {
         soundPool = SoundPool(1, AudioManager.STREAM_MUSIC, 0)
@@ -31,11 +35,17 @@ class RFIDHandler(
         return if (result == 0) {
             // initSound()
             Log.d("RFID", "✅ Connected successfully")
-            channel.invokeMethod("onConnected", null)
+            // Cũng nên gửi callback này trên luồng chính cho an toàn
+            Handler(Looper.getMainLooper()).post {
+                channel.invokeMethod("onConnected", null)
+            }
             true
         } else {
             Log.e("RFID", "❌ Connection failed: $result")
-            channel.invokeMethod("onError", "Connection failed: $result")
+            // Callback lỗi cũng nên gửi trên luồng chính
+            Handler(Looper.getMainLooper()).post {
+                channel.invokeMethod("onError", "Connection failed: $result")
+            }
             false
         }
     }
@@ -53,15 +63,31 @@ class RFIDHandler(
 
     fun scanRFID(mode: Int) {
         Reader.rrlib.SetCallBack(object : TagCallback {
+            // Hàm này được gọi từ LUỒNG NỀN (Background Thread) của thư viện RFID
             override fun tagCallback(tag: ReadTag?) {
-                tag?.epcId?.let {
-                    Log.d("RFID", "📦 Tag scanned: $it")
-                    channel.invokeMethod("onTagScanned", it)
+                tag?.epcId?.let { epc ->
+                    // Log vẫn chạy được trên luồng nền
+                    Log.d("RFID", "📦 Tag scanned on background thread: $epc")
+
+                    // =================== PHẦN SỬA LỖI Ở ĐÂY ===================
+                    // Dùng Handler để đăng một tác vụ lên hàng đợi của Luồng Chính (Main Thread)
+                    Handler(Looper.getMainLooper()).post {
+                        // Code bên trong khối này sẽ được thực thi trên Main Thread,
+                        // do đó gọi invokeMethod ở đây là AN TOÀN.
+                        Log.d("RFID", "🚀 Sending tag to Flutter on main thread: $epc")
+                        channel.invokeMethod("onTagScanned", epc)
+                    }
+                    // ==========================================================
                 }
             }
 
+            // Hàm này cũng có thể được gọi từ luồng nền, nên xử lý tương tự cho chắc chắn
             override fun StopReadCallBack() {
-                Log.d("RFID", "🛑 Scan stopped")
+                Handler(Looper.getMainLooper()).post {
+                    Log.d("RFID", "🛑 Scan stopped callback received")
+                    // Bạn có thể gửi một callback về Flutter nếu cần
+                    // channel.invokeMethod("onNativeScanStop", null)
+                }
             }
         })
 
@@ -79,10 +105,14 @@ class RFIDHandler(
                 val result = Reader.rrlib.StartRead()
                 if (result == 0) {
                     Log.d("RFID", "🔄 Continuous scan started")
-                    channel.invokeMethod("onContinuousScanStart", null)
+                    Handler(Looper.getMainLooper()).post {
+                        channel.invokeMethod("onContinuousScanStart", null)
+                    }
                 } else {
                     Log.e("RFID", "❌ Failed to start scan: $result")
-                    channel.invokeMethod("onError", "StartRead failed: $result")
+                    Handler(Looper.getMainLooper()).post {
+                        channel.invokeMethod("onError", "StartRead failed: $result")
+                    }
                 }
             }
             else -> {
@@ -94,6 +124,8 @@ class RFIDHandler(
     fun stopScan() {
         Reader.rrlib.StopRead()
         Log.d("RFID", "⏹️ Scan stopped by user")
-        channel.invokeMethod("onScanStopped", null)
+        Handler(Looper.getMainLooper()).post {
+            channel.invokeMethod("onScanStopped", null)
+        }
     }
 }

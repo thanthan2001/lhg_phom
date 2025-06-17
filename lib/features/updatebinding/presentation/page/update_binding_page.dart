@@ -29,11 +29,11 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               _buildCodePhomAndSum(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   _buildSelectSize(),
@@ -66,7 +66,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20), // Increased space
+              const SizedBox(height: 10), // Increased space
               Container(
                 width: double.infinity,
                 child: ButtonWidget(
@@ -100,7 +100,24 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
               }),
               const SizedBox(height: 10),
               _buildRfidScan(),
-              const SizedBox(height: 30),
+              const SizedBox(height: 10),
+              TextWidget(
+                text: "Thực hiện quét RFID",
+                size: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              Obx(
+                () => TextWidget(
+                  text:
+                      controller.totalCount.value == 0
+                          ? "Chưa quét.."
+                          : "Đã quét: ${controller.totalCount.value} thẻ",
+                  size: 16,
+                  color: AppColors.black,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 10),
 
               _buildDoneButton(),
             ],
@@ -186,7 +203,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   child: ButtonWidget(
                     backgroundColor: AppColors.primary1,
                     textColor: AppColors.white,
-                    ontap: controller.onScanMultipleTags,
+                    ontap: controller.onStartRead,
                     text: "Scan",
                     borderRadius: 5,
                     fontSize: 16,
@@ -205,7 +222,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   height: 50,
                   width: 100,
                   child: ButtonWidget(
-                    backgroundColor: AppColors.primary1,
+                    backgroundColor: AppColors.yellow,
                     textColor: AppColors.white,
                     ontap: controller.onClear,
                     text: "Clear",
@@ -214,27 +231,23 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   ),
                 ),
               ),
+
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              children: [
-                TextWidget(
-                  text: "Thực hiện quét RFID",
-                  size: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                TextWidget(
-                  text:
-                      controller.listTagRFID.isEmpty
-                          ? "Chưa quét.."
-                          : "Đã quét: ${controller.listTagRFID.length} thẻ",
-                  size: 16,
-                  color: AppColors.black,
-                  fontWeight: FontWeight.w400,
-                ),
-              ],
+            child: SizedBox(
+              height: 50,
+              width: 100,
+              child: ButtonWidget(
+                backgroundColor: AppColors.red,
+                textColor: AppColors.white,
+                ontap: controller.onStopRead,
+                text: "Stop",
+                borderRadius: 5,
+                fontSize: 16,
+              ),
             ),
           ),
+          const SizedBox(width: 10), // Add space between buttons and text
         ],
       );
     });

@@ -26,6 +26,8 @@ class LendGiveController extends GetxController {
   String? idBillFromSearch;
   final tableScrollController = ScrollController();
   RxString selectedDepartmentId = ''.obs;
+  final isScanning = false.obs; // <<===== THÊM BIẾN NÀY
+  var totalCount = 0.obs;
 
   var listTagRFID = [].obs;
   List<String> lastSizeList = [];
@@ -196,7 +198,7 @@ class LendGiveController extends GetxController {
     epcDataTable.clear();
     print("  - epcDataTable cleared.");
 
-    scannedRfidDetailsList.clear(); // Clear the new list
+    scannedRfidDetailsList.clear();
     print("  - scannedRfidDetailsList cleared.");
 
     if (inventoryData.isEmpty) {
@@ -335,11 +337,21 @@ class LendGiveController extends GetxController {
     }
   }
 
+  Future<void> onStopRead() async {
+    try {
+      await RFIDService.stopScan();
+      isScanning.value = false;
+      isLoading.value = false;
+      print('⏹️ Dừng quét RFID');
+    } catch (e) {
+      print('❌ Lỗi dừng quét: $e');
+      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi dừng quét: $e');
+    }
+  }
+
   String convertDate(String inputDate) {
-    // dd/MM/yyyy to yyyy-MM-dd
     final parts = inputDate.split('/');
-    if (parts.length != 3)
-      return inputDate; // Return original if format is wrong
+    if (parts.length != 3) return inputDate;
     final day = parts[0].padLeft(2, '0');
     final month = parts[1].padLeft(2, '0');
     final year = parts[2];
@@ -365,6 +377,11 @@ class LendGiveController extends GetxController {
 
         if (jsonList == null || jsonList.isEmpty) {
           print("⚠️ Không có dữ liệu chi tiết cho EPC: $epc");
+          Get.snackbar(
+            '❌Lỗi',
+            'Phom không đúng dữ liệu đơn mượn ',
+            backgroundColor: Colors.red,
+          );
           return;
         }
         bool inventoryUpdated = false;
@@ -472,7 +489,7 @@ class LendGiveController extends GetxController {
     }
   }
 
-  String? ID_BILL = ''; // To store ID_Bill if needed for other operations
+  String? ID_BILL = '';
   Future<void> onSearch() async {
     if (companyName == null || companyName!.isEmpty) {
       Get.snackbar('Lỗi', 'Thông tin công ty không có sẵn.');
@@ -482,14 +499,13 @@ class LendGiveController extends GetxController {
       Get.snackbar('Lỗi', 'Vui lòng chọn ngày.');
       return;
     }
-    // Add more validation for other fields if necessary (DepID, UserID, LastMatNo)
 
     isLoading.value = true;
-    isAvalableScan.value = false; // Reset before search
+    isAvalableScan.value = false;
     inventoryData.clear();
     lastSizeList.clear();
-    scannedRfidDetailsList.clear(); // Clear details from previous search
-    LastSum.value = 0; // Reset total sum
+    scannedRfidDetailsList.clear();
+    LastSum.value = 0;
     idBillFromSearch = null;
     final newSelectedDate = convertDate(dateController.text);
     final searchData = {
@@ -539,7 +555,6 @@ class LendGiveController extends GetxController {
             responseBody["data"]["rowCount"] > 0) {
           isAvalableScan.value = true;
           final List<dynamic> jsonArray = responseBody["data"]["jsonArray"];
-          // print("✅ Data received from layphieumuon: $jsonArray");
 
           idBillFromSearch = jsonArray[0]['ID_bill']?.toString();
           print('idbillFromSearch: $idBillFromSearch');
@@ -553,8 +568,8 @@ class LendGiveController extends GetxController {
                 item['LastMatNo']?.toString() ?? '',
                 item['LastName']?.toString() ?? '',
                 item['LastSize']?.toString() ?? '',
-                item['LastSum']?.toString() ?? '0', // Expected quantity
-                '0', // Scanned quantity, initialized to 0
+                item['LastSum']?.toString() ?? '0',
+                '0',
               ]);
             }
           }
@@ -634,14 +649,13 @@ class LendGiveController extends GetxController {
     if (uniqueNewTags.isNotEmpty) {
       print('✅ Thêm tag mới vào listTagRFID và gửi server: $uniqueNewTags');
       for (String epc in uniqueNewTags) {
-        sendEPCToServer(epc); // This will try to match against inventoryData
+        sendEPCToServer(epc);
       }
     } else {
       print(
         'ℹ️ Các thẻ này đã được quét trong phiên này: $newTags. Sẽ được xử lý lại để cập nhật số lượng nếu cần.',
       );
       for (String epc in newTags) {
-        // Process all received tags, even if "duplicates" from reader
         sendEPCToServer(epc);
       }
     }
@@ -650,36 +664,86 @@ class LendGiveController extends GetxController {
     );
   }
 
+  // Future<void> onScanMultipleTags() async {
+  //   if (!isAvalableScan.value) {
+  //     Get.snackbar('Cảnh báo', 'Vui lòng thực hiện tìm kiếm trước khi quét.');
+  //     print("⚠️ Attempted to scan but isAvalableScan is false.");
+  //     return;
+  //   }
+  //   if (isLoading.value) {
+  //     print("⚠️ Scan already in progress.");
+  //     return;
+  //   }
+
+  //   isLoading.value = true;
+
+  //   try {
+  //     // Using scanSingleTagMultiple suggests it might read multiple unique tags in one go.
+  //     final tags = await RFIDService.scanSingleTagMultiple(
+  //       timeout: Duration(milliseconds: 200), // Increased timeout slightly
+  //     );
+
+  //     if (tags.isNotEmpty) {
+  //       print('📡 Thẻ RFID quét được: $tags');
+  //       checkAndAddNewTags(tags);
+  //     } else {
+  //       // No new tags found in this scan attempt. This is normal.
+  //       print('ℹ️ Không có thẻ RFID mới nào được tìm thấy trong lần quét này.');
+  //       // Get.snackbar('Thông báo', 'Không tìm thấy thẻ mới.'); // Avoid too many snackbars
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét: $e');
+  //     print('❌ Lỗi khi quét nhiều thẻ: $e');
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
   Future<void> onScanMultipleTags() async {
     if (!isAvalableScan.value) {
       Get.snackbar('Cảnh báo', 'Vui lòng thực hiện tìm kiếm trước khi quét.');
       print("⚠️ Attempted to scan but isAvalableScan is false.");
       return;
     }
-    if (isLoading.value) {
-      print("⚠️ Scan already in progress.");
+
+    if (isScanning.value) {
+      print("⚠️ Đã đang trong quá trình quét liên tục.");
       return;
     }
 
     isLoading.value = true;
+    isScanning.value = true;
+    print("▶️ Bắt đầu quét liên tục nhiều thẻ...");
 
     try {
-      // Using scanSingleTagMultiple suggests it might read multiple unique tags in one go.
-      final tags = await RFIDService.scanSingleTagMultiple(
-        timeout: Duration(milliseconds: 200), // Increased timeout slightly
-      );
+      // Dọn dữ liệu cũ (nếu cần)
+      listTagRFID.clear();
+      rfidController.clear();
+      totalCount.value = 0;
+      update();
 
-      if (tags.isNotEmpty) {
-        print('📡 Thẻ RFID quét được: $tags');
-        checkAndAddNewTags(tags);
-      } else {
-        // No new tags found in this scan attempt. This is normal.
-        print('ℹ️ Không có thẻ RFID mới nào được tìm thấy trong lần quét này.');
-        // Get.snackbar('Thông báo', 'Không tìm thấy thẻ mới.'); // Avoid too many snackbars
-      }
+      // Bắt đầu quét liên tục
+      await RFIDService.scanContinuous((epc) {
+        if (!isScanning.value) return;
+
+        if (!listTagRFID.contains(epc)) {
+          listTagRFID.add(epc);
+
+          // Gọi xử lý riêng nếu cần
+          checkAndAddNewTags([epc]);
+
+          // Cập nhật hiển thị
+          rfidController.text = listTagRFID.join(', ');
+          totalCount.value = listTagRFID.length;
+
+          print('✅ Thẻ mới: $epc | Tổng số: ${totalCount.value}');
+        }
+      });
+
+      print("▶️ scanContinuous đã được khởi động.");
     } catch (e) {
+      print('❌ Lỗi khi bắt đầu quét liên tục: $e');
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét: $e');
-      print('❌ Lỗi khi quét nhiều thẻ: $e');
+      isScanning.value = false;
     } finally {
       isLoading.value = false;
     }
@@ -688,10 +752,20 @@ class LendGiveController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    isLoading.value = true; // Show loading indicator during initialization
-
+    isLoading.value = true;
     user = await _getuserUseCase.getUser();
 
+    RFIDService.setOnHardwareScan(() {
+      print(
+        '🔔 Nút cứng đã được bấm! Trạng thái quét hiện tại: ${isScanning.value}',
+      );
+
+      if (isScanning.value) {
+        onStopRead();
+      } else {
+        onScanMultipleTags();
+      }
+    });
     if (user == null ||
         user!.companyName == null ||
         user!.companyName!.isEmpty) {
@@ -700,8 +774,7 @@ class LendGiveController extends GetxController {
       );
       Get.snackbar('Lỗi', 'Không tìm thấy thông tin người dùng hoặc công ty.');
       isLoading.value = false;
-      // Optionally, navigate away or prevent further actions
-      // Get.offAllNamed('/login'); // Example
+
       return;
     }
 
@@ -714,11 +787,10 @@ class LendGiveController extends GetxController {
     dateController.text =
         "${today.day.toString().padLeft(2, '0')}/${today.month.toString().padLeft(2, '0')}/${today.year}";
 
-    // Initialize dropdown lists and other data that depends on companyName
     await Future.wait([
-      _connectRFID(),
-      getDepartment(), // Depends on companyName
-      getLastMatNo(), // Depends on companyName
+      // _connectRFID(),
+      getDepartment(),
+      getLastMatNo(),
     ]);
 
     isLoading.value = false;
@@ -732,7 +804,7 @@ class LendGiveController extends GetxController {
     // userNameController.dispose(); // If used
     // rfidController.dispose(); // If used
     tableScrollController.dispose();
-    _disconnectRFID(); // Ensure RFID is disconnected
+    // _disconnectRFID();
     super.onClose();
     print("LendGiveController closed and resources disposed.");
   }

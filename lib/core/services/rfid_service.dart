@@ -5,7 +5,41 @@ class RFIDService {
   static const MethodChannel _channel = MethodChannel('rfid_channel');
   static Function(String epc)? _onScanCallback;
   static bool _handlerInitialized = false;
+  static Function()? _onHardwareScanCallback; // <-- THÊM DÒNG NÀY
 
+  /// Đăng ký callback cho nút scan cứng.
+  static void setOnHardwareScan(Function() callback) {
+    _onHardwareScanCallback = callback;
+    _registerHandlerOnce(); // Đảm bảo handler đã được đăng ký
+  }
+
+  /// Chỉ gọi 1 lần để đăng ký nhận từ native
+  // static void _registerHandlerOnce() {
+  //   if (_handlerInitialized) return;
+  //   _channel.setMethodCallHandler((call) async {
+  //     switch (call.method) {
+  //       case 'onTagScanned':
+  //         final epc = call.arguments as String;
+  //         _onScanCallback?.call(epc);
+  //         break;
+  //       case 'onConnected':
+  //         print('✅ Native báo đã kết nối thành công');
+  //         break;
+  //       case 'onError':
+  //         print('❌ Native báo lỗi: ${call.arguments}');
+  //         break;
+  //       case 'onContinuousScanStart':
+  //         print('🔁 Native báo đã bắt đầu quét liên tục');
+  //         break;
+  //       case 'onScanStopped':
+  //         print('🛑 Native báo đã dừng quét');
+  //         break;
+  //       default:
+  //         print('⚠️ Không nhận diện method native: ${call.method}');
+  //     }
+  //   });
+  //   _handlerInitialized = true;
+  // }
   /// Chỉ gọi 1 lần để đăng ký nhận từ native
   static void _registerHandlerOnce() {
     if (_handlerInitialized) return;
@@ -15,6 +49,13 @@ class RFIDService {
           final epc = call.arguments as String;
           _onScanCallback?.call(epc);
           break;
+
+        // THÊM CASE MỚI ĐỂ NHẬN SỰ KIỆN TỪ NÚT CỨNG
+        case 'onScanButtonPressed':
+          print('🔔 Hardware scan button pressed!');
+          _onHardwareScanCallback?.call(); // Gọi callback đã đăng ký
+          break;
+
         case 'onConnected':
           print('✅ Native báo đã kết nối thành công');
           break;

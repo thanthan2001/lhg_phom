@@ -63,14 +63,16 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                 size: 16,
                 fontWeight: FontWeight.bold,
               ),
-              TextWidget(
-                text:
-                    controller.totalCount.value == 0
-                        ? "Chưa quét.."
-                        : "Đã quét: ${controller.totalCount.value} thẻ",
-                size: 16,
-                color: AppColors.black,
-                fontWeight: FontWeight.w400,
+              Obx(
+                () => TextWidget(
+                  text:
+                      controller.totalCount.value == 0
+                          ? "Chưa quét.."
+                          : "Đã quét: ${controller.totalCount.value} thẻ",
+                  size: 16,
+                  color: AppColors.black,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ],
           ),
@@ -267,7 +269,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
               height: 50,
               width: 100,
               child: ButtonWidget(
-                backgroundColor: AppColors.primary1,
+                backgroundColor: AppColors.red,
                 textColor: AppColors.white,
                 ontap: controller.onStopRead,
                 text: "Stop",

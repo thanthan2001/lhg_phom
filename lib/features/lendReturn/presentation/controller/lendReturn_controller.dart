@@ -22,6 +22,8 @@ class LendReturnController extends GetxController {
   final userNameController = TextEditingController();
   final rfidController = TextEditingController();
   late String? companyName;
+  var totalCount = 0.obs;
+  final isScanning = false.obs; // <<===== THÊM BIẾN NÀY
 
   // ScannedCount sẽ đếm số lần sendEPCToServer được gọi và thành công
   var ScannedCount = 0.obs;
@@ -211,35 +213,85 @@ class LendReturnController extends GetxController {
   }
 
   // onScanMultipleTags giữ nguyên như bạn cung cấp
+  // Future<void> onScanMultipleTags() async {
+  //   if (!isAvalableScan.value) {
+  //     Get.snackbar('Cảnh báo', 'Vui lòng thực hiện tìm kiếm trước khi quét.');
+  //     print("⚠️ Attempted to scan but isAvalableScan is false.");
+  //     return;
+  //   }
+  //   if (isLoading.value) {
+  //     // Giữ nguyên isLoading cho trạng thái quét
+  //     print("⚠️ Scan already in progress.");
+  //     return;
+  //   }
+
+  //   isLoading.value = true;
+  //   print('🚀 Initiating scan. User: ${user?.userId}, Company: $companyName');
+
+  //   try {
+  //     final tags = await RFIDService.scanSingleTagMultiple(
+  //       timeout: Duration(milliseconds: 200),
+  //     );
+
+  //     if (tags.isNotEmpty) {
+  //       print('📡 Thẻ RFID quét được từ đầu đọc: $tags');
+  //       checkAndAddNewTags(tags); // Gọi hàm đã được sửa đổi
+  //     } else {
+  //       print('ℹ️ Không có thẻ RFID mới nào được tìm thấy trong lần quét này.');
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét: $e');
+  //     print('❌ Lỗi khi quét nhiều thẻ: $e');
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
   Future<void> onScanMultipleTags() async {
     if (!isAvalableScan.value) {
       Get.snackbar('Cảnh báo', 'Vui lòng thực hiện tìm kiếm trước khi quét.');
       print("⚠️ Attempted to scan but isAvalableScan is false.");
       return;
     }
-    if (isLoading.value) {
-      // Giữ nguyên isLoading cho trạng thái quét
-      print("⚠️ Scan already in progress.");
+
+    if (isScanning.value) {
+      print("⚠️ Đã đang trong quá trình quét liên tục.");
       return;
     }
 
     isLoading.value = true;
-    print('🚀 Initiating scan. User: ${user?.userId}, Company: $companyName');
+    isScanning.value = true;
+    print("▶️ Bắt đầu quét liên tục nhiều thẻ...");
 
     try {
-      final tags = await RFIDService.scanSingleTagMultiple(
-        timeout: Duration(milliseconds: 200),
-      );
+      // Dọn dữ liệu cũ (nếu cần)
+      listTagRFID.clear();
+      rfidController.clear();
+      totalCount.value = 0;
+      update();
 
-      if (tags.isNotEmpty) {
-        print('📡 Thẻ RFID quét được từ đầu đọc: $tags');
-        checkAndAddNewTags(tags); // Gọi hàm đã được sửa đổi
-      } else {
-        print('ℹ️ Không có thẻ RFID mới nào được tìm thấy trong lần quét này.');
-      }
+      // Bắt đầu quét liên tục
+      await RFIDService.scanContinuous((epc) {
+        if (!isScanning.value) return;
+
+        if (!listTagRFID.contains(epc)) {
+          listTagRFID.add(epc);
+
+          // Gọi xử lý riêng nếu cần
+          checkAndAddNewTags([epc]);
+
+          // Cập nhật hiển thị
+          rfidController.text = listTagRFID.join(', ');
+          totalCount.value = listTagRFID.length;
+
+          print('✅ Thẻ mới: $epc | Tổng số: ${totalCount.value}');
+        }
+      });
+
+      print("▶️ scanContinuous đã được khởi động.");
     } catch (e) {
+      print('❌ Lỗi khi bắt đầu quét liên tục: $e');
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét: $e');
-      print('❌ Lỗi khi quét nhiều thẻ: $e');
+      isScanning.value = false;
     } finally {
       isLoading.value = false;
     }
@@ -426,13 +478,37 @@ class LendReturnController extends GetxController {
     }
   }
 
+  /// Dừng quá trình quét liên tục
+  Future<void> onStopRead() async {
+    try {
+      await RFIDService.stopScan();
+      isScanning.value = false; // <<< CẬP NHẬT TRẠNG THÁI
+      isLoading.value = false;
+      print('⏹️ Dừng quét RFID');
+    } catch (e) {
+      print('❌ Lỗi dừng quét: $e');
+      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi dừng quét: $e');
+    }
+  }
+
   @override
   void onInit() async {
     super.onInit();
     isLoading.value = true;
 
     user = await _getuserUseCase.getUser();
+    RFIDService.setOnHardwareScan(() {
+      print(
+        '🔔 Nút cứng đã được bấm! Trạng thái quét hiện tại: ${isScanning.value}',
+      );
 
+      // KIỂM TRA TRẠNG THÁI VÀ GỌI HÀM TƯƠNG ỨNG
+      if (isScanning.value) {
+        onStopRead(); // Nếu đang quét, gọi hàm dừng
+      } else {
+        onScanMultipleTags(); // Nếu chưa quét, gọi hàm bắt đầu
+      }
+    });
     if (user == null ||
         user!.companyName == null ||
         user!.companyName!.isEmpty) {
@@ -458,7 +534,8 @@ class LendReturnController extends GetxController {
 
     // Không await _connectRFID() nếu nó có thể block lâu, hoặc di chuyển logic kết nối
     // tới một thời điểm thích hợp hơn (ví dụ: khi người dùng nhấn nút Scan lần đầu)
-    _connectRFID();
+
+    // _connectRFID();
 
     await Future.wait([getDepartment(), getLastMatNo()]);
 

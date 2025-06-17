@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/services/dio.api.service.dart';
-// import 'dart:convert'; // Not strictly needed if not using json.decode/encode directly
+
 import 'package:intl/intl.dart';
 
 import '../../../../core/services/models/user/domain/usecase/get_user_use_case.dart';
 import '../../../../core/services/models/user/model/user_model.dart';
 import '../../../../core/services/rfid_service.dart';
-// import 'dart:convert'; // Duplicate import
 
 class TransferLendController extends GetxController {
   final GetuserUseCase _getuserUseCase;
@@ -16,20 +15,15 @@ class TransferLendController extends GetxController {
   List<String> lastSizeList = [];
 
   TransferLendController(this._getuserUseCase);
-  final departmentList =
-      <String>[].obs; // List of department names for dropdown
-  final Map<String, String> depNameToIdMap = {}; // Map: Name -> ID
-  final Map<String, String> depIdToNameMap = {}; // Map: ID -> Name (NEW)
+  final departmentList = <String>[].obs;
+  final Map<String, String> depNameToIdMap = {};
+  final Map<String, String> depIdToNameMap = {};
 
-  final selectedDepartment =
-      ''.obs; // Selected department NAME for "Đơn vị chuyển"
-  RxString selectedDepartmentId =
-      ''.obs; // Selected department ID for "Đơn vị chuyển"
+  final selectedDepartment = ''.obs;
+  RxString selectedDepartmentId = ''.obs;
 
-  final selectedDepartmentReceiver =
-      ''.obs; // Selected department NAME for "Đơn vị nhận"
-  final selectedDepartmentReceiverId =
-      ''.obs; // Selected department ID for "Đơn vị nhận"
+  final selectedDepartmentReceiver = ''.obs;
+  final selectedDepartmentReceiverId = ''.obs;
 
   final bill_br_id = TextEditingController();
   var isAvalableScan = false.obs;
@@ -77,10 +71,9 @@ class TransferLendController extends GetxController {
       '✅ Controller Initialized. CompanyName: $companyName, UserID: ${user!.userId}',
     );
 
-    // Initialize dropdown lists and other data that depends on companyName
     await Future.wait([
-      _connectRFID(),
-      getDepartment(), // Depends on companyName
+      // _connectRFID(),
+      getDepartment(),
     ]);
 
     isLoading.value = false;
@@ -90,8 +83,7 @@ class TransferLendController extends GetxController {
     user = await _getuserUseCase.getUser();
     final String? companyName = user?.companyName;
     final String? userId = user?.userId;
-    // print('searchList: $inventoryData');
-    // print('scannedRfidDetailsList: $scannedRfidDetailsList');
+
     final new_bill_return =
         inventoryData.map((item) {
           return {
@@ -104,7 +96,7 @@ class TransferLendController extends GetxController {
           };
         }).toList();
     final new_bill_borrow = {
-      "RFIDDetails": // Assuming this is the correct key for the receiver
+      "RFIDDetails":
           scannedRfidDetailsList.map((item) {
             return {
               "DepID": selectedDepartmentReceiverId.value,
@@ -140,7 +132,7 @@ class TransferLendController extends GetxController {
       if (response.data["statusCode"] == 200) {
         print("✅ Finish successful: ${response.data}");
         Get.snackbar('Thông báo', 'Hoàn tất thành công.');
-        onClear(); // Clear after successful finish
+        onClear();
       } else {
         print('❌ Lỗi khi hoàn tất: ${response.statusCode} - ${response.data}');
         Get.snackbar('Lỗi ❌', 'Không thể hoàn tất: ${response.data}');
@@ -160,32 +152,30 @@ class TransferLendController extends GetxController {
       final data = {"companyName": companyName};
       print(
         "Fetching departments with data: $data from $baseUrl/phom/getDepartment",
-      ); // Updated endpoint based on previous context
+      );
       var response = await ApiService(
         baseUrl,
-      ).post('/phom/getDepartment', data); // Ensure this endpoint is correct
+      ).post('/phom/getDepartment', data);
       if (response.statusCode == 200) {
         final List<dynamic>? jsonArray = response.data?["data"]?["jsonArray"];
         if (jsonArray != null) {
           final List<String> departmentsNames = [];
           final Map<String, String> nameToId = {};
-          final Map<String, String> idToName = {}; // For the new map
-
+          final Map<String, String> idToName = {};
           for (var e in jsonArray) {
             String depName = e['DepName'].toString();
             String id = e['ID'].toString();
             departmentsNames.add(depName);
             nameToId[depName] = id;
-            idToName[id] = depName; // Populate the reverse map
+            idToName[id] = depName;
           }
 
           departmentList.assignAll(departmentsNames);
           depNameToIdMap.clear();
           depNameToIdMap.addAll(nameToId);
-          depIdToNameMap.clear(); // Clear and add to the new map
+          depIdToNameMap.clear();
           depIdToNameMap.addAll(idToName);
 
-          // Set default selected department if list is not empty and not already set
           if (departmentsNames.isNotEmpty) {
             if (selectedDepartment.value.isEmpty) {
               selectedDepartment.value = departmentsNames.first;
@@ -193,7 +183,6 @@ class TransferLendController extends GetxController {
                   depNameToIdMap[departmentsNames.first] ?? '';
             }
             if (selectedDepartmentReceiver.value.isEmpty) {
-              // Also for receiver
               selectedDepartmentReceiver.value = departmentsNames.first;
               selectedDepartmentReceiverId.value =
                   depNameToIdMap[departmentsNames.first] ?? '';
@@ -201,7 +190,7 @@ class TransferLendController extends GetxController {
           }
           print("✅ Departments fetched: $departmentsNames");
           print("✅ depNameToIdMap: $depNameToIdMap");
-          print("✅ depIdToNameMap: $depIdToNameMap"); // Log the new map
+          print("✅ depIdToNameMap: $depIdToNameMap");
         } else {
           print("⚠️ Department data is null or not in expected format.");
           departmentList.clear();
@@ -234,7 +223,7 @@ class TransferLendController extends GetxController {
     isAvalableScan.value = false;
     inventoryData.clear();
     idBillFromSearch = null;
-    LastSum.value = 0; // Reset LastSum before new search
+    LastSum.value = 0;
 
     final searchData = {"companyName": companyName, "ID_BILL": bill_br_id.text};
     print("Searching with data: $searchData from $baseUrl/phom/layphieumuon");
@@ -375,13 +364,11 @@ class TransferLendController extends GetxController {
     scannedRfidDetailsList.clear();
     inventoryData.clear();
 
-    // Reset selected departments to initial/default state or empty
     if (departmentList.isNotEmpty) {
-      selectedDepartment.value =
-          departmentList.first; // Or set to '' if you prefer unselected
+      selectedDepartment.value = departmentList.first;
       selectedDepartmentId.value = depNameToIdMap[departmentList.first] ?? '';
 
-      selectedDepartmentReceiver.value = departmentList.first; // Or set to ''
+      selectedDepartmentReceiver.value = departmentList.first;
       selectedDepartmentReceiverId.value =
           depNameToIdMap[departmentList.first] ?? '';
     } else {
@@ -392,7 +379,7 @@ class TransferLendController extends GetxController {
     }
 
     isAvalableScan.value = false;
-    isShowDep.value = false; // Hide department section again after clear
+    isShowDep.value = false;
 
     if (lastSizeList.isNotEmpty) {
       lastSizeList.clear();
@@ -401,9 +388,6 @@ class TransferLendController extends GetxController {
     print("✅ Clear action completed.");
     Get.snackbar("Thông báo", "Đã đặt lại các trường và danh sách thẻ.");
   }
-
-  // ... (rest of your controller code: checkAndAddNewTags, sendEPCToServer, onScanMultipleTags, _connectRFID, _disconnectRFID)
-  // Make sure they are unchanged unless necessary for this specific task.
 
   void checkAndAddNewTags(List<String> newTags) {
     if (!isAvalableScan.value) {
@@ -424,14 +408,13 @@ class TransferLendController extends GetxController {
     if (uniqueNewTags.isNotEmpty) {
       print('✅ Thêm tag mới vào listTagRFID và gửi server: $uniqueNewTags');
       for (String epc in uniqueNewTags) {
-        sendEPCToServer(epc); // This will try to match against inventoryData
+        sendEPCToServer(epc);
       }
     } else {
       print(
         'ℹ️ Các thẻ này đã được quét trong phiên này: $newTags. Sẽ được xử lý lại để cập nhật số lượng nếu cần.',
       );
       for (String epc in newTags) {
-        // Process all received tags, even if "duplicates" from reader
         sendEPCToServer(epc);
       }
     }
@@ -488,8 +471,7 @@ class TransferLendController extends GetxController {
               }
               String inventoryMatNo = inventoryRow[2];
               String inventorySize = inventoryRow[4].trim();
-              String inventoryDepID =
-                  inventoryRow[1]; // DepID from the bill item
+              String inventoryDepID = inventoryRow[1];
 
               if (inventoryMatNo == epcLastMatNo &&
                   inventorySize == epcLastSize &&
@@ -509,7 +491,7 @@ class TransferLendController extends GetxController {
                   print(
                     "ℹ️ RFID $rfidFromApi đã được quét cho item này (MatNo: $epcLastMatNo, DepID: $inventoryDepID). Không tăng số lượng.",
                   );
-                  continue; // Skip if this specific RFID has already been counted for this material/department.
+                  continue;
                 }
 
                 final String currentDate = DateFormat(
@@ -524,10 +506,8 @@ class TransferLendController extends GetxController {
                   inventoryRow[6] = currentScannedCount.toString();
                   inventoryUpdated = true;
 
-                  // Add to scannedRfidDetailsList only once per unique RFID for this material/department combination
                   scannedRfidDetailsList.add({
-                    "DepID":
-                        inventoryDepID, // Use the item's DepID which should match selectedDepartmentId
+                    "DepID": inventoryDepID,
                     "LastMatNo": epcLastMatNo,
                     "ScanDate": currentDate,
                     "RFID": rfidFromApi,
@@ -552,7 +532,7 @@ class TransferLendController extends GetxController {
           inventoryData.refresh();
           print("🔄 UI inventoryData đã được refresh.");
         }
-        // print('📋 lastSizeList content: $lastSizeList'); // lastSizeList usage needs clarification
+
         print('📋 scannedRfidDetailsList content: $scannedRfidDetailsList');
         print('✅ Dữ liệu trả về từ getphomrfid: ${response.data}');
       } else {
@@ -573,17 +553,15 @@ class TransferLendController extends GetxController {
       return;
     }
     if (isLoading.value) {
-      // Check isLoading for scan operation, not general isLoading
       print("⚠️ Scan already in progress.");
       return;
     }
 
-    // You might want a specific isLoading for scan, e.g., isScanning.value
-    isLoading.value = true; // Or isScanning.value = true;
+    isLoading.value = true;
 
     try {
       final tags = await RFIDService.scanSingleTagMultiple(
-        timeout: Duration(milliseconds: 300), // Slightly increased timeout
+        timeout: Duration(milliseconds: 300),
       );
 
       if (tags.isNotEmpty) {
@@ -596,7 +574,7 @@ class TransferLendController extends GetxController {
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét: $e');
       print('❌ Lỗi khi quét nhiều thẻ: $e');
     } finally {
-      isLoading.value = false; // Or isScanning.value = false;
+      isLoading.value = false;
     }
   }
 

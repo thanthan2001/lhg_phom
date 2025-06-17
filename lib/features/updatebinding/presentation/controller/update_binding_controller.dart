@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/configs/app_colors.dart';
 import '../../../../core/services/dio.api.service.dart';
 import '../../../../core/services/models/phom_model.dart';
 import '../../../../core/services/models/user/domain/usecase/get_user_use_case.dart';
@@ -15,6 +16,8 @@ class UpdateBindingController extends GetxController {
   final shelfList = ['K1', 'K2', 'K3'];
   final selectedShelf = ''.obs;
   final currentDate = DatetimeUtil.currentDate();
+  final rfidController = TextEditingController();
+
   var ID_Return = ''.obs;
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
   final isLoading = false.obs;
@@ -22,6 +25,10 @@ class UpdateBindingController extends GetxController {
   final GetuserUseCase _getuserUseCase;
   UpdateBindingController(this._getuserUseCase);
   late String? companyName;
+  final isScanning = false.obs; // <<===== THÊM BIẾN NÀY
+  var totalCount = 0.obs;
+  var isScan = false.obs;
+
   UserModel? user;
   final selectedCodePhom = ''.obs;
   final phomName = ''.obs;
@@ -77,6 +84,7 @@ class UpdateBindingController extends GetxController {
         final List<dynamic>? jsonArray = dataField["jsonArray"];
 
         if (jsonArray != null && jsonArray.isNotEmpty) {
+          isScan.value = true; // Set isScan to true when search is successful
           print('Data for table: $jsonArray');
           // Add the "Scanning" column with a default value of 0
           searchResults.value =
@@ -104,6 +112,19 @@ class UpdateBindingController extends GetxController {
     }
   }
 
+  /// Dừng quá trình quét liên tục
+  Future<void> onStopRead() async {
+    try {
+      await RFIDService.stopScan();
+      isScanning.value = false; // <<< CẬP NHẬT TRẠNG THÁI
+      isLoading.value = false;
+      print('⏹️ Dừng quét RFID');
+    } catch (e) {
+      print('❌ Lỗi dừng quét: $e');
+      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi dừng quét: $e');
+    }
+  }
+
   //check exict tag in listTagRFID
   void checkAndAddNewTags(List<String> newTags) {
     final uniqueTags =
@@ -117,47 +138,140 @@ class UpdateBindingController extends GetxController {
     }
   }
 
-  Future<void> onScanMultipleTags() async {
-    isLoading.value = true;
-    final user = await _getuserUseCase.getUser();
-    print('user: ${user?.userId}');
-    print('password: ${user?.password}');
-    print('username: ${user?.userName}');
-    try {
-      final tags = await RFIDService.scanSingleTagMultiple(
-        timeout: Duration(milliseconds: 100),
-      );
+  // Future<void> onScanMultipleTags() async {
+  //   isLoading.value = true;
+  //   final user = await _getuserUseCase.getUser();
+  //   print('user: ${user?.userId}');
+  //   print('password: ${user?.password}');
+  //   print('username: ${user?.userName}');
+  //   try {
+  //     final tags = await RFIDService.scanSingleTagMultiple(
+  //       timeout: Duration(milliseconds: 100),
+  //     );
 
-      if (tags.isNotEmpty) {
-        checkAndAddNewTags(tags);
-        phomBindingList.clear(); // Đảm bảo không bị cộng dồn dữ liệu cũ
-        for (var tag in listTagRFID) {
+  //     if (tags.isNotEmpty) {
+  //       checkAndAddNewTags(tags);
+  //       phomBindingList.clear(); // Đảm bảo không bị cộng dồn dữ liệu cũ
+  //       for (var tag in listTagRFID) {
+  //         final item = PhomBindingItem(
+  //           rfid: tag,
+  //           lastMatNo: selectedCodePhom.value.trim(),
+  //           lastName: phomName.value.trim(),
+  //           lastType: searchResults[0]["LastType"],
+  //           material: searchResults[0]["Material"],
+  //           lastSize: searchResults[0]["LastSize"],
+  //           lastSide: isLeftSide.value ? "Left" : "Right",
+  //           dateIn: currentDate,
+  //           userID: user?.userId ?? "",
+  //           shelfName: selectedShelf.value.trim(),
+  //           companyName: user?.companyName ?? "",
+  //         );
+  //         phomBindingList.add(item);
+  //       }
+  //       print(
+  //         "phomBindingList: ${jsonEncode(phomBindingList.map((e) => e.toJson()).toList())}",
+  //       );
+  //       print('📋 Tổng listTagRFID: $listTagRFID + ${listTagRFID.length}');
+  //     } else {
+  //       Get.snackbar('Lỗi', 'Không tìm thấy thẻ nào');
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar('Lỗi', 'Đã xảy ra lỗi: $e');
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
+
+  Future<void> onStartRead() async {
+    // 1. Kiểm tra các điều kiện ban đầu (Lấy từ onStartRead)
+    if (isScanning.value) {
+      print('ℹ️ Đã có một phiên quét đang chạy.');
+      return; // Nếu đang quét rồi thì không làm gì cả
+    }
+    if (!isScan.value) {
+      Get.snackbar(
+        '⚠️Thông báo',
+        'Thực hiện tìm kiếm trước khi scan',
+        backgroundColor: AppColors.primary2,
+      );
+      return;
+    }
+
+    isLoading.value = true;
+    print('▶️ Đang chuẩn bị quét liên tục...');
+
+    try {
+      final user = await _getuserUseCase.getUser();
+      if (user == null) {
+        Get.snackbar('Lỗi', 'Không thể lấy thông tin người dùng.');
+        isLoading.value = false;
+        return;
+      }
+
+      // 3. Xóa dữ liệu của phiên quét cũ (Rất quan trọng)
+      listTagRFID.clear();
+      phomBindingList.clear();
+      rfidController.clear();
+      totalCount.value = 0;
+      update();
+
+      // 4. Bắt đầu quét liên tục và xử lý tag trong callback
+      // Đặt isScanning = true ngay trước khi bắt đầu để callback có thể kiểm tra
+      isScanning.value = true;
+      print('▶️ Đã bắt đầu quét liên tục...');
+
+      await RFIDService.scanContinuous((epc) {
+        // Chỉ xử lý khi đang trong trạng thái quét
+        if (!isScanning.value) return;
+
+        // Kiểm tra và chỉ thêm tag mới, tránh trùng lặp
+        if (!listTagRFID.contains(epc)) {
+          listTagRFID.add(epc); // Thêm tag mới vào danh sách tổng
+
+          // Tạo đối tượng PhomBindingItem với dữ liệu từ tag mới
+          // Logic này được lấy từ hàm onScanMultipleTags cũ
           final item = PhomBindingItem(
-            rfid: tag,
+            rfid: epc, // Sử dụng epc vừa quét được
             lastMatNo: selectedCodePhom.value.trim(),
             lastName: phomName.value.trim(),
-            lastType: searchResults[0]["LastType"],
-            material: searchResults[0]["Material"],
-            lastSize: searchResults[0]["LastSize"],
+            // Đảm bảo searchResults không rỗng trước khi truy cập
+            lastType:
+                searchResults.isNotEmpty ? searchResults[0]["LastType"] : "",
+            material:
+                searchResults.isNotEmpty ? searchResults[0]["Material"] : "",
+            lastSize:
+                searchResults.isNotEmpty ? searchResults[0]["LastSize"] : "",
             lastSide: isLeftSide.value ? "Left" : "Right",
             dateIn: currentDate,
-            userID: user?.userId ?? "",
+            userID: user.userId ?? "",
             shelfName: selectedShelf.value.trim(),
-            companyName: user?.companyName ?? "",
+            companyName: user.companyName ?? "",
           );
+
           phomBindingList.add(item);
+
+          // Cập nhật UI ngay lập tức
+          totalCount.value = listTagRFID.length;
+
+          print('✅ Tag mới: $epc | Tổng số tag: ${totalCount.value}');
         }
-        print(
-          "phomBindingList: ${jsonEncode(phomBindingList.map((e) => e.toJson()).toList())}",
-        );
-        print('📋 Tổng listTagRFID: $listTagRFID + ${listTagRFID.length}');
-      } else {
-        Get.snackbar('Lỗi', 'Không tìm thấy thẻ nào');
-      }
+      });
+
+      // Sau khi await kết thúc (nếu scanContinuous kết thúc hoặc bị lỗi),
+      // chúng ta sẽ vào khối catch hoặc finally.
+      // Nếu nó không bao giờ tự kết thúc, bạn cần một hàm onStopScan.
     } catch (e) {
-      Get.snackbar('Lỗi', 'Đã xảy ra lỗi: $e');
+      print('❌ Lỗi khi bắt đầu quét: $e');
+      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi bắt đầu quét: $e');
     } finally {
-      isLoading.value = false;
+      // Lưu ý: Trong quét liên tục, khối finally này có thể không được gọi
+      // cho đến khi quá trình quét dừng lại. Vì vậy, việc đặt isLoading = false
+      // nên được xử lý trong một hàm onStopScan() riêng.
+      // Tuy nhiên, nếu có lỗi ở các bước trên, nó sẽ được gọi.
+      if (isScanning.value == false) {
+        // Chỉ tắt loading nếu quét chưa bắt đầu thành công
+        isLoading.value = false;
+      }
     }
   }
 
@@ -261,34 +375,77 @@ class UpdateBindingController extends GetxController {
     if (!await isVerify()) {
       return;
     }
-    try {
-      for (var item in phomBindingList) {
-        var data = item.toJson(); // Chuyển đổi mỗi đối tượng thành map
 
-        final response = await ApiService(baseUrl).post(
-          '/phom/updatephom', // Giả sử backend có endpoint này để nhận một đối tượng
-          data,
-        );
-        print(response.data);
-        if (response.data['statusCode'] == 200) {
-          print("✅ Gửi thành công: ${item.rfid}");
-          Get.snackbar('✅ Gửi thành công', "${item.rfid}");
-        } else {
-          print("❌ Gửi thất bại cho RFID: ${item.rfid}");
+    isLoading.value = true; // Bật loading
+
+    try {
+      // Chuẩn bị dữ liệu để gửi đi, cấu trúc này đã đúng
+      final data = {
+        "companyName": companyName,
+        "details": phomBindingList.map((item) => item.toJson()).toList(),
+      };
+
+      print("🚀 Dữ liệu gửi đi: ${jsonEncode(data)}");
+
+      final response = await ApiService(baseUrl).post('/phom/updatephom', data);
+
+      print("📦 Dữ liệu nhận về: ${response.data}");
+
+      // Xử lý response mới từ backend
+      if (response.data['statusCode'] == 200) {
+        final responseData = response.data['data'];
+        final int successCount = responseData['totalSuccess'] ?? 0;
+        final int failureCount = responseData['totalFailure'] ?? 0;
+        final List failures = responseData['failures'] ?? [];
+
+        // Hiển thị thông báo tổng hợp
+        if (failureCount == 0) {
+          // Tất cả đều thành công
           Get.snackbar(
-            "Lỗi ${response.data['message']}",
-            "Gửi thất bại cho RFID: ${item.rfid}",
-            snackPosition: SnackPosition.BOTTOM,
+            '✅ Thành Công',
+            'Đã cập nhật thành công tất cả $successCount thẻ.',
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
           );
+          // Có thể xóa list hoặc reset màn hình ở đây nếu muốn
+          // onClear();
+        } else {
+          // Có cả thành công và thất bại
+          Get.snackbar(
+            '⚠️ Cảnh Báo',
+            'Hoàn tất: $successCount thành công, $failureCount thất bại.',
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 5), // Hiển thị lâu hơn để đọc
+          );
+          // In ra log các thẻ bị lỗi để debug
+          print("❌ Danh sách RFID cập nhật thất bại:");
+          for (var failure in failures) {
+            print("  - RFID: ${failure['rfid']}, Lỗi: ${failure['error']}");
+          }
         }
+      } else {
+        // Lỗi từ server (ví dụ 400, 500)
+        final errorMessage =
+            response.data['message'] ?? 'Lỗi không xác định từ server.';
+        Get.snackbar(
+          '❌ Lỗi Server',
+          errorMessage,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
       print("❌ Lỗi khi gửi dữ liệu: $e");
       Get.snackbar(
-        "Lỗi",
-        "Đã xảy ra lỗi: $e",
+        "Lỗi Hệ Thống",
+        "Không thể kết nối đến máy chủ: $e",
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
+    } finally {
+      isLoading.value = false; // Tắt loading
     }
   }
 
@@ -319,7 +476,6 @@ class UpdateBindingController extends GetxController {
   void onInit() async {
     isLoading.value = true;
     user = await _getuserUseCase.getUser();
-
     if (user == null ||
         user!.companyName == null ||
         user!.companyName!.isEmpty) {
@@ -333,7 +489,21 @@ class UpdateBindingController extends GetxController {
     print('CompanyName: $companyName');
     await getLastMatNo(); // Ensure this completes before setting isLoading to false
     isLoading.value = false; // Set to false after initial data loading
-    _connectRFID();
+    // _connectRFID();
+
+    // ĐĂNG KÝ LẮNG NGHE SỰ KIỆN NÚT CỨNG
+    RFIDService.setOnHardwareScan(() {
+      print(
+        '🔔 Nút cứng đã được bấm! Trạng thái quét hiện tại: ${isScanning.value}',
+      );
+
+      // KIỂM TRA TRẠNG THÁI VÀ GỌI HÀM TƯƠNG ỨNG
+      if (isScanning.value) {
+        onStopRead(); // Nếu đang quét, gọi hàm dừng
+      } else {
+        onStartRead(); // Nếu chưa quét, gọi hàm bắt đầu
+      }
+    });
     super.onInit();
   }
 
@@ -344,7 +514,10 @@ class UpdateBindingController extends GetxController {
 
   @override
   void onClose() {
+    rfidController.dispose();
+    phomBindingList.clear();
+    listTagRFID.clear();
     super.onClose();
-    _disconnectRFID();
+    // _disconnectRFID();
   }
 }
