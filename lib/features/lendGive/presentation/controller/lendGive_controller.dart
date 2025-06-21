@@ -18,6 +18,7 @@ class LendGiveController extends GetxController {
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
   final Map<String, String> depNameToIdMap = {};
   final sumController = TextEditingController();
+  final totalPhomNotBindingController = TextEditingController(text: '0');
   final dateController = TextEditingController();
   final bill_br_id = TextEditingController();
   final userNameController = TextEditingController();
@@ -42,7 +43,7 @@ class LendGiveController extends GetxController {
   var selectedRowIndex = Rx<int?>(null);
   final LastSum = 0.obs;
   UserModel? user;
-
+  var isAvalableFinish = false.obs;
   final codePhomList = <String>[].obs;
   final departmentList = <String>[].obs;
 
@@ -69,6 +70,45 @@ class LendGiveController extends GetxController {
       "DepID": selectedDepartment.value,
       "StateScan": "0",
     };
+  }
+
+  // Thêm hàm này vào trong class LendGiveController của bạn
+  void _resetScanState() {
+    print("🔄 Đặt lại trạng thái quét cho phiên làm việc mới...");
+
+    // 1. Xóa danh sách các thẻ RFID đã quét trong phiên trước
+    listTagRFID.clear();
+    lastSizeList.clear(); // Rất quan trọng để logic đếm không bị sai
+    print("  - Đã xóa listTagRFID và lastSizeList.");
+
+    // 2. Xóa danh sách chi tiết đã chuẩn bị để gửi đi
+    scannedRfidDetailsList.clear();
+    print("  - Đã xóa scannedRfidDetailsList.");
+
+    // 3. Đặt lại số lượng đã quét trong bảng giao diện (inventoryData) về 0
+    if (inventoryData.isNotEmpty) {
+      bool changed = false;
+      for (int i = 0; i < inventoryData.length; i++) {
+        // Đảm bảo dòng có đủ phần tử trước khi truy cập
+        if (inventoryData[i].length > 6 && inventoryData[i][6] != '0') {
+          inventoryData[i][6] = '0'; // <<===== ĐÂY LÀ YÊU CẦU CHÍNH CỦA BẠN
+          changed = true;
+        }
+      }
+      if (changed) {
+        inventoryData.refresh(); // Cập nhật lại UI để hiển thị số 0
+        print(
+          "  - Cột 'Scanned' trong inventoryData đã được đặt lại về '0'. Giao diện đã được làm mới.",
+        );
+      }
+    }
+
+    // 4. Đặt lại các biến trạng thái giao diện khác
+    rfidController.clear();
+    totalCount.value = 0;
+    print("  - Đã xóa rfidController và đặt lại totalCount.");
+
+    print("✅ Trạng thái quét đã được đặt lại thành công.");
   }
 
   // Table data
@@ -115,16 +155,15 @@ class LendGiveController extends GetxController {
             "DateBorrow": commonDateBorrow,
           };
         }).toList();
-
+    print('preparedList for saveBill: $preparedList');
     final Map<String, dynamic> payload = {
       "companyName": commonCompanyName,
+      "ToTalPhomNotBinding": totalPhomNotBindingController.text,
       "scannedRfidDetailsList": preparedList,
     };
     print('payload for saveBill: $payload');
     try {
       final response = await ApiService(baseUrl).post(apiEndpoint, payload);
-
-      isLoading.value = false;
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -137,7 +176,7 @@ class LendGiveController extends GetxController {
             "$successCount mục đã được gửi thành công!",
           );
           await onClear();
-          Get.back();
+          isLoading.value = false;
         } else if (successCount > 0 && failureCount > 0) {
           await Get.snackbar(
             "Hoàn tất một phần",
@@ -146,6 +185,7 @@ class LendGiveController extends GetxController {
             colorText: Colors.white,
           );
           print("🔺 Thất bại:\n${data['failedList']}");
+          isLoading.value = false;
         } else {
           Get.snackbar(
             "Thất bại",
@@ -153,8 +193,11 @@ class LendGiveController extends GetxController {
             backgroundColor: Colors.red,
             colorText: Colors.white,
           );
+          isLoading.value = false;
         }
       } else {
+        isLoading.value = false;
+
         Get.snackbar(
           "Lỗi",
           "Không thể gửi dữ liệu. Mã lỗi: ${response.statusCode}",
@@ -249,7 +292,11 @@ class LendGiveController extends GetxController {
     }
 
     print("✅ Clear action completed.");
-    Get.snackbar("Thông báo", "Đã đặt lại số lượng đã quét và danh sách thẻ.");
+    Get.snackbar(
+      "✅Thành công",
+      "Scan mượn thành công.",
+      backgroundColor: Colors.green.withOpacity(0.8),
+    );
   }
 
   Future<void> _connectRFID() async {
@@ -379,7 +426,7 @@ class LendGiveController extends GetxController {
           print("⚠️ Không có dữ liệu chi tiết cho EPC: $epc");
           Get.snackbar(
             '❌Lỗi',
-            'Phom không đúng dữ liệu đơn mượn ',
+            'Không có dữ liệu từ phom',
             backgroundColor: Colors.red,
           );
           return;
@@ -388,12 +435,19 @@ class LendGiveController extends GetxController {
         for (var item in jsonList) {
           if (item is Map<String, dynamic>) {
             String? epcLastMatNo = item['LastMatNo']?.toString();
+            String? epcLastName = item['LastName']?.toString();
+
             String rfidFromApi = item["RFID"]?.toString() ?? epc;
             String? epcLastSize = item['LastSize']?.toString().trim();
 
             if (epcLastMatNo == null || epcLastSize == null) {
               print(
                 "⚠️ Dữ liệu từ API cho EPC $rfidFromApi thiếu LastMatNo hoặc LastSize: $item",
+              );
+              Get.snackbar(
+                '⚠️ Cảnh báo',
+                '⚠️ Dữ liệu từ API cho EPC $rfidFromApi thiếu LastMatNo hoặc LastSize: $item',
+                backgroundColor: Colors.red,
               );
               continue;
             }
@@ -407,6 +461,11 @@ class LendGiveController extends GetxController {
                 print(
                   "⚠️ inventoryRow at index $i is too short: $inventoryRow",
                 );
+                // Get.snackbar(
+                //   '⚠️ Cảnh báo',
+                //   'Dữ liệu không đầy đủ tại dòng $i: $inventoryRow',
+                //   backgroundColor: Colors.red,
+                // );
                 continue;
               }
               String inventoryMatNo = inventoryRow[2];
@@ -421,8 +480,18 @@ class LendGiveController extends GetxController {
 
                 if (!lastSizeList.contains(rfidFromApi)) {
                   int maxAllowedScans = int.tryParse(inventoryRow[5]) ?? 0;
-                  if (lastSizeList.length < maxAllowedScans * 2) {
+                  if (lastSizeList.length > maxAllowedScans * 2) {
+                    isAvalableFinish.value = false;
+                    Get.snackbar(
+                      '⚠️ Cảnh báo',
+                      'Số lượng thẻ đã quét vượt quá giới hạn cho phép: $maxAllowedScans. Vui lòng kiểm tra lại.',
+                      backgroundColor: Colors.yellow,
+                    );
+                  } else {
                     lastSizeList.add(rfidFromApi);
+                    print(
+                      "✅ Thêm RFID $rfidFromApi vào lastSizeList. Tổng số lượng: ${lastSizeList.length}",
+                    );
                   }
                 }
                 final String currentDate = DateFormat(
@@ -466,6 +535,12 @@ class LendGiveController extends GetxController {
                     "⚠️ Số lượng quét cho dòng $i (MatNo: $inventoryMatNo, Size: $inventorySize) đã đạt tối đa: $currentScannedCount / $maxAllowedScans. Không tăng thêm.",
                   );
                 }
+              } else {
+                Get.snackbar(
+                  '⚠️ Cảnh báo',
+                  'Phom không hợp lệ cho EPC: $rfidFromApi, Tên Phom: $epcLastName, Size: $epcLastSize',
+                  backgroundColor: Colors.red,
+                );
               }
             }
           }
@@ -664,40 +739,6 @@ class LendGiveController extends GetxController {
     );
   }
 
-  // Future<void> onScanMultipleTags() async {
-  //   if (!isAvalableScan.value) {
-  //     Get.snackbar('Cảnh báo', 'Vui lòng thực hiện tìm kiếm trước khi quét.');
-  //     print("⚠️ Attempted to scan but isAvalableScan is false.");
-  //     return;
-  //   }
-  //   if (isLoading.value) {
-  //     print("⚠️ Scan already in progress.");
-  //     return;
-  //   }
-
-  //   isLoading.value = true;
-
-  //   try {
-  //     // Using scanSingleTagMultiple suggests it might read multiple unique tags in one go.
-  //     final tags = await RFIDService.scanSingleTagMultiple(
-  //       timeout: Duration(milliseconds: 200), // Increased timeout slightly
-  //     );
-
-  //     if (tags.isNotEmpty) {
-  //       print('📡 Thẻ RFID quét được: $tags');
-  //       checkAndAddNewTags(tags);
-  //     } else {
-  //       // No new tags found in this scan attempt. This is normal.
-  //       print('ℹ️ Không có thẻ RFID mới nào được tìm thấy trong lần quét này.');
-  //       // Get.snackbar('Thông báo', 'Không tìm thấy thẻ mới.'); // Avoid too many snackbars
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét: $e');
-  //     print('❌ Lỗi khi quét nhiều thẻ: $e');
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
   Future<void> onScanMultipleTags() async {
     if (!isAvalableScan.value) {
       Get.snackbar('Cảnh báo', 'Vui lòng thực hiện tìm kiếm trước khi quét.');
@@ -709,29 +750,25 @@ class LendGiveController extends GetxController {
       print("⚠️ Đã đang trong quá trình quét liên tục.");
       return;
     }
-
+    _resetScanState();
     isLoading.value = true;
     isScanning.value = true;
     print("▶️ Bắt đầu quét liên tục nhiều thẻ...");
 
     try {
-      // Dọn dữ liệu cũ (nếu cần)
       listTagRFID.clear();
       rfidController.clear();
       totalCount.value = 0;
       update();
 
-      // Bắt đầu quét liên tục
       await RFIDService.scanContinuous((epc) {
         if (!isScanning.value) return;
 
         if (!listTagRFID.contains(epc)) {
           listTagRFID.add(epc);
 
-          // Gọi xử lý riêng nếu cần
           checkAndAddNewTags([epc]);
 
-          // Cập nhật hiển thị
           rfidController.text = listTagRFID.join(', ');
           totalCount.value = listTagRFID.length;
 

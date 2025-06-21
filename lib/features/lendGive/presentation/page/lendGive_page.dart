@@ -105,12 +105,19 @@ class LendGivePage extends GetView<LendGiveController> {
                     ),
                   );
                 }),
+                _buildTotalPhomNotBinding(
+                  'Số đôi chưa gán dữ liệu:',
+                  controller.totalPhomNotBindingController,
+                ),
               ],
             ),
           ),
           bottomNavigationBar: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: _buildDoneButton(),
+            child:
+                controller.isLoading.value
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildDoneButton(),
           ),
         ),
       ),
@@ -154,6 +161,38 @@ class LendGivePage extends GetView<LendGiveController> {
               obscureText: false,
               borderRadius: 5,
               textColor: AppColors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalPhomNotBinding(
+    String label,
+    TextEditingController controller,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Row(
+        children: [
+          TextWidget(
+            text: label,
+            color: AppColors.black,
+            fontWeight: FontWeight.bold,
+            size: 16,
+          ),
+          const SizedBox(width: 5),
+          Expanded(
+            child: CustomTextFieldWidget(
+              decorationType: InputDecorationType.underline,
+              enableColor: AppColors.grey2,
+              height: 30,
+              controller: controller,
+              obscureText: false,
+              borderRadius: 5,
+              textColor: AppColors.black,
+              keyboardType: TextInputType.number,
             ),
           ),
         ],

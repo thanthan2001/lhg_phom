@@ -21,11 +21,11 @@ class UpdateBindingController extends GetxController {
   var ID_Return = ''.obs;
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
   final isLoading = false.obs;
-  final isSearching = false.obs; // For search operation loading
+  final isSearching = false.obs;
   final GetuserUseCase _getuserUseCase;
   UpdateBindingController(this._getuserUseCase);
   late String? companyName;
-  final isScanning = false.obs; // <<===== THÊM BIẾN NÀY
+  final isScanning = false.obs;
   var totalCount = 0.obs;
   var isScan = false.obs;
 
@@ -37,20 +37,22 @@ class UpdateBindingController extends GetxController {
   final RxList<String> sizeList = <String>[].obs;
   final isLeftSide = true.obs;
   var listTagRFID = [];
-  // To store the search results for the table
   final RxList<Map<String, dynamic>> searchResults =
       <Map<String, dynamic>>[].obs;
   final phomBindingList = <PhomBindingItem>[].obs;
   void onSelectLeft() => isLeftSide.value = true;
   void onSelectRight() => isLeftSide.value = false;
   Future<void> onClear() async {
+    isScanning.value = false;
+    isScan.value = false;
     isLoading.value = true;
-    // selectedCodePhom.value = '';
+    selectedCodePhom.value = '';
     // phomName.value = '';
-    // selectedSize.value = '';
+    totalCount.value = 0;
+    selectedSize.value = '';
     // codePhomList.clear();
     // sizeList.clear();
-    // searchResults.clear();
+    searchResults.clear();
     listTagRFID.clear();
     phomBindingList.clear();
     isLoading.value = false;
@@ -66,17 +68,14 @@ class UpdateBindingController extends GetxController {
     };
 
     isSearching.value = true;
-    searchResults.clear(); // Clear previous results
+    searchResults.clear();
 
     try {
       final response = await ApiService(
         baseUrl,
       ).post('/phom/searchPhomBinding', data);
-      print(
-        'Raw API Response Data: ${response.data}',
-      ); // Log the entire response data
+      print('Raw API Response Data: ${response.data}');
 
-      // Safely access the jsonArray
       final dynamic dataField = response.data["data"];
       if (dataField != null &&
           dataField is Map &&
@@ -84,15 +83,15 @@ class UpdateBindingController extends GetxController {
         final List<dynamic>? jsonArray = dataField["jsonArray"];
 
         if (jsonArray != null && jsonArray.isNotEmpty) {
-          isScan.value = true; // Set isScan to true when search is successful
+          isScan.value = true;
           print('Data for table: $jsonArray');
-          // Add the "Scanning" column with a default value of 0
+
           searchResults.value =
               jsonArray.map((item) {
                 final Map<String, dynamic> mapItem = Map<String, dynamic>.from(
                   item,
                 );
-                mapItem['Scanning'] = 0; // Add default scanning count
+                mapItem['Scanning'] = 0;
                 return mapItem;
               }).toList();
         } else {
@@ -116,7 +115,7 @@ class UpdateBindingController extends GetxController {
   Future<void> onStopRead() async {
     try {
       await RFIDService.stopScan();
-      isScanning.value = false; // <<< CẬP NHẬT TRẠNG THÁI
+      isScanning.value = false;
       isLoading.value = false;
       print('⏹️ Dừng quét RFID');
     } catch (e) {
@@ -125,7 +124,6 @@ class UpdateBindingController extends GetxController {
     }
   }
 
-  //check exict tag in listTagRFID
   void checkAndAddNewTags(List<String> newTags) {
     final uniqueTags =
         newTags.where((tag) => !listTagRFID.contains(tag)).toList();
@@ -138,55 +136,10 @@ class UpdateBindingController extends GetxController {
     }
   }
 
-  // Future<void> onScanMultipleTags() async {
-  //   isLoading.value = true;
-  //   final user = await _getuserUseCase.getUser();
-  //   print('user: ${user?.userId}');
-  //   print('password: ${user?.password}');
-  //   print('username: ${user?.userName}');
-  //   try {
-  //     final tags = await RFIDService.scanSingleTagMultiple(
-  //       timeout: Duration(milliseconds: 100),
-  //     );
-
-  //     if (tags.isNotEmpty) {
-  //       checkAndAddNewTags(tags);
-  //       phomBindingList.clear(); // Đảm bảo không bị cộng dồn dữ liệu cũ
-  //       for (var tag in listTagRFID) {
-  //         final item = PhomBindingItem(
-  //           rfid: tag,
-  //           lastMatNo: selectedCodePhom.value.trim(),
-  //           lastName: phomName.value.trim(),
-  //           lastType: searchResults[0]["LastType"],
-  //           material: searchResults[0]["Material"],
-  //           lastSize: searchResults[0]["LastSize"],
-  //           lastSide: isLeftSide.value ? "Left" : "Right",
-  //           dateIn: currentDate,
-  //           userID: user?.userId ?? "",
-  //           shelfName: selectedShelf.value.trim(),
-  //           companyName: user?.companyName ?? "",
-  //         );
-  //         phomBindingList.add(item);
-  //       }
-  //       print(
-  //         "phomBindingList: ${jsonEncode(phomBindingList.map((e) => e.toJson()).toList())}",
-  //       );
-  //       print('📋 Tổng listTagRFID: $listTagRFID + ${listTagRFID.length}');
-  //     } else {
-  //       Get.snackbar('Lỗi', 'Không tìm thấy thẻ nào');
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar('Lỗi', 'Đã xảy ra lỗi: $e');
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
-
   Future<void> onStartRead() async {
-    // 1. Kiểm tra các điều kiện ban đầu (Lấy từ onStartRead)
     if (isScanning.value) {
       print('ℹ️ Đã có một phiên quét đang chạy.');
-      return; // Nếu đang quét rồi thì không làm gì cả
+      return;
     }
     if (!isScan.value) {
       Get.snackbar(
@@ -208,33 +161,26 @@ class UpdateBindingController extends GetxController {
         return;
       }
 
-      // 3. Xóa dữ liệu của phiên quét cũ (Rất quan trọng)
       listTagRFID.clear();
       phomBindingList.clear();
       rfidController.clear();
       totalCount.value = 0;
       update();
 
-      // 4. Bắt đầu quét liên tục và xử lý tag trong callback
-      // Đặt isScanning = true ngay trước khi bắt đầu để callback có thể kiểm tra
       isScanning.value = true;
       print('▶️ Đã bắt đầu quét liên tục...');
 
       await RFIDService.scanContinuous((epc) {
-        // Chỉ xử lý khi đang trong trạng thái quét
         if (!isScanning.value) return;
 
-        // Kiểm tra và chỉ thêm tag mới, tránh trùng lặp
         if (!listTagRFID.contains(epc)) {
-          listTagRFID.add(epc); // Thêm tag mới vào danh sách tổng
+          listTagRFID.add(epc);
 
-          // Tạo đối tượng PhomBindingItem với dữ liệu từ tag mới
-          // Logic này được lấy từ hàm onScanMultipleTags cũ
           final item = PhomBindingItem(
-            rfid: epc, // Sử dụng epc vừa quét được
+            rfid: epc,
             lastMatNo: selectedCodePhom.value.trim(),
             lastName: phomName.value.trim(),
-            // Đảm bảo searchResults không rỗng trước khi truy cập
+
             lastType:
                 searchResults.isNotEmpty ? searchResults[0]["LastType"] : "",
             material:
@@ -250,26 +196,16 @@ class UpdateBindingController extends GetxController {
 
           phomBindingList.add(item);
 
-          // Cập nhật UI ngay lập tức
           totalCount.value = listTagRFID.length;
 
           print('✅ Tag mới: $epc | Tổng số tag: ${totalCount.value}');
         }
       });
-
-      // Sau khi await kết thúc (nếu scanContinuous kết thúc hoặc bị lỗi),
-      // chúng ta sẽ vào khối catch hoặc finally.
-      // Nếu nó không bao giờ tự kết thúc, bạn cần một hàm onStopScan.
     } catch (e) {
       print('❌ Lỗi khi bắt đầu quét: $e');
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi bắt đầu quét: $e');
     } finally {
-      // Lưu ý: Trong quét liên tục, khối finally này có thể không được gọi
-      // cho đến khi quá trình quét dừng lại. Vì vậy, việc đặt isLoading = false
-      // nên được xử lý trong một hàm onStopScan() riêng.
-      // Tuy nhiên, nếu có lỗi ở các bước trên, nó sẽ được gọi.
       if (isScanning.value == false) {
-        // Chỉ tắt loading nếu quét chưa bắt đầu thành công
         isLoading.value = false;
       }
     }
@@ -301,10 +237,10 @@ class UpdateBindingController extends GetxController {
   }
 
   Future<void> getInforbyLastMatNo(String lastMatNo) async {
-    selectedCodePhom.value = lastMatNo; // Update selected code phom
-    phomName.value = ''; // Reset phom name
-    sizeList.clear(); // Clear previous sizes
-    selectedSize.value = ''; // Reset selected size
+    selectedCodePhom.value = lastMatNo;
+    phomName.value = '';
+    sizeList.clear();
+    selectedSize.value = '';
 
     isLoading.value = true;
     final data = {"companyName": companyName, "LastMatNo": lastMatNo};

@@ -38,19 +38,18 @@ class LendReturnPage extends GetView<LendReturnController> {
                 // _buildLabelTextField(
                 //   "Tên người mượn:",
                 //   controller
-                //       .userNameController, // Đảm bảo controller này được khởi tạo giá trị
+                //       .userNameController,
                 // ),
                 // const SizedBox(height: 10),
                 // _buildDepartmentAndDate(),
                 const SizedBox(height: 10),
-                _buildCodePhomAndSum(), // Nút Search ở đây
-                // const SizedBox(height: 10), // Xóa bớt 1 SizedBox
+                _buildCodePhomAndSum(),
 
-                // THÊM BẢNG KẾT QUẢ TÌM KIẾM VÀO ĐÂY
+                // const SizedBox(height: 10),
                 _buildSearchResultsTable(),
 
-                // const SizedBox(height: 10), // Giữ lại nếu _buildTable() được dùng
-                // _buildTable(), // Bảng inventoryData cũ, bỏ comment nếu cần
+                // const SizedBox(height: 10),
+                // _buildTable(),
                 const SizedBox(height: 20),
                 _buildRfidScan(),
               ],
@@ -82,7 +81,6 @@ class LendReturnPage extends GetView<LendReturnController> {
   }
 
   Widget _buildLabelTextField(String label, TextEditingController ctrl) {
-    // đổi tên controller thành ctrl để tránh nhầm lẫn
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
@@ -103,7 +101,7 @@ class LendReturnPage extends GetView<LendReturnController> {
               obscureText: false,
               borderRadius: 5,
               textColor: AppColors.black,
-              // Thêm readOnly nếu muốn các trường này không cho sửa trực tiếp
+
               // readOnly: (label == "Tên người mượn:"),
             ),
           ),
@@ -150,14 +148,13 @@ class LendReturnPage extends GetView<LendReturnController> {
                 columns: <DataColumn>[
                   DataColumn(
                     label: Expanded(
-                      // Sử dụng Expanded để Text chiếm hết không gian và canh giữa
                       child: Text(
                         'ID BILL',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        textAlign: TextAlign.center, // CANH GIỮA HEADER
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
@@ -169,7 +166,7 @@ class LendReturnPage extends GetView<LendReturnController> {
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        textAlign: TextAlign.center, // CANH GIỮA HEADER
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
@@ -181,10 +178,10 @@ class LendReturnPage extends GetView<LendReturnController> {
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        textAlign: TextAlign.center, // CANH GIỮA HEADER
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                    numeric: true, // Vẫn giữ numeric nếu muốn căn phải số
+                    numeric: true,
                   ),
                   DataColumn(
                     label: Expanded(
@@ -194,7 +191,7 @@ class LendReturnPage extends GetView<LendReturnController> {
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        textAlign: TextAlign.center, // CANH GIỮA HEADER
+                        textAlign: TextAlign.center,
                       ),
                     ),
                     numeric: true,
@@ -207,7 +204,7 @@ class LendReturnPage extends GetView<LendReturnController> {
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        textAlign: TextAlign.center, // CANH GIỮA HEADER
+                        textAlign: TextAlign.center,
                       ),
                     ),
                     numeric: true,
@@ -219,13 +216,11 @@ class LendReturnPage extends GetView<LendReturnController> {
                         cells: <DataCell>[
                           DataCell(
                             Center(
-                              // CANH GIỮA CELL
                               child: Text(item['ID_bill']?.toString() ?? 'N/A'),
                             ),
                           ),
                           DataCell(
                             Center(
-                              // CANH GIỮA CELL
                               child: Text(
                                 item['LastMatNo']?.toString() ?? 'N/A',
                               ),
@@ -233,13 +228,11 @@ class LendReturnPage extends GetView<LendReturnController> {
                           ),
                           DataCell(
                             Center(
-                              // CANH GIỮA CELL
                               child: Text(item['LastSum']?.toString() ?? '0'),
                             ),
                           ),
                           DataCell(
                             Center(
-                              // CANH GIỮA CELL
                               child: Text(
                                 item['TotalScanOut']?.toString() ?? '0',
                               ),
@@ -247,7 +240,6 @@ class LendReturnPage extends GetView<LendReturnController> {
                           ),
                           DataCell(
                             Center(
-                              // CANH GIỮA CELL
                               child: Obx(() {
                                 return Text(controller.ScannedCount.toString());
                               }),
@@ -289,7 +281,7 @@ class LendReturnPage extends GetView<LendReturnController> {
         // const SizedBox(width: 10),
         Expanded(
           child: ButtonWidget(
-            width: 100, // width không có tác dụng khi Expanded
+            width: 100,
             height: 48,
             backgroundColor: AppColors.primary1,
             textColor: Colors.white,
@@ -313,9 +305,7 @@ class LendReturnPage extends GetView<LendReturnController> {
               onTap:
                   () => showSearchableSelectionDialog(
                     title: 'Chọn đơn vị',
-                    itemList:
-                        controller.departmentList
-                            .toList(), // Chuyển RxList thành List
+                    itemList: controller.departmentList.toList(),
                     selectedItem: controller.selectedDepartment.value,
                     onSelected: (val) {
                       controller.selectedDepartment.value = val;
@@ -336,7 +326,7 @@ class LendReturnPage extends GetView<LendReturnController> {
             children: [
               CustomTextFieldWidget(
                 enableColor: AppColors.grey2,
-                height: 40, // Nên đồng nhất height với CustomDropdownField
+                height: 40,
                 labelText: "Ngày mượn:",
                 labelColor: AppColors.black,
                 controller: controller.dateController,
@@ -344,20 +334,20 @@ class LendReturnPage extends GetView<LendReturnController> {
                 borderRadius: 5,
                 textColor: AppColors.black,
                 keyboardType: TextInputType.datetime,
-                // readOnly: true, // Ngăn sửa trực tiếp, chỉ cho chọn qua DatePicker
+                // readOnly: true,
               ),
               IconButton(
                 icon: const Icon(
                   Icons.calendar_month_outlined,
-                  size: 30, // Điều chỉnh size nếu cần
+                  size: 30,
                   color: AppColors.primary1,
                 ),
                 onPressed: () async {
                   final pickedDate = await showDatePicker(
-                    context: Get.context!, // Đảm bảo Get.context! hợp lệ
+                    context: Get.context!,
                     initialDate: DateTime.now(),
                     firstDate: DateTime(1900),
-                    lastDate: DateTime(2101), // Sửa lỗi lastDate
+                    lastDate: DateTime(2101),
                   );
                   if (pickedDate != null) {
                     controller.dateController.text =
@@ -387,7 +377,7 @@ class LendReturnPage extends GetView<LendReturnController> {
         ),
         const SizedBox(width: 10),
         Expanded(
-          flex: 1, // flex: 1 là mặc định cho Expanded
+          flex: 1,
           child: ButtonWidget(
             height: 48,
             backgroundColor: AppColors.yellow,
@@ -414,26 +404,23 @@ class LendReturnPage extends GetView<LendReturnController> {
 
   Widget _buildDoneButton() {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-      ), // Giữ padding này cho ButtonWidget
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ButtonWidget(
         text: "Hoàn tất",
         height: 50,
         ontap: controller.onFinish,
-        // width: double.infinity, // Nếu muốn nút chiếm toàn bộ chiều rộng trong Padding
+        // width: double.infinity,
       ),
     );
   }
 
-  // Giữ lại _buildTable và _buildTableRow nếu bạn vẫn dùng bảng inventoryData
   Widget _buildTable() {
     return RawScrollbar(
       controller: controller.tableScrollController,
       thumbVisibility: true,
       trackVisibility: true,
       radius: const Radius.circular(5),
-      thickness: 2, // Nên là double
+      thickness: 2,
       thumbColor: AppColors.primary,
       trackColor: AppColors.grey3,
       trackBorderColor: AppColors.grey3,
@@ -444,9 +431,7 @@ class LendReturnPage extends GetView<LendReturnController> {
           padding: const EdgeInsets.symmetric(vertical: 5),
           child: Obx(
             () => ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: Get.width - 20,
-              ), // -20 là padding của body
+              constraints: BoxConstraints(minWidth: Get.width - 20),
               child: Table(
                 border: TableBorder.all(
                   color: AppColors.grey,
@@ -505,7 +490,6 @@ class LendReturnPage extends GetView<LendReturnController> {
                 : GestureDetector(
                   onTap: () {
                     if (index != null) {
-                      // Kiểm tra index không null
                       controller.selectedRowIndex.value = index;
                     }
                   },
