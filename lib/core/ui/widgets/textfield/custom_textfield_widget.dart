@@ -78,6 +78,29 @@ class CustomTextFieldWidget extends StatefulWidget {
 class _CustomTextFieldWidgetState extends State<CustomTextFieldWidget> {
   bool isError = false;
   bool isFormFieldValid = false;
+  FocusNode? _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode!.addListener(() {
+      if (!_focusNode!.hasFocus) {
+        if (widget.onCompleted != null && widget.controller != null) {
+          widget.onCompleted!(widget.controller!.text);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    if (widget.focusNode == null) {
+      _focusNode?.dispose();
+    }
+    super.dispose();
+  }
 
   InputBorder _getInputBorder(Color color, double width) {
     if (widget.decorationType == InputDecorationType.box) {
@@ -96,24 +119,22 @@ class _CustomTextFieldWidgetState extends State<CustomTextFieldWidget> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); // Ẩn bàn phím khi nhấn ngoài input
+        FocusScope.of(context).unfocus();
       },
-      behavior: HitTestBehavior.translucent, // Cho phép nhận sự kiện nhấn
+      behavior: HitTestBehavior.translucent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextFormField(
-            
             enabled: widget.enable,
             maxLength: widget.maxLength,
             keyboardType: widget.keyboardType,
             controller: widget.controller,
             autovalidateMode: widget.autovalidateMode,
             onChanged: widget.onChanged,
-            onFieldSubmitted: widget.onCompleted,
             inputFormatters: widget.inputFormatters,
             obscureText: widget.obscureText,
-            focusNode: widget.focusNode,
+            focusNode: _focusNode,
             validator: widget.validator,
             style: TextStyle(
               fontSize: AppDimens.textSize16,

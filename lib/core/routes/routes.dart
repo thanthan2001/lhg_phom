@@ -20,4 +20,5 @@ abstract class Routes {
   static const lendDetails = "/lendDetails";
   static const lendRegister = "/lendRegister";
   static const lendAll = "/lendAll";
+  static const updateBinding = '/updateBinding';
 }

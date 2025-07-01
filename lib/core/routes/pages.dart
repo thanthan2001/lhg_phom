@@ -26,6 +26,10 @@ import '../../features/main/di/main_binding.dart';
 import '../../features/main/presentation/page/main_page.dart';
 import '../../features/splash/di/splash_binding.dart';
 import '../../features/splash/presentation/page/splash_page.dart';
+import '../../features/transfer_lend/di/transfer_lend_binding.dart';
+import '../../features/transfer_lend/presentation/page/transfer_lend_page.dart';
+import '../../features/updatebinding/di/update_binding.dart';
+import '../../features/updatebinding/presentation/page/update_binding_page.dart';
 import 'routes.dart';
 
 class Pages {
@@ -121,6 +125,16 @@ class Pages {
       name: Routes.lendAll,
       page: () => const LendAllPage(),
       binding: LendAllBinding(),
+    ),
+    GetPage(
+      name: Routes.updateBinding,
+      page: () => const UpdateBindingPage(),
+      binding: UpdateBinding(),
+    ),
+    GetPage(
+      name: Routes.lendOthers,
+      page: () => const TransferLendPage(),
+      binding: TransferLendBinding(),
     ),
   ];
 }

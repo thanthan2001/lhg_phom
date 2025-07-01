@@ -3,7 +3,7 @@ class UserModel {
   String? password;
   String? userName;
   String? phoneNumbers;
-  String? department;
+  String? DEPID;
   String? address;
   String? cccd;
   String? role;
@@ -15,7 +15,7 @@ class UserModel {
     this.password,
     this.userName,
     this.phoneNumbers,
-    this.department,
+    this.DEPID,
     this.address,
     this.cccd,
     this.role,
@@ -29,7 +29,7 @@ class UserModel {
       password: json['PWD'] ?? '',
       userName: json['USERNAME'] ?? '',
       phoneNumbers: json['phoneNumbers'] ?? '',
-      department: json['department'] ?? '',
+      DEPID: json['DEPID'] ?? '',
       address: json['address'] ?? '',
       cccd: json['CCCD'] ?? '',
       role: json['role'] ?? '',
@@ -44,7 +44,7 @@ class UserModel {
       'PWD': password ?? '',
       'USERNAME': userName ?? '',
       'phoneNumbers': phoneNumbers ?? '',
-      'department': department ?? '',
+      'DEPID': DEPID ?? '',
       'address': address ?? '',
       'CCCD': cccd ?? '',
       'role': role ?? 'user',

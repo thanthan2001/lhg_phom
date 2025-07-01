@@ -39,7 +39,7 @@ const Map<String, String> en = {
   'lend_all': 'All',
   'lend_give': 'Give lend',
   'lend_return': 'Return lend',
-  'lend_others': 'Lend from other factory',
+  'lend_others': 'Transfer lend',
   'lend_register_list': 'Register lend list',
   'lend_give_list': 'Give lend list',
   'borrower': 'Borrower',

@@ -2,6 +2,7 @@ class PhomBindingItem {
   final String? rfid;
   final String? lastMatNo;
   final String? lastName;
+  final String? lastno;
   final String? lastType;
   final String? material;
   final String? lastSize;
@@ -15,6 +16,7 @@ class PhomBindingItem {
     this.rfid,
     this.lastMatNo,
     this.lastName,
+    this.lastno,
     this.lastType,
     this.material,
     this.lastSize,
@@ -30,6 +32,7 @@ class PhomBindingItem {
       "RFID": rfid,
       "LastMatNo": lastMatNo,
       "LastName": lastName,
+      "LastNo": lastno,
       "LastType": lastType,
       "Material": material,
       "LastSize": lastSize,
