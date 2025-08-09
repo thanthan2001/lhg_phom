@@ -5,6 +5,7 @@ import 'package:lhg_phom/core/ui/widgets/textfield/custom_textfield_widget.dart'
 import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
 
+import '../../../../core/routes/routes.dart';
 import '../../../../core/ui/dialogs/showSearchableSelectionDialog.dart';
 import '../../../../core/ui/widgets/textfield/custom_dropdownfield_widget.dart';
 import '../controller/bindingPhom_controller.dart';
@@ -38,6 +39,14 @@ class BindingPhomPage extends GetView<BindingPhomController> {
         icon: const Icon(Icons.arrow_back_ios, color: AppColors.white),
         onPressed: Get.back,
       ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.exit_to_app),
+          onPressed: () {
+            Get.toNamed(Routes.updateBinding);
+          },
+        ),
+      ],
     );
   }
 
@@ -50,9 +59,9 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           const SizedBox(height: 10),
           _buildSizeAndSearch(),
           const SizedBox(height: 10),
-          _buildShelfDropdown(),
+
           const SizedBox(height: 10),
-          _buildLeftRightButtons(),
+
           const Divider(color: AppColors.grey, thickness: 1),
           _buildRfidScan(),
           const SizedBox(height: 10),
@@ -68,7 +77,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                   text:
                       controller.totalCount.value == 0
                           ? "Chưa quét.."
-                          : "Đã quét: ${controller.totalCount.value} thẻ",
+                          : "Đã quét: ${controller.totalCount.value} đôi",
                   size: 16,
                   color: AppColors.black,
                   fontWeight: FontWeight.w400,
@@ -76,7 +85,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
               ),
             ],
           ),
-          // _buildListRfidScan(),
+
           const SizedBox(height: 10),
           _buildTable(),
           const SizedBox(height: 30),
@@ -102,9 +111,6 @@ class BindingPhomPage extends GetView<BindingPhomController> {
             onCompleted: (value) {
               controller.callLastName(value);
             },
-            // onChanged: (value) {
-            //   controller.callLastName(value);
-            // },
           ),
         ),
         const SizedBox(width: 10),
@@ -379,9 +385,8 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                     'Chất liệu',
                     'Kích thước',
                     'Số lượng',
-                    'Trái',
-                    'Phải',
-                    'Đã quét',
+
+                    'Đã quét(Đôi)',
                   ], isHeader: true),
                   ...controller.inventoryData.asMap().entries.map(
                     (entry) => _buildTableRow(entry.value, index: entry.key),

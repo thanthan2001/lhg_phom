@@ -159,7 +159,7 @@ Future<void> showSearchableSelectionDialog2({
                                 ? const Icon(Icons.check, color: Colors.green)
                                 : null,
                         onTap: () async {
-                          Get.back(); // đóng dialog trước
+                          Get.back();
                           onSelected(item);
                           if (onSelectedAndCallApi != null) {
                             await onSelectedAndCallApi(item);

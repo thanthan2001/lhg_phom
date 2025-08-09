@@ -9,7 +9,6 @@ const Map<String, String> my = {
   'version': 'ဗားရှင်း 1.0.0',
   'hello': 'မင်္ဂလာပါ - ',
 
-  // user
   'information': 'အချက်အလက်',
   'setting': 'ဆက်တင်များ',
   'user_information': 'အသုံးပြုသူအချက်အလက်',
@@ -32,7 +31,6 @@ const Map<String, String> my = {
   'input_to_search': 'ရှာဖွေရန် ရိုက်ထည့်ပါ...',
   'no_data': 'ဒေတာမရှိပါ',
 
-  // Lend
   'lend': 'ချေးပေးရန်',
   'lend_register': 'ချေးပေးရန် မှတ်ပုံတင်ပါ',
   'lend_all': 'အားလုံး',
@@ -47,7 +45,6 @@ const Map<String, String> my = {
   'return_date': 'ပြန်လည်ပေးရန် ရက်စွဲ',
   'lend_status': 'ချေးပေးရန် အခြေအနေ',
 
-  // Phom
   'press_to_add_phom': 'Phom ထည့်ရန် နှိပ်ပါ',
   'phom_code': 'Phom ကုဒ်',
   'phom_name': 'Phom အမည်',
@@ -61,7 +58,6 @@ const Map<String, String> my = {
   'total_phom_code': 'စုစုပေါင်း Phom ကုဒ်အရေအတွက်',
   'total_inventory': 'စုစုပေါင်း ကုန်ပစ္စည်းစာရင်း',
 
-  // shelf
   'list_shelf': 'Shelf စာရင်း',
   'shelf_code': 'Shelf ကုဒ်',
   'shelf_name': 'Shelf အမည်',

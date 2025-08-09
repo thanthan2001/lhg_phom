@@ -15,9 +15,8 @@ class LoginPage extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      // Unfocus Input
       onTap: () {
-        FocusScope.of(context).unfocus(); // Hide keyboard
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
@@ -76,7 +75,6 @@ class LoginPage extends GetView<LoginController> {
                         ),
                         SizedBox(height: 20),
 
-                        // Nút chọn nhà máy
                         Obx(
                           () => GestureDetector(
                             onTap: () => controller.showFactoryModal(context),
@@ -132,11 +130,7 @@ class LoginPage extends GetView<LoginController> {
                 ),
               ),
             ),
-            Positioned(
-              top: 40, // Adjust position as needed
-              left: 20,
-              child: LanguageSelector(),
-            ),
+            Positioned(top: 40, left: 20, child: LanguageSelector()),
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -155,7 +149,6 @@ class LanguageSelector extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      // Danh sách các ngôn ngữ có sẵn
       final List<Map<String, String>> languages = [
         {'code': 'en', 'flag': AppImagesString.fEn},
         {'code': 'vi', 'flag': AppImagesString.fVi},
@@ -163,10 +156,8 @@ class LanguageSelector extends GetView<LoginController> {
         {'code': 'my', 'flag': AppImagesString.fMy},
       ];
 
-      // Xác định ngôn ngữ hiện tại
       final String currentFlag = controller.currentFlag.value;
 
-      // Lọc ra 3 ngôn ngữ còn lại
       final List<Map<String, String>> otherLanguages =
           languages.where((lang) => lang['flag'] != currentFlag).toList();
 

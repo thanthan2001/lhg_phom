@@ -1,4 +1,3 @@
-// lib/lang/zh.dart
 const Map<String, String> zh = {
   'log_in': '登录',
   'welcome': '欢迎来到我的应用程序',
@@ -10,7 +9,6 @@ const Map<String, String> zh = {
   'version': '版本 1.0.0',
   'hello': '你好 - ',
 
-  // user
   'information': '信息',
   'setting': '设置',
   'user_information': '用户信息',
@@ -33,7 +31,6 @@ const Map<String, String> zh = {
   'input_to_search': '输入以搜索...',
   'no_data': '没有数据',
 
-  // Lend
   'lend': '借出',
   'lend_register': '注册借出',
   'lend_all': '全部',
@@ -48,7 +45,6 @@ const Map<String, String> zh = {
   'return_date': '归还日期',
   'lend_status': '借出状态',
 
-  // Phom
   'press_to_add_phom': '按此添加 Phom',
   'phom_code': 'Phom 代码',
   'phom_name': 'Phom 名称',
@@ -62,7 +58,6 @@ const Map<String, String> zh = {
   'total_phom_code': '总类型数量',
   'total_inventory': '总库存',
 
-  // shelf
   'list_shelf': '货架列表',
   'shelf_code': '货架代码',
   'shelf_name': '货架名称',

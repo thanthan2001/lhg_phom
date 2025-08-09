@@ -16,7 +16,6 @@ class ApiService {
     };
   }
 
-  // Post Method
   Future<Response> post(String endpoint, Map<String, dynamic> data) async {
     try {
       final response = await _dio.post(endpoint, data: jsonEncode(data));

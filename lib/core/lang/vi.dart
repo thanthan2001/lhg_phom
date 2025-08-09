@@ -1,4 +1,3 @@
-// lib/lang/vi.dart
 const Map<String, String> vi = {
   'log_in': 'Đăng nhập',
   'welcome': 'Chào mừng đến với ứng dụng của tôi',
@@ -13,7 +12,6 @@ const Map<String, String> vi = {
   'no_data': 'Không có dữ liệu',
   'hello': 'Xin chào - ',
 
-  // user
   'information': 'Thông tin',
   'setting': 'Cài đặt',
   'user_information': 'Thông tin người dùng',
@@ -33,7 +31,6 @@ const Map<String, String> vi = {
   'confirm_password': 'Xác nhận mật khẩu',
   'save': 'Lưu',
 
-  // Lend
   'lend': 'Cho mượn',
   'lend_register': 'Đăng ký mượn',
   'lend_all': 'Tất cả',
@@ -48,7 +45,6 @@ const Map<String, String> vi = {
   'return_date': 'Ngày trả',
   'lend_status': 'Trạng thái',
 
-  // Phom
   'press_to_add_phom': 'Nhấn để thêm phom',
   'phom_code': 'Mã phom',
   'phom_name': 'Tên phom',
@@ -62,9 +58,7 @@ const Map<String, String> vi = {
   'total_phom_code': 'Tổng số loại',
   'total_inventory': 'Tổng tồn kho',
 
-  //Shelf
   'list_shelf': 'Danh sách kệ',
   'shelf_code': 'Mã kệ',
   'shelf_name': 'Tên kệ',
 };
-

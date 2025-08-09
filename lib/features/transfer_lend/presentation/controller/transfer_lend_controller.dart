@@ -71,10 +71,7 @@ class TransferLendController extends GetxController {
       '✅ Controller Initialized. CompanyName: $companyName, UserID: ${user!.userId}',
     );
 
-    await Future.wait([
-      // _connectRFID(),
-      getDepartment(),
-    ]);
+    await Future.wait([getDepartment()]);
 
     isLoading.value = false;
   }
@@ -124,28 +121,24 @@ class TransferLendController extends GetxController {
       "BILL_RETURN": new_bill_return,
       "BILL_BORROW": new_bill_borrow,
     };
-    print("Data to send on finish: $data");
+
     try {
       var response = await ApiService(
         baseUrl,
       ).post('/phom/submitTransfer', data);
       if (response.data["statusCode"] == 200) {
-        print("✅ Finish successful: ${response.data}");
         Get.snackbar('Thông báo', 'Hoàn tất thành công.');
         onClear();
       } else {
-        print('❌ Lỗi khi hoàn tất: ${response.statusCode} - ${response.data}');
         Get.snackbar('Lỗi ❌', 'Không thể hoàn tất: ${response.data}');
       }
     } catch (e) {
-      print('❌ Lỗi khi gọi API finish: $e');
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi hoàn tất: $e');
     }
   }
 
   Future<void> getDepartment() async {
     if (companyName == null || companyName!.isEmpty) {
-      print("⚠️ Company name is not set. Cannot fetch departments.");
       return;
     }
     try {
@@ -188,11 +181,7 @@ class TransferLendController extends GetxController {
                   depNameToIdMap[departmentsNames.first] ?? '';
             }
           }
-          print("✅ Departments fetched: $departmentsNames");
-          print("✅ depNameToIdMap: $depNameToIdMap");
-          print("✅ depIdToNameMap: $depIdToNameMap");
         } else {
-          print("⚠️ Department data is null or not in expected format.");
           departmentList.clear();
           depNameToIdMap.clear();
           depIdToNameMap.clear();
@@ -206,7 +195,6 @@ class TransferLendController extends GetxController {
         depIdToNameMap.clear();
       }
     } catch (e) {
-      print('❌ Lỗi khi lấy danh sách đơn vị: $e');
       departmentList.clear();
       depNameToIdMap.clear();
       depIdToNameMap.clear();
@@ -226,7 +214,6 @@ class TransferLendController extends GetxController {
     LastSum.value = 0;
 
     final searchData = {"companyName": companyName, "ID_BILL": bill_br_id.text};
-    print("Searching with data: $searchData from $baseUrl/phom/layphieumuon");
 
     try {
       var response = await ApiService(
@@ -245,7 +232,7 @@ class TransferLendController extends GetxController {
             'Thông báo',
             'Phiếu mượn chưa được xác nhận. Vui lòng kiểm tra lại.',
           );
-          print('ℹ️ Phiếu mượn chưa được xác nhận.');
+
           isAvalableScan.value = false;
           isLoading.value = false;
           return;
@@ -260,14 +247,11 @@ class TransferLendController extends GetxController {
           isAvalableScan.value = true;
           final List<dynamic> jsonArray = responseBody["data"]["jsonArray"];
           idBillFromSearch = jsonArray[0]['ID_bill']?.toString();
-          print('idbillFromSearch: $idBillFromSearch');
 
-          // --- START: CẬP NHẬT ĐƠN VỊ CHUYỂN TỪ API ---
           final infoBill = responseBody["infoBill"];
           if (infoBill != null && infoBill is Map<String, dynamic>) {
             String? apiDepId = infoBill['DepID']?.toString();
             if (apiDepId != null && apiDepId.isNotEmpty) {
-              // Tìm tên đơn vị từ ID bằng depIdToNameMap
               String? departmentName = depIdToNameMap[apiDepId];
 
               if (departmentName != null) {
@@ -277,7 +261,6 @@ class TransferLendController extends GetxController {
                   "🔄 Đơn vị chuyển được cập nhật từ API: Tên='${selectedDepartment.value}', ID='${selectedDepartmentId.value}'",
                 );
               } else {
-                // Nếu không tìm thấy tên, có thể hiển thị ID hoặc một giá trị mặc định
                 selectedDepartment.value =
                     apiDepId; // Hiển thị ID nếu không có tên
                 selectedDepartmentId.value = apiDepId;
@@ -289,21 +272,12 @@ class TransferLendController extends GetxController {
               print(
                 "⚠️ DepID trong infoBill rỗng hoặc null. Không cập nhật đơn vị chuyển.",
               );
-              // Optionally reset to default if preferred
-              // if (departmentList.isNotEmpty) {
-              //   selectedDepartment.value = departmentList.first;
-              //   selectedDepartmentId.value = depNameToIdMap[departmentList.first] ?? '';
-              // } else {
-              //   selectedDepartment.value = '';
-              //   selectedDepartmentId.value = '';
-              // }
             }
           } else {
             print(
               "⚠️ infoBill is null hoặc không phải Map. Không cập nhật đơn vị chuyển.",
             );
           }
-          // --- END: CẬP NHẬT ĐƠN VỊ CHUYỂN TỪ API ---
 
           for (var item in jsonArray) {
             if (item is Map<String, dynamic>) {
@@ -320,7 +294,6 @@ class TransferLendController extends GetxController {
               ]);
             }
           }
-          print("📦 inventoryData populated. Total LastSum: ${LastSum.value}");
         } else {
           Get.snackbar(
             'Thông báo',
@@ -329,18 +302,6 @@ class TransferLendController extends GetxController {
           print(
             'ℹ️ Không có dữ liệu từ layphieumuon hoặc rowCount là 0. Response: $responseBody',
           );
-          // Optionally reset department dropdowns if no data found
-          // if (departmentList.isNotEmpty) {
-          //   selectedDepartment.value = departmentList.first;
-          //   selectedDepartmentId.value = depNameToIdMap[departmentList.first] ?? '';
-          //   selectedDepartmentReceiver.value = departmentList.first;
-          //   selectedDepartmentReceiverId.value = depNameToIdMap[departmentList.first] ?? '';
-          // } else {
-          //   selectedDepartment.value = '';
-          //   selectedDepartmentId.value = '';
-          //   selectedDepartmentReceiver.value = '';
-          //   selectedDepartmentReceiverId.value = '';
-          // }
         }
       } else {
         Get.snackbar('Lỗi ❌', '${response.data['message']}');
@@ -350,14 +311,12 @@ class TransferLendController extends GetxController {
       }
     } catch (e) {
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi tìm kiếm: $e');
-      print('❌ Lỗi khi gọi API layphieumuon: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<void> onClear() async {
-    print("Clear action triggered");
     LastSum.value = 0;
     bill_br_id.clear();
     listTagRFID.clear();
@@ -385,13 +344,11 @@ class TransferLendController extends GetxController {
       lastSizeList.clear();
     }
 
-    print("✅ Clear action completed.");
     Get.snackbar("Thông báo", "Đã đặt lại các trường và danh sách thẻ.");
   }
 
   void checkAndAddNewTags(List<String> newTags) {
     if (!isAvalableScan.value) {
-      print("⚠️ Scanning is not available. Search for items first.");
       Get.snackbar("Thông báo", "Vui lòng tìm kiếm phiếu mượn trước khi quét.");
       return;
     }
@@ -406,7 +363,6 @@ class TransferLendController extends GetxController {
         }).toList();
 
     if (uniqueNewTags.isNotEmpty) {
-      print('✅ Thêm tag mới vào listTagRFID và gửi server: $uniqueNewTags');
       for (String epc in uniqueNewTags) {
         sendEPCToServer(epc);
       }
@@ -425,11 +381,9 @@ class TransferLendController extends GetxController {
 
   Future<void> sendEPCToServer(String epc) async {
     if (companyName == null || companyName!.isEmpty) {
-      print("⚠️ Company name is not set. Cannot send EPC to server.");
       return;
     }
     final data = {"companyName": companyName, "RFID": epc};
-    print("data for getphomrfid: $data");
 
     try {
       final response = await ApiService(
@@ -438,10 +392,8 @@ class TransferLendController extends GetxController {
 
       if (response.statusCode == 200) {
         final List<dynamic>? jsonList = response.data?['data'];
-        print("jsonList from getphomrfid: $jsonList");
 
         if (jsonList == null || jsonList.isEmpty) {
-          print("⚠️ Không có dữ liệu chi tiết cho EPC: $epc");
           return;
         }
         bool inventoryUpdated = false;
@@ -530,30 +482,22 @@ class TransferLendController extends GetxController {
 
         if (inventoryUpdated) {
           inventoryData.refresh();
-          print("🔄 UI inventoryData đã được refresh.");
         }
-
-        print('📋 scannedRfidDetailsList content: $scannedRfidDetailsList');
-        print('✅ Dữ liệu trả về từ getphomrfid: ${response.data}');
       } else {
         print(
           '❌ Gửi EPC thất bại (getphomrfid): ${response.statusCode}, ${response.data}',
         );
       }
-    } catch (e, stackTrace) {
-      print('❌ Lỗi khi gửi EPC lên server (getphomrfid): $e');
-      print('Stack trace: $stackTrace');
-    }
+    } catch (e, stackTrace) {}
   }
 
   Future<void> onScanMultipleTags() async {
     if (!isAvalableScan.value) {
       Get.snackbar('Cảnh báo', 'Vui lòng thực hiện tìm kiếm trước khi quét.');
-      print("⚠️ Attempted to scan but isAvalableScan is false.");
+
       return;
     }
     if (isLoading.value) {
-      print("⚠️ Scan already in progress.");
       return;
     }
 
@@ -565,14 +509,10 @@ class TransferLendController extends GetxController {
       );
 
       if (tags.isNotEmpty) {
-        print('📡 Thẻ RFID quét được: $tags');
         checkAndAddNewTags(tags);
-      } else {
-        print('ℹ️ Không có thẻ RFID mới nào được tìm thấy trong lần quét này.');
-      }
+      } else {}
     } catch (e) {
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét: $e');
-      print('❌ Lỗi khi quét nhiều thẻ: $e');
     } finally {
       isLoading.value = false;
     }
@@ -582,12 +522,10 @@ class TransferLendController extends GetxController {
     try {
       final connected = await RFIDService.connect();
       if (connected) {
-        print('✅💕 Đã kết nối RFID thành công');
       } else {
         Get.snackbar('Lỗi', 'Không thể kết nối thiết bị RFID');
       }
     } catch (e) {
-      print('❌ Lỗi kết nối RFID: $e');
       Get.snackbar('Lỗi', 'Kết nối RFID thất bại: $e');
     }
   }
@@ -595,9 +533,6 @@ class TransferLendController extends GetxController {
   Future<void> _disconnectRFID() async {
     try {
       await RFIDService.disconnect();
-      print('✅ Ngắt kết nối RFID');
-    } catch (e) {
-      print('❌ Lỗi ngắt kết nối: $e');
-    }
+    } catch (e) {}
   }
 }

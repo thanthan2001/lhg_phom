@@ -32,7 +32,6 @@ class HomePage extends GetView<HomeController> {
     );
   }
 
-  // Card Phom
   Widget _buildExpandableCard(Map<String, dynamic> item, int index) {
     return Obx(() {
       final isExpanded = controller.expandedIndex.value == index;
@@ -176,7 +175,6 @@ class HomePage extends GetView<HomeController> {
     return details.fold<int>(0, (sum, item) => sum + (item['quantity'] as int));
   }
 
-  // AppBar
   Widget _buildAppBar() {
     return Container(
       width: double.infinity,

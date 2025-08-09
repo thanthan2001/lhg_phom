@@ -10,6 +10,8 @@ class PhomBindingItem {
   final String? dateIn;
   final String? userID;
   final String? shelfName;
+  final String? rfidShortcut;
+
   final String? companyName;
 
   PhomBindingItem({
@@ -24,6 +26,7 @@ class PhomBindingItem {
     this.dateIn,
     this.userID,
     this.shelfName,
+    this.rfidShortcut,
     this.companyName,
   });
 
@@ -40,6 +43,7 @@ class PhomBindingItem {
       "DateIn": dateIn,
       "UserID": userID,
       "ShelfName": shelfName,
+      "RFIDShortcut": rfidShortcut,
       "companyName": companyName,
     };
   }

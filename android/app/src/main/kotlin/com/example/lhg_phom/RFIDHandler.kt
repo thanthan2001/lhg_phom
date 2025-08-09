@@ -18,7 +18,7 @@ class RFIDHandler(
     private var soundPool: SoundPool? = null
     private var soundId: Int? = null
 
-    // Thêm import cho Handler và Looper ở trên cùng
+  
 
     private fun initSound() {
         soundPool = SoundPool(1, AudioManager.STREAM_MUSIC, 0)
@@ -33,16 +33,16 @@ class RFIDHandler(
     fun connect(): Boolean {
         val result = Reader.rrlib.Connect("/dev/ttyHSL0", 115200, 0)
         return if (result == 0) {
-            // initSound()
+  
             Log.d("RFID", "✅ Connected successfully")
-            // Cũng nên gửi callback này trên luồng chính cho an toàn
+  
             Handler(Looper.getMainLooper()).post {
                 channel.invokeMethod("onConnected", null)
             }
             true
         } else {
             Log.e("RFID", "❌ Connection failed: $result")
-            // Callback lỗi cũng nên gửi trên luồng chính
+  
             Handler(Looper.getMainLooper()).post {
                 channel.invokeMethod("onError", "Connection failed: $result")
             }
@@ -53,7 +53,7 @@ class RFIDHandler(
     fun disconnect() {
         try {
             Reader.rrlib.StopRead()
-            // Reader.rrlib.PowerControll(null, false)
+  
             Reader.rrlib.DisConnect()
             Log.d("RFID", "🔌 Disconnected")
         } catch (e: Exception) {
@@ -63,30 +63,30 @@ class RFIDHandler(
 
     fun scanRFID(mode: Int) {
         Reader.rrlib.SetCallBack(object : TagCallback {
-            // Hàm này được gọi từ LUỒNG NỀN (Background Thread) của thư viện RFID
+  
             override fun tagCallback(tag: ReadTag?) {
                 tag?.epcId?.let { epc ->
-                    // Log vẫn chạy được trên luồng nền
+  
                     Log.d("RFID", "📦 Tag scanned on background thread: $epc")
 
-                    // =================== PHẦN SỬA LỖI Ở ĐÂY ===================
-                    // Dùng Handler để đăng một tác vụ lên hàng đợi của Luồng Chính (Main Thread)
+  
+  
                     Handler(Looper.getMainLooper()).post {
-                        // Code bên trong khối này sẽ được thực thi trên Main Thread,
-                        // do đó gọi invokeMethod ở đây là AN TOÀN.
+  
+  
                         Log.d("RFID", "🚀 Sending tag to Flutter on main thread: $epc")
                         channel.invokeMethod("onTagScanned", epc)
                     }
-                    // ==========================================================
+  
                 }
             }
 
-            // Hàm này cũng có thể được gọi từ luồng nền, nên xử lý tương tự cho chắc chắn
+  
             override fun StopReadCallBack() {
                 Handler(Looper.getMainLooper()).post {
                     Log.d("RFID", "🛑 Scan stopped callback received")
-                    // Bạn có thể gửi một callback về Flutter nếu cần
-                    // channel.invokeMethod("onNativeScanStop", null)
+  
+  
                 }
             }
         })

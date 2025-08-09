@@ -9,7 +9,6 @@ class LendAllController extends GetxController {
 
   var searchQuery = ''.obs;
 
-  // Bộ lọc
   var selectedTrangThai = ''.obs;
   var selectedNgayMuon = ''.obs;
   var selectedDonVi = ''.obs;
@@ -25,7 +24,10 @@ class LendAllController extends GetxController {
   }
 
   void formLend() {
-    allLendItems = exampleLendItems.where((item) => item.trangThai != 'đăng ký mượn').toList();
+    allLendItems =
+        exampleLendItems
+            .where((item) => item.trangThai != 'đăng ký mượn')
+            .toList();
     formlendItems.value = allLendItems;
   }
 
@@ -35,47 +37,55 @@ class LendAllController extends GetxController {
   }
 
   void applyFilters() {
-  final dateFormatter = DateFormat('dd/MM/yyyy');
+    final dateFormatter = DateFormat('dd/MM/yyyy');
 
-  formlendItems.value = allLendItems.where((item) {
-    final name = item.idNguoiMuon?.userName?.toLowerCase() ?? '';
-    final donVi = item.donVi?.toLowerCase() ?? '';
-    final ngayMuonStr = item.ngayMuon ?? '';
-    final maPhom = item.maPhom?.toLowerCase() ?? '';
-    final trangThai = item.trangThai?.toLowerCase() ?? '';
+    formlendItems.value =
+        allLendItems.where((item) {
+          final name = item.idNguoiMuon?.userName?.toLowerCase() ?? '';
+          final donVi = item.donVi?.toLowerCase() ?? '';
+          final ngayMuonStr = item.ngayMuon ?? '';
+          final maPhom = item.maPhom?.toLowerCase() ?? '';
+          final trangThai = item.trangThai?.toLowerCase() ?? '';
 
-    DateTime? itemDate;
-    try {
-      itemDate = dateFormatter.parseStrict(ngayMuonStr);
-    } catch (e) {
-      // Không parse được ngày → bỏ qua item này
-      return false;
-    }
+          DateTime? itemDate;
+          try {
+            itemDate = dateFormatter.parseStrict(ngayMuonStr);
+          } catch (e) {
+            return false;
+          }
 
-    final inDateRange =
-        (selectedDateFrom.value == null || itemDate.isAfter(selectedDateFrom.value!.subtract(const Duration(days: 1)))) &&
-        (selectedDateTo.value == null || itemDate.isBefore(selectedDateTo.value!.add(const Duration(days: 1))));
+          final inDateRange =
+              (selectedDateFrom.value == null ||
+                  itemDate.isAfter(
+                    selectedDateFrom.value!.subtract(const Duration(days: 1)),
+                  )) &&
+              (selectedDateTo.value == null ||
+                  itemDate.isBefore(
+                    selectedDateTo.value!.add(const Duration(days: 1)),
+                  ));
 
-    final matches = 
-        (selectedTrangThai.value.isEmpty || trangThai == selectedTrangThai.value.toLowerCase()) &&
-        (selectedDonVi.value.isEmpty || donVi == selectedDonVi.value.toLowerCase()) &&
-        (selectedMaPhom.value.isEmpty || maPhom.contains(selectedMaPhom.value.toLowerCase())) &&
-        (selectedUserName.value.isEmpty || name.contains(selectedUserName.value.toLowerCase())) &&
-        inDateRange;
+          final matches =
+              (selectedTrangThai.value.isEmpty ||
+                  trangThai == selectedTrangThai.value.toLowerCase()) &&
+              (selectedDonVi.value.isEmpty ||
+                  donVi == selectedDonVi.value.toLowerCase()) &&
+              (selectedMaPhom.value.isEmpty ||
+                  maPhom.contains(selectedMaPhom.value.toLowerCase())) &&
+              (selectedUserName.value.isEmpty ||
+                  name.contains(selectedUserName.value.toLowerCase())) &&
+              inDateRange;
 
-    return matches;
-  }).toList();
-}
-
-
+          return matches;
+        }).toList();
+  }
 
   void resetFilters() {
-  selectedTrangThai.value = '';
-  selectedDonVi.value = '';
-  selectedMaPhom.value = '';
-  selectedUserName.value = '';
-  selectedDateFrom.value = null;
-  selectedDateTo.value = null;
-  applyFilters();
-}
+    selectedTrangThai.value = '';
+    selectedDonVi.value = '';
+    selectedMaPhom.value = '';
+    selectedUserName.value = '';
+    selectedDateFrom.value = null;
+    selectedDateTo.value = null;
+    applyFilters();
+  }
 }

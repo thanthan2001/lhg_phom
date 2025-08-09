@@ -27,7 +27,6 @@ class PhomPage extends GetView<PhomController> {
       ),
       body: Column(
         children: [
-          // Nút thêm phom
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: ButtonWidget(
@@ -40,7 +39,7 @@ class PhomPage extends GetView<PhomController> {
               },
             ),
           ),
-          // Danh sách phom
+
           Expanded(
             child: Obx(() {
               if (controller.phoms.isEmpty) {
@@ -101,7 +100,6 @@ class PhomPage extends GetView<PhomController> {
     );
   }
 
-  // Hàm hiển thị dữ liệu theo cột
   Widget _buildColumnData(String title, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,

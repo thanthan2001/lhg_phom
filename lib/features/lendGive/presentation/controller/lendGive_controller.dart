@@ -1,788 +1,453 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:lhg_phom/core/services/models/user/domain/usecase/get_user_use_case.dart';
 import 'package:lhg_phom/core/services/models/user/model/user_model.dart';
-import 'dart:convert';
-
 import 'package:lhg_phom/core/services/rfid_service.dart';
-
 import '../../../../core/services/dio.api.service.dart';
 
 class LendGiveController extends GetxController {
   final GetuserUseCase _getuserUseCase;
   LendGiveController(this._getuserUseCase);
+
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
-  final Map<String, String> depNameToIdMap = {};
-  final sumController = TextEditingController();
+
+  final inventoryDataMap = <String, Map<String, dynamic>>{}.obs;
+  var inventoryData = <List<String>>[].obs;
+
+  final Set<String> processedRfidsInSession = <String>{};
+  final RxList<Map<String, dynamic>> scannedRfidDetailsList =
+      <Map<String, dynamic>>[].obs;
+  final RxList<String> invalidRfids = <String>[].obs;
+
+  final RxList<Map<String, String>> mismatchedRfids =
+      <Map<String, String>>[].obs;
+  final RxList<Map<String, String>> excessRfids = <Map<String, String>>[].obs;
+
+  final bill_br_id = TextEditingController();
   final totalPhomNotBindingController = TextEditingController(text: '0');
   final dateController = TextEditingController();
-  final bill_br_id = TextEditingController();
-  final userNameController = TextEditingController();
-  final rfidController = TextEditingController();
-  late String? companyName;
-  String? idBillFromSearch;
-  final tableScrollController = ScrollController();
-  RxString selectedDepartmentId = ''.obs;
-  final isScanning = false.obs; // <<===== THÊM BIẾN NÀY
-  var totalCount = 0.obs;
 
-  var listTagRFID = [].obs;
-  List<String> lastSizeList = [];
-
-  // State
+  final isScanning = false.obs;
   final isLoading = false.obs;
-  final selectedCodePhom = ''.obs;
-  final selectedDepartment = ''.obs;
-  final isLeftSide = true.obs;
-  final isShowingDetail = false.obs;
-  final scrollProgress = 0.0.obs;
-  var selectedRowIndex = Rx<int?>(null);
-  final LastSum = 0.obs;
+  var totalScannedCount = 0.0.obs;
+  var totalExpectedCount = 0.obs;
+  var isAvalableScan = false.obs;
+  var lastScanStatus = ''.obs;
+
   UserModel? user;
-  var isAvalableFinish = false.obs;
-  final codePhomList = <String>[].obs;
-  final departmentList = <String>[].obs;
+  String? companyName;
+  String? idBillFromSearch;
 
   final List<String> headers = [
     'ID Bill',
     'Dep ID',
-    'Last Mat No',
-    'Last Name',
-    'Last Size',
-    'Last Sum',
-    'Scanned',
+    'Mã Phom',
+    'Tên Phom',
+    'Size',
+    'SL Mượn (Đôi)',
+    'Đã Quét (Đôi)',
   ];
 
-  final epcDataTable = <Map<String, dynamic>>[].obs;
-
-  final RxList<Map<String, dynamic>> scannedRfidDetailsList =
-      <Map<String, dynamic>>[].obs;
-
-  Map<String, dynamic> get currentApiDataPayload {
-    final scanDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    return {
-      "companyName": companyName,
-      "ScanDate": scanDate,
-      "DepID": selectedDepartment.value,
-      "StateScan": "0",
-    };
-  }
-
-  // Thêm hàm này vào trong class LendGiveController của bạn
-  void _resetScanState() {
-    print("🔄 Đặt lại trạng thái quét cho phiên làm việc mới...");
-
-    // 1. Xóa danh sách các thẻ RFID đã quét trong phiên trước
-    listTagRFID.clear();
-    lastSizeList.clear(); // Rất quan trọng để logic đếm không bị sai
-    print("  - Đã xóa listTagRFID và lastSizeList.");
-
-    // 2. Xóa danh sách chi tiết đã chuẩn bị để gửi đi
+  void _resetScanStateForNewSession() {
+    processedRfidsInSession.clear();
     scannedRfidDetailsList.clear();
-    print("  - Đã xóa scannedRfidDetailsList.");
+    lastScanStatus.value = '';
+    totalScannedCount.value = 0.0;
 
-    // 3. Đặt lại số lượng đã quét trong bảng giao diện (inventoryData) về 0
-    if (inventoryData.isNotEmpty) {
-      bool changed = false;
-      for (int i = 0; i < inventoryData.length; i++) {
-        // Đảm bảo dòng có đủ phần tử trước khi truy cập
-        if (inventoryData[i].length > 6 && inventoryData[i][6] != '0') {
-          inventoryData[i][6] = '0'; // <<===== ĐÂY LÀ YÊU CẦU CHÍNH CỦA BẠN
-          changed = true;
-        }
-      }
-      if (changed) {
-        inventoryData.refresh(); // Cập nhật lại UI để hiển thị số 0
-        print(
-          "  - Cột 'Scanned' trong inventoryData đã được đặt lại về '0'. Giao diện đã được làm mới.",
-        );
-      }
+    invalidRfids.clear();
+    mismatchedRfids.clear();
+    excessRfids.clear();
+
+    inventoryDataMap.forEach((key, value) {
+      value['scannedCount'] = 0.0;
+    });
+
+    for (var row in inventoryData) {
+      row[6] = '0.0';
     }
-
-    // 4. Đặt lại các biến trạng thái giao diện khác
-    rfidController.clear();
-    totalCount.value = 0;
-    print("  - Đã xóa rfidController và đặt lại totalCount.");
-
-    print("✅ Trạng thái quét đã được đặt lại thành công.");
-  }
-
-  // Table data
-  var inventoryData = <List<String>>[].obs;
-  var isAvalableScan = false.obs;
-
-  // Logic
-  void onScan() {
-    isShowingDetail.value = true;
-  }
-
-  Future<void> onStop() async {
-    await RFIDService.stopScan();
-  }
-
-  Future<void> onFinish() async {
-    if (scannedRfidDetailsList.isEmpty) {
-      Get.snackbar("Thông báo", "Không có dữ liệu quét chi tiết để gửi đi.");
-      return;
-    }
-
-    if (user == null || companyName == null || companyName!.isEmpty) {
-      Get.snackbar("Lỗi", "Thông tin người dùng hoặc công ty không đầy đủ.");
-      return;
-    }
-
-    isLoading.value = true;
-
-    final String apiEndpoint = '/phom/saveBill';
-    final String commonCompanyName = companyName!;
-    final String commonUserID = user!.userId!;
-    final String commonDateBorrow = convertDate(dateController.text);
-
-    final List<Map<String, dynamic>> preparedList =
-        scannedRfidDetailsList.map((item) {
-          return {
-            // "companyName": commonCompanyName,
-            "StateScan": 0,
-            "ID_BILL": idBillFromSearch,
-            "DepID": item["DepID"],
-            "ScanDate": item["ScanDate"],
-            "RFID": item["RFID"],
-            "UserID": commonUserID,
-            "DateBorrow": commonDateBorrow,
-          };
-        }).toList();
-    print('preparedList for saveBill: $preparedList');
-    final Map<String, dynamic> payload = {
-      "companyName": commonCompanyName,
-      "ToTalPhomNotBinding": totalPhomNotBindingController.text,
-      "scannedRfidDetailsList": preparedList,
-    };
-    print('payload for saveBill: $payload');
-    try {
-      final response = await ApiService(baseUrl).post(apiEndpoint, payload);
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        final successCount = data['successCount'] ?? 0;
-        final failureCount = data['failureCount'] ?? 0;
-
-        if (successCount > 0 && failureCount == 0) {
-          await Get.snackbar(
-            "Thành công",
-            "$successCount mục đã được gửi thành công!",
-          );
-          await onClear();
-          isLoading.value = false;
-        } else if (successCount > 0 && failureCount > 0) {
-          await Get.snackbar(
-            "Hoàn tất một phần",
-            "$successCount mục thành công, $failureCount mục thất bại.",
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-          );
-          print("🔺 Thất bại:\n${data['failedList']}");
-          isLoading.value = false;
-        } else {
-          Get.snackbar(
-            "Thất bại",
-            "Tất cả đều thất bại. Vui lòng kiểm tra lại.",
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
-          isLoading.value = false;
-        }
-      } else {
-        isLoading.value = false;
-
-        Get.snackbar(
-          "Lỗi",
-          "Không thể gửi dữ liệu. Mã lỗi: ${response.statusCode}",
-        );
-      }
-    } catch (e) {
-      isLoading.value = false;
-      Get.snackbar("Lỗi hệ thống", "Không thể kết nối tới máy chủ.");
-      print("❌ Exception: $e");
-    }
-  }
-
-  bool isValidDate(String input) {
-    try {
-      final parts = input.split('/');
-      if (parts.length != 3) return false;
-
-      final day = int.parse(parts[0]);
-      final month = int.parse(parts[1]);
-      final year = int.parse(parts[2]);
-
-      final inputDate = DateTime(year, month, day);
-      final now = DateTime.now();
-
-      if (inputDate.isBefore(DateTime(now.year, now.month, now.day))) {
-        return false;
-      }
-      return true;
-    } catch (e) {
-      return false;
-    }
+    inventoryData.refresh();
   }
 
   Future<void> onClear() async {
-    print("Clear action triggered");
-    LastSum.value = 0;
+    await onStopRead(showReport: false);
+
     bill_br_id.clear();
-    listTagRFID.clear();
-    print("  - listTagRFID cleared.");
+    totalPhomNotBindingController.text = '0';
 
-    epcDataTable.clear();
-    print("  - epcDataTable cleared.");
-
+    inventoryData.clear();
+    inventoryDataMap.clear();
+    processedRfidsInSession.clear();
     scannedRfidDetailsList.clear();
-    print("  - scannedRfidDetailsList cleared.");
+    invalidRfids.clear();
+    mismatchedRfids.clear();
+    excessRfids.clear();
 
-    if (inventoryData.isEmpty) {
-      print("  - inventoryData is already empty, nothing to clear.");
-    } else {
-      inventoryData.clear();
-      print("  - inventoryData cleared.");
-    }
-
-    selectedCodePhom.value = '';
-    print("  - selectedCodePhom reset to empty.");
-    selectedDepartment.value = '';
-    print("  - selectedDepartment reset to empty.");
-    selectedDepartmentId.value = '';
-    print("  - selectedDepartmentId reset to empty.");
     isAvalableScan.value = false;
-    print("  - isAvalableScan set to false.");
-    isShowingDetail.value = false;
-    print("  - isShowingDetail set to false.");
+    lastScanStatus.value = '';
+    totalScannedCount.value = 0.0;
+    totalExpectedCount.value = 0;
+    idBillFromSearch = null;
 
-    if (inventoryData.isNotEmpty) {
-      bool changed = false;
-      for (int i = 0; i < inventoryData.length; i++) {
-        if (inventoryData[i].length > 6 && inventoryData[i][6] != '0') {
-          inventoryData[i][6] = '0';
-          changed = true;
-        }
-      }
-      if (changed) {
-        inventoryData.refresh();
-        print(
-          "  - 'Scanned' column in inventoryData reset to '0'. UI refreshed.",
-        );
-      } else {
-        print(
-          "  - 'Scanned' column in inventoryData was already '0' or inventoryData is empty.",
-        );
-      }
-    } else {
-      print("  - inventoryData is empty, nothing to reset in it.");
-    }
-
-    if (lastSizeList.isNotEmpty) {
-      lastSizeList.clear();
-      print("  - lastSizeList (matched RFIDs) cleared.");
-    } else {
-      print("  - lastSizeList was already empty.");
-    }
-
-    print("✅ Clear action completed.");
     Get.snackbar(
-      "✅Thành công",
-      "Scan mượn thành công.",
-      backgroundColor: Colors.green.withOpacity(0.8),
+      "Thông báo",
+      "Đã xóa toàn bộ dữ liệu, sẵn sàng cho phiếu mượn mới.",
+      backgroundColor: Colors.blueAccent,
+      colorText: Colors.white,
     );
   }
 
-  Future<void> _connectRFID() async {
-    try {
-      final connected = await RFIDService.connect();
-      if (connected) {
-        print('✅💕 Đã kết nối RFID thành công');
-        Get.snackbar(
-          '✅ Kết nối thành công',
-          'Đã kết nối với thiết bị RFID',
-          backgroundColor: Colors.green.withOpacity(0.8),
-        );
-      } else {
-        Get.snackbar(
-          '❌Lỗi',
-          'Kết nối RFID thất bại',
-          backgroundColor: Colors.red.withOpacity(0.8),
-        );
-      }
-    } catch (e) {
-      print('❌ Lỗi kết nối RFID: $e');
-      Get.snackbar(
-        '❌Lỗi',
-        'Kết nối RFID thất bại: $e',
-        backgroundColor: Colors.red.withOpacity(0.8),
-      );
-    }
-  }
-
-  Future<void> _disconnectRFID() async {
-    try {
-      await RFIDService.disconnect();
-      print('✅ Ngắt kết nối RFID');
-    } catch (e) {
-      print('❌ Lỗi ngắt kết nối: $e');
-    }
-  }
-
-  Future<void> getDepartment() async {
-    if (companyName == null || companyName!.isEmpty) {
-      print("⚠️ Company name is not set. Cannot fetch departments.");
-      return;
-    }
-    try {
-      final data = {"companyName": companyName};
-      print("Fetching departments with data: $data from $baseUrl");
-      var response = await ApiService(
-        baseUrl,
-      ).post('/phom/getDepartment', data);
-      if (response.statusCode == 200) {
-        final List<dynamic>? jsonArray = response.data?["data"]?["jsonArray"];
-        if (jsonArray != null) {
-          final List<String> departments = [];
-          final Map<String, String> map = {};
-          for (var e in jsonArray) {
-            String depName = e['DepName'].toString();
-            String id = e['ID'].toString();
-            departments.add(depName);
-            map[depName] = id;
-          }
-          departmentList.assignAll(departments);
-          depNameToIdMap.clear();
-          depNameToIdMap.addAll(map);
-
-          if (departments.isNotEmpty) {
-            selectedDepartment.value = departments.first;
-          }
-          print("✅ Departments fetched: $departments");
-        } else {
-          print("⚠️ Department data is null or not in expected format.");
-          departmentList.clear();
-          depNameToIdMap.clear();
-        }
-      } else {
-        print(
-          '❌ Lỗi khi lấy danh sách đơn vị: ${response.statusCode} - ${response.data}',
-        );
-        departmentList.clear();
-        depNameToIdMap.clear();
-      }
-    } catch (e) {
-      print('❌ Lỗi khi lấy danh sách đơn vị: $e');
-      departmentList.clear();
-      depNameToIdMap.clear();
-    }
-  }
-
-  Future<void> onStopRead() async {
-    try {
-      await RFIDService.stopScan();
-      isScanning.value = false;
-      isLoading.value = false;
-      print('⏹️ Dừng quét RFID');
-    } catch (e) {
-      print('❌ Lỗi dừng quét: $e');
-      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi dừng quét: $e');
-    }
-  }
-
-  String convertDate(String inputDate) {
-    final parts = inputDate.split('/');
-    if (parts.length != 3) return inputDate;
-    final day = parts[0].padLeft(2, '0');
-    final month = parts[1].padLeft(2, '0');
-    final year = parts[2];
-    return "$year-$month-$day";
-  }
-
-  Future<void> sendEPCToServer(String epc) async {
-    if (companyName == null || companyName!.isEmpty) {
-      print("⚠️ Company name is not set. Cannot send EPC to server.");
-      return;
-    }
-    final data = {"companyName": companyName, "RFID": epc};
-    print("data for getphomrfid: $data");
-
-    try {
-      final response = await ApiService(
-        baseUrl,
-      ).post('/phom/getphomrfid', data);
-
-      if (response.statusCode == 200) {
-        final List<dynamic>? jsonList = response.data?['data'];
-        print("jsonList from getphomrfid: $jsonList");
-
-        if (jsonList == null || jsonList.isEmpty) {
-          print("⚠️ Không có dữ liệu chi tiết cho EPC: $epc");
-          Get.snackbar(
-            '❌Lỗi',
-            'Không có dữ liệu từ phom',
-            backgroundColor: Colors.red,
-          );
-          return;
-        }
-        bool inventoryUpdated = false;
-        for (var item in jsonList) {
-          if (item is Map<String, dynamic>) {
-            String? epcLastMatNo = item['LastMatNo']?.toString();
-            String? epcLastName = item['LastName']?.toString();
-
-            String rfidFromApi = item["RFID"]?.toString() ?? epc;
-            String? epcLastSize = item['LastSize']?.toString().trim();
-
-            if (epcLastMatNo == null || epcLastSize == null) {
-              print(
-                "⚠️ Dữ liệu từ API cho EPC $rfidFromApi thiếu LastMatNo hoặc LastSize: $item",
-              );
-              Get.snackbar(
-                '⚠️ Cảnh báo',
-                '⚠️ Dữ liệu từ API cho EPC $rfidFromApi thiếu LastMatNo hoặc LastSize: $item',
-                backgroundColor: Colors.red,
-              );
-              continue;
-            }
-            print(
-              "🔎 Đang tìm kiếm trong inventoryData cho MatNo: $epcLastMatNo, Size: $epcLastSize (RFID: $rfidFromApi)",
-            );
-
-            for (int i = 0; i < inventoryData.length; i++) {
-              List<String> inventoryRow = inventoryData[i];
-              if (inventoryRow.length < 7) {
-                print(
-                  "⚠️ inventoryRow at index $i is too short: $inventoryRow",
-                );
-                // Get.snackbar(
-                //   '⚠️ Cảnh báo',
-                //   'Dữ liệu không đầy đủ tại dòng $i: $inventoryRow',
-                //   backgroundColor: Colors.red,
-                // );
-                continue;
-              }
-              String inventoryMatNo = inventoryRow[2];
-              String inventorySize = inventoryRow[4].trim();
-              String inventoryDepID = inventoryRow[1];
-
-              if (inventoryMatNo == epcLastMatNo &&
-                  inventorySize == epcLastSize) {
-                print(
-                  "✅ Tìm thấy dòng khớp tại index $i: $inventoryRow cho RFID: $rfidFromApi",
-                );
-
-                if (!lastSizeList.contains(rfidFromApi)) {
-                  int maxAllowedScans = int.tryParse(inventoryRow[5]) ?? 0;
-                  if (lastSizeList.length > maxAllowedScans * 2) {
-                    isAvalableFinish.value = false;
-                    Get.snackbar(
-                      '⚠️ Cảnh báo',
-                      'Số lượng thẻ đã quét vượt quá giới hạn cho phép: $maxAllowedScans. Vui lòng kiểm tra lại.',
-                      backgroundColor: Colors.yellow,
-                    );
-                  } else {
-                    lastSizeList.add(rfidFromApi);
-                    print(
-                      "✅ Thêm RFID $rfidFromApi vào lastSizeList. Tổng số lượng: ${lastSizeList.length}",
-                    );
-                  }
-                }
-                final String currentDate = DateFormat(
-                  'yyyy-MM-dd',
-                ).format(DateTime.now());
-
-                int currentScannedCount = int.tryParse(inventoryRow[6]) ?? 0;
-                int maxAllowedScans = int.tryParse(inventoryRow[5]) ?? 0;
-
-                if (currentScannedCount < maxAllowedScans * 2) {
-                  currentScannedCount++;
-                  bool alreadyExistsInDetails = scannedRfidDetailsList.any(
-                    (detail) =>
-                        detail["RFID"] == rfidFromApi &&
-                        detail["LastMatNo"] == epcLastMatNo &&
-                        detail["DepID"] == inventoryDepID,
-                  );
-
-                  if (!alreadyExistsInDetails) {
-                    scannedRfidDetailsList.add({
-                      "DepID": inventoryDepID,
-                      "LastMatNo": epcLastMatNo,
-                      "ScanDate": currentDate,
-                      "RFID": rfidFromApi,
-                    });
-                    print(
-                      "📝 Added to scannedRfidDetailsList: DepID: $inventoryDepID, LastMatNo: $epcLastMatNo, ScanDate: $currentDate, RFID: $rfidFromApi",
-                    );
-                  } else {
-                    print(
-                      "ℹ️ RFID $rfidFromApi for MatNo $epcLastMatNo, DepID $inventoryDepID already in scannedRfidDetailsList. Scanned count will still increment.",
-                    );
-                  }
-                  inventoryRow[6] = currentScannedCount.toString();
-                  inventoryUpdated = true;
-                  print(
-                    "📊 Cập nhật số lượng quét cho dòng $i (MatNo: $inventoryMatNo, Size: $inventorySize) thành: $currentScannedCount / $maxAllowedScans",
-                  );
-                } else {
-                  print(
-                    "⚠️ Số lượng quét cho dòng $i (MatNo: $inventoryMatNo, Size: $inventorySize) đã đạt tối đa: $currentScannedCount / $maxAllowedScans. Không tăng thêm.",
-                  );
-                }
-              } else {
-                Get.snackbar(
-                  '⚠️ Cảnh báo',
-                  'Phom không hợp lệ cho EPC: $rfidFromApi, Tên Phom: $epcLastName, Size: $epcLastSize',
-                  backgroundColor: Colors.red,
-                );
-              }
-            }
-          }
-        }
-
-        if (inventoryUpdated) {
-          inventoryData.refresh();
-          print("🔄 UI inventoryData đã được refresh.");
-        }
-        print('📋 lastSizeList content: $lastSizeList');
-        print('📋 scannedRfidDetailsList content: $scannedRfidDetailsList');
-        print('✅ Dữ liệu trả về từ getphomrfid: ${response.data}');
-      } else {
-        print(
-          '❌ Gửi EPC thất bại (getphomrfid): ${response.statusCode}, ${response.data}',
-        );
-      }
-    } catch (e, stackTrace) {
-      print('❌ Lỗi khi gửi EPC lên server (getphomrfid): $e');
-      print('Stack trace: $stackTrace');
-    }
-  }
-
-  String? ID_BILL = '';
   Future<void> onSearch() async {
-    if (companyName == null || companyName!.isEmpty) {
-      Get.snackbar('Lỗi', 'Thông tin công ty không có sẵn.');
+    final String billIdToSearch = bill_br_id.text.trim();
+    if (billIdToSearch.isEmpty) {
+      Get.snackbar('Lỗi', 'Vui lòng nhập mã số đơn mượn.');
       return;
     }
-    if (dateController.text.isEmpty) {
-      Get.snackbar('Lỗi', 'Vui lòng chọn ngày.');
-      return;
-    }
-
     isLoading.value = true;
-    isAvalableScan.value = false;
+    await onStopRead(showReport: false);
+
     inventoryData.clear();
-    lastSizeList.clear();
+    inventoryDataMap.clear();
+    processedRfidsInSession.clear();
     scannedRfidDetailsList.clear();
-    LastSum.value = 0;
+    invalidRfids.clear();
+    mismatchedRfids.clear();
+    excessRfids.clear();
+    isAvalableScan.value = false;
+    lastScanStatus.value = '';
+    totalScannedCount.value = 0.0;
+    totalExpectedCount.value = 0;
     idBillFromSearch = null;
-    final newSelectedDate = convertDate(dateController.text);
-    final searchData = {
-      "companyName": companyName,
-      // "DateBorrow": newSelectedDate,
-      // "DepID": selectedDepartmentId.value,
-      "ID_BILL": bill_br_id.text, // Ensure this is filled or handle if optional
-      // "LastMatNo":
-      //     selectedCodePhom
-      //         .value, // Ensure this is selected or handle if optional
-    };
-    print("Searching with data: $searchData from $baseUrl/phom/layphieumuon");
+
+    final searchData = {"companyName": companyName, "ID_BILL": billIdToSearch};
 
     try {
       var response = await ApiService(
         baseUrl,
       ).post('/phom/layphieumuon', searchData);
-      // print('response from layphieumuon: ${response.data["statusCode"]}');
-      if (response.data["statusCode"] == 200) {
-        if (!response.data["infoBill"]["isConfirm"]) {
-          Get.snackbar(
-            backgroundColor: Colors.yellow,
-            'Thông báo',
-            'Phiếu mượn chưa được xác nhận. Vui lòng kiểm tra lại.',
-          );
-          print('ℹ️ Phiếu mượn chưa được xác nhận.');
-          isAvalableScan.value = false;
-          isLoading.value = false;
-          return;
-        }
-        if (response.data["infoBill"]["StateLastBill"]) {
-          Get.snackbar(
-            backgroundColor: Colors.greenAccent,
-            'Thông báo',
-            '✅Đơn đã được hoàn tất. Không thể quét thêm.',
-          );
-          print('ℹ️ Đơn đã được hoàn tất. Không thể quét thêm.');
-          isAvalableScan.value = false;
-          isLoading.value = false;
-          return;
-        }
-        final responseBody = response.data;
-        print(responseBody);
-        if (responseBody != null &&
-            responseBody["data"] != null &&
-            responseBody["data"]["rowCount"] != null &&
-            responseBody["data"]["rowCount"] > 0) {
-          isAvalableScan.value = true;
-          final List<dynamic> jsonArray = responseBody["data"]["jsonArray"];
-
-          idBillFromSearch = jsonArray[0]['ID_bill']?.toString();
-          print('idbillFromSearch: $idBillFromSearch');
-          for (var item in jsonArray) {
-            if (item is Map<String, dynamic>) {
-              LastSum.value +=
-                  int.tryParse(item['LastSum']?.toString() ?? '0') ?? 0;
-              inventoryData.add([
-                item['ID_bill']?.toString() ?? '',
-                item['DepID']?.toString() ?? '',
-                item['LastMatNo']?.toString() ?? '',
-                item['LastName']?.toString() ?? '',
-                item['LastSize']?.toString() ?? '',
-                item['LastSum']?.toString() ?? '0',
-                '0',
-              ]);
-            }
-          }
-          print("📦 inventoryData populated. Total LastSum: ${LastSum.value}");
-        } else {
-          Get.snackbar(
-            'Thông báo',
-            'Không tìm thấy dữ liệu cho tiêu chí đã chọn.',
-          );
-          print(
-            'ℹ️ Không có dữ liệu từ layphieumuon hoặc rowCount là 0. Response: $responseBody',
-          );
-        }
-      } else {
-        Get.snackbar('Lỗi ❌', '${response.data['message']}');
-        print(
-          '❌ Lỗi khi lấy dữ liệu từ layphieumuon: ${response.statusCode} - ${response.data}',
+      if (response.data["statusCode"] != 200) {
+        throw Exception(
+          response.data['message'] ?? 'Lỗi không xác định từ máy chủ',
         );
       }
+      final infoBill = response.data["infoBill"];
+      if (infoBill == null) throw Exception('Không nhận được thông tin phiếu.');
+      if (!infoBill["isConfirm"]) {
+        Get.snackbar(
+          'Cảnh báo',
+          'Phiếu mượn chưa được xác nhận. Không thể quét.',
+          backgroundColor: Colors.orange,
+        );
+        return;
+      }
+      final List<dynamic>? jsonArray = response.data["data"]?["jsonArray"];
+      if (jsonArray == null || jsonArray.isEmpty) {
+        Get.snackbar('Thông báo', 'Không tìm thấy dữ liệu cho phiếu mượn này.');
+        return;
+      }
+
+      idBillFromSearch = jsonArray[0]['ID_bill']?.toString();
+      int currentTotalExpected = 0;
+      final List<List<String>> tempInventoryData = [];
+      final Map<String, Map<String, dynamic>> tempInventoryMap = {};
+      for (var item in jsonArray) {
+        if (item is Map<String, dynamic>) {
+          String lastMatNo = item['LastMatNo']?.toString() ?? '';
+          String lastSize = item['LastSize']?.toString().trim() ?? '';
+          String key = "${lastMatNo}_$lastSize";
+          int lastSum = int.tryParse(item['LastSum']?.toString() ?? '0') ?? 0;
+          currentTotalExpected += lastSum;
+          final row = [
+            item['ID_bill']?.toString() ?? '',
+            item['DepID']?.toString() ?? '',
+            lastMatNo,
+            item['LastName']?.toString() ?? '',
+            lastSize,
+            lastSum.toString(),
+            '0.0',
+          ];
+          tempInventoryData.add(row);
+          tempInventoryMap[key] = {
+            'rowData': row,
+            'expectedCount': lastSum.toDouble(),
+            'scannedCount': 0.0,
+            'depId': item['DepID']?.toString() ?? '',
+          };
+        }
+      }
+      inventoryData.assignAll(tempInventoryData);
+      inventoryDataMap.assignAll(tempInventoryMap);
+      totalExpectedCount.value = currentTotalExpected;
+      isAvalableScan.value = true;
+      Get.snackbar(
+        'Thành công',
+        'Đã tải thông tin phiếu mượn. Sẵn sàng để quét.',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
     } catch (e) {
-      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi tìm kiếm: $e');
-      print('❌ Lỗi khi gọi API layphieumuon: $e');
+      Get.snackbar('Lỗi tìm kiếm', 'Lỗi: ${e.toString()}');
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> getLastMatNo() async {
-    if (companyName == null || companyName!.isEmpty) {
-      print("⚠️ Company name is not set. Cannot fetch LastMatNo.");
-      return;
-    }
-    try {
-      final data = {"companyName": companyName};
-      print("Fetching LastMatNo with data: $data from $baseUrl");
-      var response = await ApiService(baseUrl).post('/phom/getLastMatNo', data);
-      if (response.statusCode == 200) {
-        final List<dynamic>? jsonArray = response.data?["data"]?["jsonArray"];
-        if (jsonArray != null) {
-          final List<String> codes =
-              jsonArray.map((e) => e['LastMatNo'].toString()).toList();
-          codePhomList.assignAll(codes);
-          if (codes.isNotEmpty) {}
-          print("✅ LastMatNo fetched: $codes");
-        } else {
-          print("⚠️ LastMatNo data is null or not in expected format.");
-          codePhomList.clear();
-        }
-      } else {
-        print(
-          '❌ Lỗi khi lấy danh sách mặt nợ: ${response.statusCode} - ${response.data}',
-        );
-        codePhomList.clear();
-      }
-    } catch (e) {
-      print('❌ Lỗi khi lấy danh sách mặt nợ: $e');
-      codePhomList.clear();
-    }
-  }
-
-  void checkAndAddNewTags(List<String> newTags) {
-    if (!isAvalableScan.value) {
-      print("⚠️ Scanning is not available. Search for items first.");
-      Get.snackbar("Thông báo", "Vui lòng tìm kiếm phiếu mượn trước khi quét.");
-      return;
-    }
-
-    final uniqueNewTags =
-        newTags.where((tag) {
-          bool alreadyProcessed = listTagRFID.contains(tag);
-          if (!alreadyProcessed) {
-            listTagRFID.add(tag);
-          }
-          return !alreadyProcessed;
-        }).toList();
-
-    if (uniqueNewTags.isNotEmpty) {
-      print('✅ Thêm tag mới vào listTagRFID và gửi server: $uniqueNewTags');
-      for (String epc in uniqueNewTags) {
-        sendEPCToServer(epc);
-      }
+  void toggleScan() {
+    if (isScanning.value) {
+      onStopRead();
     } else {
-      print(
-        'ℹ️ Các thẻ này đã được quét trong phiên này: $newTags. Sẽ được xử lý lại để cập nhật số lượng nếu cần.',
-      );
-      for (String epc in newTags) {
-        sendEPCToServer(epc);
-      }
+      onScanMultipleTags();
     }
-    print(
-      '📋 Tổng số thẻ đã quét trong phiên (listTagRFID): ${listTagRFID.length} - $listTagRFID',
-    );
   }
 
   Future<void> onScanMultipleTags() async {
     if (!isAvalableScan.value) {
-      Get.snackbar('Cảnh báo', 'Vui lòng thực hiện tìm kiếm trước khi quét.');
-      print("⚠️ Attempted to scan but isAvalableScan is false.");
+      Get.snackbar(
+        'Cảnh báo',
+        'Vui lòng tìm kiếm phiếu mượn hợp lệ trước khi quét.',
+      );
       return;
     }
+    if (isScanning.value) return;
 
-    if (isScanning.value) {
-      print("⚠️ Đã đang trong quá trình quét liên tục.");
-      return;
-    }
-    _resetScanState();
-    isLoading.value = true;
+    _resetScanStateForNewSession();
     isScanning.value = true;
-    print("▶️ Bắt đầu quét liên tục nhiều thẻ...");
 
     try {
-      listTagRFID.clear();
-      rfidController.clear();
-      totalCount.value = 0;
-      update();
-
       await RFIDService.scanContinuous((epc) {
         if (!isScanning.value) return;
-
-        if (!listTagRFID.contains(epc)) {
-          listTagRFID.add(epc);
-
-          checkAndAddNewTags([epc]);
-
-          rfidController.text = listTagRFID.join(', ');
-          totalCount.value = listTagRFID.length;
-
-          print('✅ Thẻ mới: $epc | Tổng số: ${totalCount.value}');
+        if (processedRfidsInSession.add(epc)) {
+          _handleEpc(epc);
         }
       });
-
-      print("▶️ scanContinuous đã được khởi động.");
     } catch (e) {
-      print('❌ Lỗi khi bắt đầu quét liên tục: $e');
-      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét: $e');
       isScanning.value = false;
+      lastScanStatus.value = "Lỗi quét: $e";
+    }
+  }
+
+  Future<void> onStopRead({bool showReport = true}) async {
+    if (isScanning.value) {
+      await RFIDService.stopScan();
+      isScanning.value = false;
+      lastScanStatus.value = "Đã dừng quét.";
+
+      if (showReport) {
+        _showScanReport();
+      }
+    }
+  }
+
+  void _showScanReport() {
+    if (invalidRfids.isEmpty &&
+        mismatchedRfids.isEmpty &&
+        excessRfids.isEmpty) {
+      Get.snackbar(
+        "Quét hoàn tất",
+        "Tất cả các thẻ quét đều hợp lệ.",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      return;
+    }
+    Get.defaultDialog(
+      title: "Báo cáo phiên quét",
+      titleStyle: const TextStyle(fontWeight: FontWeight.bold),
+      content: SingleChildScrollView(
+        child: ListBody(
+          children: <Widget>[
+            if (invalidRfids.isNotEmpty) ...[
+              const Text(
+                'RFID không tồn tại trong hệ thống:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+              Text(invalidRfids.join('\n')),
+              const SizedBox(height: 10),
+            ],
+            if (mismatchedRfids.isNotEmpty) ...[
+              const Text(
+                'Phom sai (không có trong phiếu mượn):',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+              Text(
+                mismatchedRfids
+                    .map(
+                      (item) =>
+                          "${item['rfid']} - ${item['matNo']} - Size ${item['size']}",
+                    )
+                    .join('\n'),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (excessRfids.isNotEmpty) ...[
+              const Text(
+                'Quét thừa số lượng:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+              Text(
+                excessRfids
+                    .map(
+                      (item) =>
+                          "${item['rfid']} - ${item['matNo']} - Size ${item['size']}",
+                    )
+                    .join('\n'),
+              ),
+            ],
+          ],
+        ),
+      ),
+      textConfirm: "Đã hiểu",
+      confirmTextColor: Colors.white,
+      onConfirm: () => Get.back(),
+    );
+  }
+
+  Future<void> _handleEpc(String epc) async {
+    final data = {"companyName": companyName, "RFID": epc};
+    try {
+      final response = await ApiService(
+        baseUrl,
+      ).post('/phom/getphomrfid', data);
+
+      if (response.statusCode != 200 ||
+          response.data?['data'] == null ||
+          response.data['data'].isEmpty) {
+        lastScanStatus.value = 'RFID $epc không hợp lệ';
+
+        if (!invalidRfids.contains(epc)) invalidRfids.add(epc);
+        return;
+      }
+
+      final item = response.data['data'][0];
+      String lastMatNo = item['LastMatNo']?.toString() ?? 'N/A';
+      String lastSize = item['LastSize']?.toString().trim() ?? 'N/A';
+      String key = "${lastMatNo}_$lastSize";
+
+      if (inventoryDataMap.containsKey(key)) {
+        var entry = inventoryDataMap[key]!;
+        double currentScanned = entry['scannedCount'];
+        double expected = entry['expectedCount'];
+
+        if (currentScanned < expected) {
+          entry['scannedCount'] = currentScanned + 0.5;
+          totalScannedCount.value += 0.5;
+
+          List<String> rowData = entry['rowData'];
+          rowData[6] = entry['scannedCount'].toString();
+          inventoryData.refresh();
+
+          scannedRfidDetailsList.add({
+            "StateScan": 0,
+            "ID_BILL": idBillFromSearch,
+            "DepID": entry['depId'],
+            "ScanDate": DateFormat('yyyy-MM-dd').format(DateTime.now()),
+            "RFID": epc,
+            "UserID": user!.userId!,
+            "DateBorrow": convertDate(dateController.text),
+          });
+          lastScanStatus.value = 'Hợp lệ: $lastMatNo - Size $lastSize';
+          print(
+            '✅ Quét hợp lệ: $key | Đã quét: ${entry['scannedCount']}/${expected}',
+          );
+        } else {
+          lastScanStatus.value = 'Đã đủ SL: $lastMatNo - Size $lastSize';
+
+          if (!excessRfids.any((e) => e['rfid'] == epc)) {
+            excessRfids.add({
+              'rfid': epc,
+              'matNo': lastMatNo,
+              'size': lastSize,
+            });
+          }
+        }
+      } else {
+        lastScanStatus.value = 'Sai phom: $lastMatNo - Size $lastSize';
+
+        if (!mismatchedRfids.any((m) => m['rfid'] == epc)) {
+          mismatchedRfids.add({
+            'rfid': epc,
+            'matNo': lastMatNo,
+            'size': lastSize,
+          });
+        }
+      }
+    } catch (e) {
+      lastScanStatus.value = 'Lỗi xử lý RFID';
+    }
+  }
+
+  Future<void> onFinish() async {
+    if (invalidRfids.isNotEmpty || mismatchedRfids.isNotEmpty) {
+      Get.defaultDialog(
+        title: "Cảnh báo",
+        middleText:
+            "Vẫn còn các phom không hợp lệ hoặc sai phom trong phiên quét. Bạn có chắc muốn hoàn tất không?",
+        textConfirm: "Vẫn hoàn tất",
+        textCancel: "Hủy",
+        onConfirm: () {
+          Get.back();
+          _proceedToFinish();
+        },
+      );
+    } else {
+      _proceedToFinish();
+    }
+  }
+
+  Future<void> _proceedToFinish() async {
+    if (scannedRfidDetailsList.isEmpty) {
+      Get.snackbar("Thông báo", "Chưa có phom nào được quét.");
+      return;
+    }
+    isLoading.value = true;
+    final payload = {
+      "companyName": companyName,
+      "ToTalPhomNotBinding": totalPhomNotBindingController.text,
+      "scannedRfidDetailsList": scannedRfidDetailsList,
+    };
+
+    try {
+      final response = await ApiService(
+        baseUrl,
+      ).post('/phom/saveBill', payload);
+      if (response.statusCode == 200) {
+        final successCount = response.data['successCount'] ?? 0;
+        await Get.defaultDialog(
+          title: "Hoàn tất",
+          middleText: "$successCount mục đã được lưu thành công!",
+          textConfirm: "OK",
+          onConfirm: () {
+            Get.back();
+            onClear();
+          },
+        );
+      } else {
+        throw Exception("Lưu thất bại. Mã lỗi: ${response.statusCode}");
+      }
+    } catch (e) {
+      Get.snackbar("Lỗi hệ thống", "Không thể gửi dữ liệu. ${e.toString()}");
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  String convertDate(String inputDate) {
+    try {
+      final parts = inputDate.split('/');
+      return "${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}";
+    } catch (_) {
+      return inputDate;
     }
   }
 
@@ -790,59 +455,27 @@ class LendGiveController extends GetxController {
   void onInit() async {
     super.onInit();
     isLoading.value = true;
-    user = await _getuserUseCase.getUser();
-
-    RFIDService.setOnHardwareScan(() {
-      print(
-        '🔔 Nút cứng đã được bấm! Trạng thái quét hiện tại: ${isScanning.value}',
-      );
-
-      if (isScanning.value) {
-        onStopRead();
-      } else {
-        onScanMultipleTags();
+    try {
+      user = await _getuserUseCase.getUser();
+      if (user?.companyName == null || user!.companyName!.isEmpty) {
+        throw Exception('Không tìm thấy thông tin người dùng hoặc công ty.');
       }
-    });
-    if (user == null ||
-        user!.companyName == null ||
-        user!.companyName!.isEmpty) {
-      print(
-        '❌ User hoặc CompanyName null/empty, không thể khởi tạo LendGiveController',
-      );
-      Get.snackbar('Lỗi', 'Không tìm thấy thông tin người dùng hoặc công ty.');
+      companyName = user!.companyName;
+      RFIDService.setOnHardwareScan(toggleScan);
+      dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    } catch (e) {
+      Get.snackbar('Lỗi khởi tạo', e.toString());
+    } finally {
       isLoading.value = false;
-
-      return;
     }
-
-    companyName = user!.companyName;
-    print(
-      '✅ LendGiveController Initialized. CompanyName: $companyName, UserID: ${user!.userId}',
-    );
-
-    final today = DateTime.now();
-    dateController.text =
-        "${today.day.toString().padLeft(2, '0')}/${today.month.toString().padLeft(2, '0')}/${today.year}";
-
-    await Future.wait([
-      // _connectRFID(),
-      getDepartment(),
-      getLastMatNo(),
-    ]);
-
-    isLoading.value = false;
   }
 
   @override
   void onClose() {
-    sumController.dispose();
-    dateController.dispose();
     bill_br_id.dispose();
-    // userNameController.dispose(); // If used
-    // rfidController.dispose(); // If used
-    tableScrollController.dispose();
-    // _disconnectRFID();
+    totalPhomNotBindingController.dispose();
+    dateController.dispose();
+    onStopRead(showReport: false);
     super.onClose();
-    print("LendGiveController closed and resources disposed.");
   }
 }

@@ -7,7 +7,6 @@ class CustomDropdownField extends StatelessWidget {
   final String selectedValue;
   final VoidCallback onTap;
 
-  // Optional customizations
   final TextStyle? labelStyle;
   final double? labelSize;
   final Color? labelColor;

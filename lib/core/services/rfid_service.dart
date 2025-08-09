@@ -5,42 +5,13 @@ class RFIDService {
   static const MethodChannel _channel = MethodChannel('rfid_channel');
   static Function(String epc)? _onScanCallback;
   static bool _handlerInitialized = false;
-  static Function()? _onHardwareScanCallback; // <-- THÊM DÒNG NÀY
+  static Function()? _onHardwareScanCallback;
 
-  /// Đăng ký callback cho nút scan cứng.
   static void setOnHardwareScan(Function() callback) {
     _onHardwareScanCallback = callback;
-    _registerHandlerOnce(); // Đảm bảo handler đã được đăng ký
+    _registerHandlerOnce();
   }
 
-  /// Chỉ gọi 1 lần để đăng ký nhận từ native
-  // static void _registerHandlerOnce() {
-  //   if (_handlerInitialized) return;
-  //   _channel.setMethodCallHandler((call) async {
-  //     switch (call.method) {
-  //       case 'onTagScanned':
-  //         final epc = call.arguments as String;
-  //         _onScanCallback?.call(epc);
-  //         break;
-  //       case 'onConnected':
-  //         print('✅ Native báo đã kết nối thành công');
-  //         break;
-  //       case 'onError':
-  //         print('❌ Native báo lỗi: ${call.arguments}');
-  //         break;
-  //       case 'onContinuousScanStart':
-  //         print('🔁 Native báo đã bắt đầu quét liên tục');
-  //         break;
-  //       case 'onScanStopped':
-  //         print('🛑 Native báo đã dừng quét');
-  //         break;
-  //       default:
-  //         print('⚠️ Không nhận diện method native: ${call.method}');
-  //     }
-  //   });
-  //   _handlerInitialized = true;
-  // }
-  /// Chỉ gọi 1 lần để đăng ký nhận từ native
   static void _registerHandlerOnce() {
     if (_handlerInitialized) return;
     _channel.setMethodCallHandler((call) async {
@@ -50,49 +21,38 @@ class RFIDService {
           _onScanCallback?.call(epc);
           break;
 
-        // THÊM CASE MỚI ĐỂ NHẬN SỰ KIỆN TỪ NÚT CỨNG
         case 'onScanButtonPressed':
-          print('🔔 Hardware scan button pressed!');
-          _onHardwareScanCallback?.call(); // Gọi callback đã đăng ký
+          _onHardwareScanCallback?.call();
           break;
 
         case 'onConnected':
-          print('✅ Native báo đã kết nối thành công');
           break;
         case 'onError':
-          print('❌ Native báo lỗi: ${call.arguments}');
           break;
         case 'onContinuousScanStart':
-          print('🔁 Native báo đã bắt đầu quét liên tục');
           break;
         case 'onScanStopped':
-          print('🛑 Native báo đã dừng quét');
           break;
         default:
-          print('⚠️ Không nhận diện method native: ${call.method}');
       }
     });
     _handlerInitialized = true;
   }
 
-  /// Kết nối đến thiết bị RFID
   static Future<bool> connect() async {
     _registerHandlerOnce();
     try {
       final result = await _channel.invokeMethod<bool>('connectRFID');
       return result ?? false;
     } catch (e) {
-      print('❌ Lỗi khi connect: $e');
       return false;
     }
   }
 
-  /// Ngắt kết nối với thiết bị
   static Future<void> disconnect() async {
     await _channel.invokeMethod('disconnectRFID');
   }
 
-  /// Bắt đầu quét liên tục, truyền callback mỗi khi có tag
   static Future<bool> scanContinuous(Function(String epc) onScan) async {
     _registerHandlerOnce();
     _onScanCallback = onScan;
@@ -101,18 +61,15 @@ class RFIDService {
       await _channel.invokeMethod('scanRFID', {'mode': 1});
       return true;
     } catch (e) {
-      print('❌ scanContinuous lỗi: $e');
       return false;
     }
   }
 
-  /// Dừng quét liên tục
   static Future<void> stopScan() async {
     await _channel.invokeMethod('stopScan');
     _onScanCallback = null;
   }
 
-  /// Quét 1 lần, trả về EPC đầu tiên quét được
   static Future<String?> scanSingleTag({
     Duration timeout = const Duration(seconds: 3),
   }) async {
@@ -127,7 +84,6 @@ class RFIDService {
       await _channel.invokeMethod('scanRFID', {'mode': 0});
       return await completer.future.timeout(timeout);
     } catch (e) {
-      print('❌ Timeout hoặc lỗi khi quét 1 lần: $e');
       return null;
     }
   }
@@ -151,7 +107,6 @@ class RFIDService {
       });
       return completer.future;
     } catch (e) {
-      print('❌ Lỗi quét nhiều EPC: \$e');
       return [];
     }
   }

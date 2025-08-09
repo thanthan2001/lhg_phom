@@ -76,18 +76,6 @@ class TransferLendPage extends GetView<TransferLendController> {
         ),
         const SizedBox(width: 10),
 
-        // Expanded(
-        //   flex: 1,
-        //   child: ButtonWidget(
-        //     width: 100,
-        //     height: 48,
-        //     backgroundColor: AppColors.yellow,
-        //     textColor: Colors.white,
-        //     ontap: controller.onStop,
-        //     text: "Stop",
-        //     borderRadius: 5,
-        //   ),
-        // ),
         const SizedBox(width: 10),
         Expanded(
           child: ButtonWidget(
@@ -261,46 +249,6 @@ class TransferLendPage extends GetView<TransferLendController> {
           ),
         ),
         const SizedBox(width: 10),
-        // Expanded(
-        //   child: Stack(
-        //     alignment: Alignment.centerRight,
-        //     children: [
-        //       CustomTextFieldWidget(
-        //         enableColor: AppColors.grey2,
-        //         height: 40,
-        //         labelText: "Ngày mượn:",
-        //         labelColor: AppColors.black,
-        //         controller: controller.dateController,
-        //         obscureText: false,
-        //         borderRadius: 5,
-        //         textColor: AppColors.black,
-        //         keyboardType: TextInputType.datetime,
-        //         onChanged: (value) {
-        //           // Xử lý validation nếu cần
-        //         },
-        //       ),
-        //       IconButton(
-        //         icon: const Icon(
-        //           Icons.calendar_month_outlined,
-        //           size: 30,
-        //           color: AppColors.primary1,
-        //         ),
-        //         onPressed: () async {
-        //           final pickedDate = await showDatePicker(
-        //             context: Get.context!,
-        //             initialDate: DateTime.now(),
-        //             firstDate: DateTime(1900),
-        //             lastDate: DateTime(2100),
-        //           );
-        //           if (pickedDate != null) {
-        //             controller.dateController.text =
-        //                 "${pickedDate.day.toString().padLeft(2, '0')}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.year}";
-        //           }
-        //         },
-        //       ),
-        //     ],
-        //   ),
-        // ),
       ],
     );
   }

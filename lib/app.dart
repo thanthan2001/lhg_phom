@@ -21,9 +21,7 @@ class App extends StatelessWidget {
       future: _getSavedLocale(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          ); // Hiển thị loading khi đang lấy dữ liệu
+          return const Center(child: CircularProgressIndicator());
         }
 
         return GetMaterialApp(
@@ -37,7 +35,7 @@ class App extends StatelessWidget {
             scaffoldBackgroundColor: AppColors.white,
           ),
           translations: TranslationService(),
-          locale: snapshot.data, 
+          locale: snapshot.data,
           fallbackLocale: const Locale('en'),
         );
       },

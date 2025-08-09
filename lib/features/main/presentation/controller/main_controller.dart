@@ -38,7 +38,6 @@ class MainController extends GetxController {
           transition: Transition.fadeIn,
         );
       case '/shelf':
-        print("Navigating to ListTourPage");
         return GetPageRoute(
           settings: settings,
           page: () => const ShelfPage(),

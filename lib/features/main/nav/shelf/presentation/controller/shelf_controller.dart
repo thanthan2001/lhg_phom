@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../../core/configs/prefs_contants.dart';
 
 class ShelfController extends GetxController {
-  // Danh sách dữ liệu mẫu đa dạng hơn
   var shelves = <Map<String, dynamic>>[].obs;
 
   @override

@@ -7,23 +7,23 @@ import '../../../../../../core/data/pref/prefs.dart';
 import '../../../../../../core/routes/routes.dart';
 import '../../../../../../core/services/models/user/domain/usecase/get_user_use_case.dart';
 import '../../../../../../core/configs/prefs_contants.dart';
+import '../../../../../../core/services/models/user/model/user_model.dart';
 
 class UserController extends GetxController {
   final Prefs prefs = Prefs.preferences;
   final GetuserUseCase _getuserUseCase;
   UserController(this._getuserUseCase);
-
+  UserModel? user;
   var isDarkMode = false.obs;
   var language = "English".obs;
   var languageIcon = AppImagesString.fEn.obs;
+  String userName = "";
 
-  /// **Chuyển đổi giữa dark mode và light mode**
   void toggleDarkMode() {
     isDarkMode.value = !isDarkMode.value;
     Get.changeTheme(isDarkMode.value ? ThemeData.dark() : ThemeData.light());
   }
 
-  /// **Đăng xuất**
   Future<void> logout() async {
     await _getuserUseCase.logout();
     Get.offAllNamed(Routes.login);
@@ -62,7 +62,9 @@ class UserController extends GetxController {
   }
 
   @override
-  void onInit() {
+  void onInit() async {
+    user = await _getuserUseCase.getUser();
+    userName = user?.userName ?? "GUEST";
     super.onInit();
     loadLanguage();
   }

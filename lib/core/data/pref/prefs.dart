@@ -5,11 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../configs/prefs_contants.dart';
 
 class Prefs {
-  // Initial shared preferences /
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   static final Prefs preferences = Prefs();
 
-  // Initial method String /
   Future<String> get(String key) async {
     final SharedPreferences prefs = await _prefs;
     return json.decode(prefs.getString(key)!) ?? '';
@@ -27,8 +25,7 @@ class Prefs {
 
   Future<int> getInt(String key) async {
     final SharedPreferences prefs = await _prefs;
-    final int? value = prefs.getInt(key); // Lấy giá trị và gán vào biến value
-    // Kiểm tra nếu value là null thì trả về 0, ngược lại trả về giá trị value
+    final int? value = prefs.getInt(key);
     return value ?? 0;
   }
 
@@ -59,19 +56,13 @@ class Prefs {
 
   Future logout() async {
     final SharedPreferences prefs = await _prefs;
-    prefs.getKeys().forEach((key) {
-      print("Key before clear: $key - Value: ${prefs.get(key)}");
-    });
+    prefs.getKeys().forEach((key) {});
 
     prefs.clear();
 
-    // Debug: in tất cả các key sau khi clear
-    prefs.getKeys().forEach((key) {
-      print("Key after clear: $key");
-    });
+    prefs.getKeys().forEach((key) {});
   }
 
-  //==================================SET LANG NEWW
   Future<void> setLanguage(String languageCode) async {
     final SharedPreferences prefs = await _prefs;
     await prefs.setString(PrefsConstants.languageCode, languageCode);

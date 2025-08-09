@@ -1,5 +1,3 @@
-//import 'package:epose_app/core/extensions/required.dart';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/ui/widgets/loading/loadingfull.dart';
@@ -21,12 +19,6 @@ class MainPage extends GetView<MainController> {
             onGenerateRoute: controller.onGenerateRoute,
           ),
 
-          // Obx(() {
-          //   return !controller.isLocationServiceEnabled.value &&
-          //           controller.showRequiredLocationBox.value
-          //       ? RequiredLocation(controller: controller)
-          //       : const SizedBox();
-          // }),
           Obx(() {
             return controller.isLoading.value
                 ? const LoadingFull()

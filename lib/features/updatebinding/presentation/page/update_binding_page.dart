@@ -6,7 +6,7 @@ import '../../../../core/ui/dialogs/showSearchableSelectionDialog.dart';
 import '../../../../core/ui/widgets/button/button_widget.dart';
 import '../../../../core/ui/widgets/text/text_widget.dart';
 import '../../../../core/ui/widgets/textfield/custom_dropdownfield_widget.dart';
-// import '../../../../core/ui/widgets/textfield/custom_textfield_widget.dart'; // Not used, can remove
+
 import '../controller/update_binding_controller.dart';
 
 class UpdateBindingPage extends GetView<UpdateBindingController> {
@@ -70,7 +70,6 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
               Container(
                 width: double.infinity,
                 child: ButtonWidget(
-                  // width: 100, // width not needed due to container
                   height: 48,
                   backgroundColor: AppColors.primary1,
                   textColor: Colors.white,
@@ -81,19 +80,16 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
               ),
               const SizedBox(height: 10),
 
-              _buildLeftRightButtons(),
+              // _buildLeftRightButtons(),
               const SizedBox(height: 10),
-              _buildShelfDropdown(),
+              // _buildShelfDropdown(),
               const SizedBox(height: 10),
 
-              // Table for search results
               Obx(() {
                 if (controller.isSearching.value) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (controller.searchResults.isEmpty) {
-                  // Optionally show a message if search has been performed but no results
-                  // For now, just show nothing if empty before first search
                   return const SizedBox.shrink();
                 }
                 return _buildSearchResultsTable();
@@ -111,7 +107,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   text:
                       controller.totalCount.value == 0
                           ? "Chưa quét.."
-                          : "Đã quét: ${controller.totalCount.value} thẻ",
+                          : "Đã quét: ${controller.totalCount.value} đôi",
                   size: 16,
                   color: AppColors.black,
                   fontWeight: FontWeight.w400,
@@ -166,9 +162,6 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   itemList: controller.codePhomList.toList(),
                   selectedItem: controller.selectedCodePhom.value,
                   onSelectedAndCallApi: (val) async {
-                    print('Selected Code Phom: $val');
-                    // No need to set controller.selectedCodePhom.value = val here
-                    // as getInforbyLastMatNo will update it.
                     await controller.getInforbyLastMatNo(val);
                   },
                   onSelected:
@@ -180,7 +173,6 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
             ),
           ),
         ),
-        // const SizedBox(width: 10), // Removed as there's no second item in this row now
       ],
     );
   }
@@ -324,8 +316,6 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
   }
 
   Widget _buildSearchResultsTable() {
-    // Define your columns based on the expected data keys plus "Scanning"
-    // Ensure the keys used here match exactly what's in your searchResults maps
     const List<String> columnKeys = [
       'LastMatNo',
       'LastName',
@@ -334,8 +324,8 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
       'Material',
       'LastSize',
       'LastQty',
-      'LeftCount',
-      'RightCount',
+      // 'LeftCount',
+      // 'RightCount',
       'BindingCount',
       'Scanning',
     ];
@@ -348,10 +338,10 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
       'Chất Liệu',
       'Size',
       'SL',
-      'Trái',
-      'Phải',
-      'Binding',
-      'Scanning',
+      // 'Trái',
+      // 'Phải',
+      'Binding (Đôi)',
+      'Đang quét',
     ];
 
     return SingleChildScrollView(
@@ -359,7 +349,6 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
           Axis.horizontal, // Allows table to scroll horizontally if too wide
       child: DataTable(
         border: TableBorder.all(
-          // <--- THÊM DÒNG NÀY ĐỂ CÓ BORDER ĐẦY ĐỦ
           color: Colors.grey.shade400, // Có thể tùy chỉnh màu border
           width: 1, // Có thể tùy chỉnh độ dày border
         ),
@@ -384,7 +373,6 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
               return DataRow(
                 cells:
                     columnKeys.map((key) {
-                      // Trim string values to avoid extra spaces affecting display
                       var cellValue = item[key]?.toString() ?? '';
                       if (item[key] is String) {
                         cellValue = (item[key] as String).trim();

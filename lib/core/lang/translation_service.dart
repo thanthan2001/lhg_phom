@@ -6,11 +6,8 @@ import 'zh.dart';
 import 'my.dart';
 
 class TranslationService extends Translations {
-  static final locale = Get.deviceLocale; // Lấy ngôn ngữ mặc định của thiết bị
-  static const fallbackLocale = Locale(
-    'en',
-    'US',
-  ); // Ngôn ngữ mặc định khi không tìm thấy
+  static final locale = Get.deviceLocale;
+  static const fallbackLocale = Locale('en', 'US');
 
   @override
   Map<String, Map<String, String>> get keys => {

@@ -6,10 +6,11 @@ class WebSocketService {
 
   WebSocketService(this.url);
 
-  // Kết nối với Socket.IO
-  void connect(Function(String) onMessage,
-      {Function? onError, Function? onDone}) {
-    // Kết nối đến server Socket.IO
+  void connect(
+    Function(String) onMessage, {
+    Function? onError,
+    Function? onDone,
+  }) {
     socket = IO.io(
       url,
       IO.OptionBuilder()
@@ -18,42 +19,32 @@ class WebSocketService {
           .build(),
     );
 
-    // Kết nối tới server
     socket.connect();
 
-    // Xử lý sự kiện khi kết nối thành công
-    socket.onConnect((_) {
-      print('Connected to WebSocket');
-    });
+    socket.onConnect((_) {});
 
-    // Lắng nghe sự kiện tin nhắn từ server
     socket.on('updatePosts', (data) {
       onMessage(data);
     });
 
-    // Lắng nghe sự kiện bình luận mới
     socket.on('updateComments', (data) {
       onMessage(data);
     });
 
-    // Lắng nghe sự kiện yêu thích
     socket.on('updateFavorites', (data) {
       onMessage(data);
     });
 
-    // Lắng nghe sự kiện tin nhắn mới
     socket.on('updateMessage', (data) {
       onMessage(data);
     });
 
-    // Xử lý sự kiện lỗi
     socket.onError((error) {
       if (onError != null) {
         onError(error);
       }
     });
 
-    // Xử lý khi kết nối đóng
     socket.onDisconnect((_) {
       if (onDone != null) {
         onDone();
@@ -61,12 +52,10 @@ class WebSocketService {
     });
   }
 
-  // Gửi tin nhắn tới server
   void sendMessage(String event, dynamic message) {
     socket.emit(event, message);
   }
 
-  // Đóng kết nối
   void disconnect() {
     socket.disconnect();
   }

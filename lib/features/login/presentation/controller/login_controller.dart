@@ -1,4 +1,3 @@
-// login_controller.dart - Không thay đổi
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
@@ -17,20 +16,18 @@ class LoginController extends GetxController {
   LoginController(this._saveUserUseCase);
 
   var isShowPwd = false.obs;
-  var selectedFactory = "".obs; // Lưu nhà máy được chọn
+  var selectedFactory = "".obs;
   late TextEditingController userID = TextEditingController();
   late TextEditingController pwd = TextEditingController();
 
-  //Expanded Select Language
-  final isLanguageSelectorExpanded = false.obs; // NEW: Language Selector
+  final isLanguageSelectorExpanded = false.obs;
   final currentFlag = AppImagesString.fEn.obs;
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
   @override
   void onInit() {
     super.onInit();
-    loadSavedLanguage(); // Gọi hàm lấy ngôn ngữ đã lưu khi khởi động
+    loadSavedLanguage();
   }
-  // NEW: Toggle function for language selector
 
   void toggleLanguageSelector() {
     isLanguageSelectorExpanded.value = !isLanguageSelectorExpanded.value;
@@ -39,11 +36,10 @@ class LoginController extends GetxController {
   void loadSavedLanguage() async {
     String? savedLanguage = await prefs.getLanguage();
     if (savedLanguage != null) {
-      selectLanguage(savedLanguage, save: false); // Cập nhật giao diện
+      selectLanguage(savedLanguage, save: false);
     }
   }
 
-  // NEW: Language selection logic (you need to implement this)
   void selectLanguage(String languageName, {bool save = true}) {
     switch (languageName) {
       case 'en':
@@ -65,7 +61,7 @@ class LoginController extends GetxController {
     }
 
     if (save) {
-      prefs.setLanguage(languageName); // Lưu ngôn ngữ vào bộ nhớ
+      prefs.setLanguage(languageName);
     }
 
     isLanguageSelectorExpanded.value = false;
@@ -75,12 +71,8 @@ class LoginController extends GetxController {
     isShowPwd.value = !isShowPwd.value;
   }
 
-  // Hiển thị modal chọn nhà máy
   void showFactoryModal(BuildContext context) {
-    Get.dialog(
-      FactorySelectionWidget(),
-      barrierDismissible: true, // Cho phép đóng khi chạm bên ngoài
-    );
+    Get.dialog(FactorySelectionWidget(), barrierDismissible: true);
   }
 
   bool verifyInputLogin(userID, pwd, selectedFactory) {
@@ -112,41 +104,25 @@ class LoginController extends GetxController {
   }
 
   Future<void> login() async {
-    print("Login button clicked"); // Debug xem hàm có chạy không
     var data = {
       "userID": userID.text,
       "pwd": pwd.text,
       "companyName": selectedFactory.value.toLowerCase(),
     };
-    print("Data to be sent: $data"); // Debug xem dữ liệu gửi đi
-    print("BAseUrl: $baseUrl"); // Debug xem baseUrl
+
     verifyInputLogin(userID, pwd, selectedFactory);
     if (verifyInputLogin(userID, pwd, selectedFactory)) {
       try {
         var response = await ApiService(baseUrl).post('/auth/login', data);
-        print(
-          "111"
-        );
-        if (response.statusCode == 200) {
-             print(
-          "2"
-        );
-          var user = UserModel.fromJson(
-            response.data['data'],
-          ); // Chuyển đổi dữ liệu thành UserModel
-             print(
-          "333"
-        );
-          user.companyName =
-              selectedFactory.value.toLowerCase(); // Lưu tên nhà máy vào user
-          await _saveUserUseCase.userSave(user); // Lưu thông tin người dùng
 
-          print(
-            "Login successful: ${user.toJson()}",
-          ); // Debug xem thông tin người dùng
-          Get.offAllNamed('/main'); // Chuyển sang màng hình home
+        if (response.statusCode == 200) {
+          var user = UserModel.fromJson(response.data['data']);
+
+          user.companyName = selectedFactory.value.toLowerCase();
+          await _saveUserUseCase.userSave(user);
+
+          Get.offAllNamed('/main');
         } else {
-          print("Login failed: ${response.statusMessage}"); // Debug xem lỗi gì
           Get.snackbar(
             "Error",
             "Login failed: ${response.statusMessage}",
@@ -154,7 +130,6 @@ class LoginController extends GetxController {
           );
         }
       } catch (e) {
-        print("Error: $e"); // Debug xem lỗi gì
         Get.snackbar(
           "Error",
           "An error occurred: $e",
@@ -162,6 +137,5 @@ class LoginController extends GetxController {
         );
       }
     }
-    // Get.offAllNamed('/main');
   }
 }
