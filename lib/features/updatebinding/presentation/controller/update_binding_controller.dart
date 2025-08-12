@@ -168,6 +168,7 @@ class UpdateBindingController extends GetxController {
 
             lastType:
                 searchResults.isNotEmpty ? searchResults[0]["LastType"] : "",
+            lastno: searchResults.isNotEmpty ? searchResults[0]["LastNo"] : "",
             material:
                 searchResults.isNotEmpty ? searchResults[0]["Material"] : "",
             lastSize:

@@ -45,6 +45,8 @@ class BindingPhomController extends GetxController {
   final scrollProgress = 0.0.obs;
   final selectedRowIndex = Rx<int?>(null);
   var listTagRFID = [];
+  var TagsList = [].obs;
+
   var totalCount = 0.0.obs;
   var isScan = false.obs;
   var listFullScannedData = <Map<String, dynamic>>[].obs;
@@ -62,6 +64,7 @@ class BindingPhomController extends GetxController {
     isScan.value = false;
     isScanning.value = false; // Đặt lại trạng thái quét
     materialCodeController.clear();
+    TagsList.clear();
     phomName.value = '';
     selectedSize.value = '';
     rfidController.clear();
@@ -159,11 +162,16 @@ class BindingPhomController extends GetxController {
         final List<Map<String, dynamic>> errorItemsDetails =
             errorRfidListFromApi.cast<Map<String, dynamic>>();
 
-        if (errorItemsDetails.isNotEmpty) {
+        if (errorItemsDetails.length > 0) {
           _showErrorDialog(errorItemsDetails);
-        } else {
-          print("Không tìm thấy thông tin chi tiết cho RFID lỗi.");
         }
+      } else {
+        Get.snackbar(
+          '✅ Thành công',
+          'Không có lỗi',
+          backgroundColor: Colors.greenAccent.withOpacity(0.8),
+        );
+        print("Không tìm thấy thông tin chi tiết cho RFID lỗi.");
       }
     } catch (e) {
       isScanning.value = false;
@@ -265,6 +273,7 @@ class BindingPhomController extends GetxController {
         return;
       }
       listTagRFID.clear();
+      TagsList.clear();
       phomBindingList.clear();
       rfidController.clear();
       totalCount.value = 0;
@@ -274,7 +283,7 @@ class BindingPhomController extends GetxController {
         if (!listTagRFID.contains(epc)) {
           listTagRFID.add(epc);
           var _rfidShortcut = epc.substring(epc.length - 10);
-
+          TagsList.add(_rfidShortcut);
           final item = PhomBindingItem(
             rfid: epc,
             lastMatNo: materialCodeController.text.trim(),
@@ -479,6 +488,14 @@ class BindingPhomController extends GetxController {
   }
 
   Future<void> onFinish() async {
+    if (phomBindingList.isEmpty) {
+      Get.snackbar(
+        '⚠️Thông báo',
+        'Không có dữ liệu để gửi',
+        backgroundColor: AppColors.primary2,
+      );
+      return;
+    }
     try {
       final data = {
         "companyName": user?.companyName ?? "",
@@ -500,7 +517,7 @@ class BindingPhomController extends GetxController {
         final failCount = summary['failCount'];
         final failedRFIDs = (summary['failedRFIDs'] as List).join(', ');
         listTagRFID.clear();
-
+        TagsList.clear();
         phomBindingList.clear();
 
         totalCount.value = 0;

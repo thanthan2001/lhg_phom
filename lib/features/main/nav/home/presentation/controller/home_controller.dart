@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../../core/configs/prefs_contants.dart';
+import '../../../../../../core/services/dio.api.service.dart';
+import '../../../../../../core/services/models/user/domain/usecase/get_user_use_case.dart';
+import '../../../../../../core/services/models/user/model/user_model.dart';
 
 class HomeController extends GetxController {
   var isLoading = false.obs;
   var counter = 0.obs;
-
+  final GetuserUseCase _getuserUseCase;
+  UserModel? user;
+  final String baseUrl = dotenv.env['BASE_URL'] ?? '';
+  HomeController(this._getuserUseCase);
+  String? companyName = "";
   @override
-  void onInit() {
-    super.onInit();
+  void onInit() async {
+    user = await _getuserUseCase.getUser();
+    if (user?.companyName == null || user!.companyName!.isEmpty) {
+      throw Exception('Không tìm thấy thông tin người dùng hoặc công ty.');
+    }
+    companyName = user!.companyName;
+    await fetchData();
     loadLanguage();
-  }
-
-  Future<void> fetchData() async {
-    isLoading.value = true;
-    await Future.delayed(Duration(seconds: 2));
-    isLoading.value = false;
+    super.onInit();
   }
 
   @override
@@ -27,54 +35,8 @@ class HomeController extends GetxController {
 
   var expandedIndex = (-1).obs;
   var isExpanded = false.obs;
-  var items =
-      [
-        {
-          'code': 'JDF123',
-          'name': 'JDF123',
-          'material': 'Nhựa',
-          'details': [
-            {'size': 36, 'quantity': 1200, 'stock': 1000},
-            {'size': 37, 'quantity': 1500, 'stock': 1100},
-          ],
-        },
-        {
-          'code': 'JDF124',
-          'name': 'JDF124',
-          'material': 'Kim loại',
-          'details': [
-            {'size': 38, 'quantity': 1300, 'stock': 900},
-            {'size': 39, 'quantity': 1100, 'stock': 700},
-          ],
-        },
-        {
-          'code': 'JDF123',
-          'name': 'JDF123',
-          'material': 'Nhựa',
-          'details': [
-            {'size': 36, 'quantity': 1200, 'stock': 1000},
-            {'size': 37, 'quantity': 1500, 'stock': 1100},
-          ],
-        },
-        {
-          'code': 'JDF124',
-          'name': 'JDF124',
-          'material': 'Kim loại',
-          'details': [
-            {'size': 38, 'quantity': 1300, 'stock': 900},
-            {'size': 39, 'quantity': 1100, 'stock': 700},
-          ],
-        },
-        {
-          'code': 'JDF123',
-          'name': 'JDF123',
-          'material': 'Nhựa',
-          'details': [
-            {'size': 36, 'quantity': 1200, 'stock': 1000},
-            {'size': 37, 'quantity': 1500, 'stock': 1100},
-          ],
-        },
-      ].obs;
+
+  var items = <Map<String, dynamic>>[].obs;
 
   void toggleExpand(int index) {
     expandedIndex.value = (expandedIndex.value == index) ? -1 : index;
@@ -103,5 +65,48 @@ class HomeController extends GetxController {
         break;
     }
     Get.updateLocale(Locale(langCode));
+  }
+
+  Future<void> fetchData() async {
+    try {
+      isLoading.value = true;
+      final data = {"companyName": companyName ?? ""};
+      final response = await ApiService(
+        baseUrl,
+      ).post('/phom/getInforPhomBinding', data);
+
+      if (response.data["statusCode"] == 200) {
+        print("data ${response.data["data"]}");
+        items.value =
+            (response.data["data"] as List).map((e) {
+              final map = Map<String, dynamic>.from(e as Map);
+
+              // Trim tất cả string trong map gốc
+              map.updateAll(
+                (key, value) => value is String ? value.trim() : value,
+              );
+
+              // Nếu có details là list => trim tiếp
+              if (map['details'] is List) {
+                map['details'] =
+                    (map['details'] as List).map((detail) {
+                      final detailMap = Map<String, dynamic>.from(
+                        detail as Map,
+                      );
+                      detailMap.updateAll((k, v) => v is String ? v.trim() : v);
+                      return detailMap;
+                    }).toList();
+              }
+
+              return map;
+            }).toList();
+      } else {
+        Get.snackbar("Error", response.data["message"] ?? "Unknown error");
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

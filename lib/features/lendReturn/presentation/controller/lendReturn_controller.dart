@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
-import 'package:lhg_phom/core/configs/app_colors.dart'; // Import màu sắc nếu cần
+import 'package:lhg_phom/core/configs/app_colors.dart';
 import 'package:lhg_phom/core/services/dio.api.service.dart';
 import 'package:lhg_phom/core/services/models/user/domain/usecase/get_user_use_case.dart';
 import 'package:lhg_phom/core/services/models/user/model/user_model.dart';
 import 'package:lhg_phom/core/services/rfid_service.dart';
-import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart'; // Import TextWidget
+import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
 
 class LendReturnController extends GetxController {
   final GetuserUseCase _getuserUseCase;
@@ -34,8 +34,6 @@ class LendReturnController extends GetxController {
   final listFinalRFID = <String>[].obs;
 
   final invalidTags = <String>[].obs;
-
-  var ScannedCount = 0.0.obs;
 
   @override
   void onInit() async {
@@ -80,36 +78,43 @@ class LendReturnController extends GetxController {
 
     isLoading.value = true;
     FocusManager.instance.primaryFocus?.unfocus();
-    _resetSearchState(); // Reset trạng thái trước khi tìm kiếm mới
+    _resetSearchState();
 
     final data = {"companyName": companyName, "ID_BILL": bill_br_id.text};
 
     try {
-      final response = await ApiService(baseUrl).post('/phom/getOldBill', data);
+      final response = await ApiService(
+        baseUrl,
+      ).post('/phom/getDetailsBillScanOut', data);
 
       if (response.data["statusCode"] == 200) {
-        final resultsFromApi =
-            response.data?["data"]["results"] as List<dynamic>?;
-        final returnBillFromApi =
-            response.data?["data"]["getReturnBill"] as List<dynamic>?;
-        final lastBillResult =
-            response.data?["data"]["lastdatabill"] as List<dynamic>?;
+        final dynamic rawResult = response.data["data"]["jsonArray"];
+        print("KẾT QUẢ TÌM KIẾM: $rawResult");
+        if (rawResult is List && rawResult.isNotEmpty) {
+          final List<Map<String, dynamic>> processedResult = [];
 
-        if (lastBillResult != null)
-          LastDataBill.assignAll(lastBillResult.cast<Map<String, dynamic>>());
-        if (returnBillFromApi != null)
-          returnBillData.assignAll(
-            returnBillFromApi.cast<Map<String, dynamic>>(),
-          );
+          for (var item in rawResult) {
+            if (item is Map<String, dynamic>) {
+              final Map<String, dynamic> newItem = Map<String, dynamic>.from(
+                item,
+              );
+              newItem['scannedCount'] = 0.0.obs;
+              processedResult.add(newItem);
+            }
+          }
 
-        if (resultsFromApi != null && resultsFromApi.isNotEmpty) {
-          searchResult.assignAll(resultsFromApi.cast<Map<String, dynamic>>());
-          isAvalableScan.value = true;
-          Get.snackbar(
-            "Thành công",
-            "Đã tìm thấy phiếu mượn.",
-            backgroundColor: Colors.green.withOpacity(0.7),
-          );
+          if (processedResult.isNotEmpty) {
+            searchResult.assignAll(processedResult);
+            isAvalableScan.value = true;
+            Get.snackbar(
+              "Thành công",
+              "Đã tìm thấy phiếu mượn.",
+              backgroundColor: Colors.green.withOpacity(0.7),
+            );
+          } else {
+            isAvalableScan.value = false;
+            Get.snackbar("Thông báo", "Dữ liệu trả về không hợp lệ.");
+          }
         } else {
           isAvalableScan.value = false;
           Get.snackbar("Thông báo", "Không tìm thấy phiếu mượn phù hợp.");
@@ -117,7 +122,9 @@ class LendReturnController extends GetxController {
       } else {
         _handleApiError(response.data, "tìm kiếm");
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('LỖI KHI TÌM KIẾM: $e');
+      print('STACK TRACE: $stackTrace');
       _handleException(e, "tìm kiếm");
     } finally {
       isLoading.value = false;
@@ -131,7 +138,8 @@ class LendReturnController extends GetxController {
     }
     if (isScanning.value) return;
 
-    invalidTags.clear();
+    // *** THAY ĐỔI QUAN TRỌNG: RESET PHIÊN QUÉT TRƯỚC ĐÓ ***
+    // Gọi onClearScanned() để xóa tất cả dữ liệu quét cũ và reset bộ đếm.
     onClearScanned();
 
     isScanning.value = true;
@@ -176,8 +184,31 @@ class LendReturnController extends GetxController {
       ).post('/phom/checkRFIDinBrBill', data);
 
       if (response.data["statusCode"] == 200) {
-        listFinalRFID.add(epc);
-        ScannedCount.value += 0.5;
+        final scannedDataList = response.data["data"]["jsonArray"];
+        if (scannedDataList != null && scannedDataList.isNotEmpty) {
+          final scannedItemData = scannedDataList[0];
+
+          final String lastNo =
+              scannedItemData['LastNo']?.toString().trim() ?? '';
+          final String lastSize =
+              scannedItemData['LastSize']?.toString().trim() ?? '';
+
+          var foundItem = searchResult.firstWhere(
+            (item) =>
+                item['LastNo']?.toString().trim() == lastNo &&
+                item['LastSize']?.toString().trim() == lastSize,
+            orElse: () => <String, dynamic>{},
+          );
+
+          if (foundItem.isNotEmpty) {
+            foundItem['scannedCount'].value += 0.5;
+            listFinalRFID.add(epc);
+          } else {
+            invalidTags.add(epc);
+          }
+        } else {
+          invalidTags.add(epc);
+        }
       } else {
         invalidTags.add(epc);
       }
@@ -187,6 +218,39 @@ class LendReturnController extends GetxController {
     }
   }
 
+  // Future<void> onFinish() async {
+  //   if (listFinalRFID.isEmpty) {
+  //     Get.snackbar("Thông báo", "Chưa có phom nào được quét.");
+  //     return;
+  //   }
+  //   isLoading.value = true;
+
+  //   final payloadDetails =
+  //       listFinalRFID
+  //           .map((rfid) => {"companyName": companyName, "RFID": rfid})
+  //           .toList();
+
+  //   if (LastDataBill.isNotEmpty && searchResult.isNotEmpty) {
+  //     LastDataBill[0]['TotalScanOut'] = searchResult[0]['TotalScanOut'];
+  //   }
+
+  //   final updatedLastDataBillList =
+  //       LastDataBill.map((item) {
+  //         return {...item, "payloadDetails": payloadDetails};
+  //       }).toList();
+
+  //   updatedLastDataBillList[0]['TotalPhomNotBinding'] =
+  //       totalPhomNotBindingController.text;
+
+  //   try {
+  //     // Logic gửi dữ liệu lên server ở đây
+  //   } catch (e) {
+  //     _handleException(e, "hoàn tất trả phom");
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
+
   Future<void> onFinish() async {
     if (listFinalRFID.isEmpty) {
       Get.snackbar("Thông báo", "Chưa có phom nào được quét.");
@@ -194,24 +258,60 @@ class LendReturnController extends GetxController {
     }
     isLoading.value = true;
 
-    final payloadDetails =
-        listFinalRFID
-            .map((rfid) => {"companyName": companyName, "RFID": rfid})
-            .toList();
+    try {
+      // 1. Chuẩn bị các thành phần của payload
 
-    if (LastDataBill.isNotEmpty && searchResult.isNotEmpty) {
-      LastDataBill[0]['TotalScanOut'] = searchResult[0]['TotalScanOut'];
-    }
+      // a. Tính tổng số lượng đã phát (TotalScanOut) từ searchResult
+      // Cột 'SoLuong' trong searchResult là số lượng đã phát
+      double totalScanOut = 0;
+      for (var item in searchResult) {
+        totalScanOut += (item['SoLuong'] as num?) ?? 0;
+      }
 
-    final updatedLastDataBillList =
-        LastDataBill.map((item) {
-          return {...item, "payloadDetails": payloadDetails};
-        }).toList();
+      // b. Tạo danh sách chi tiết các RFID đã quét (chỉ cần RFID)
+      final List<Map<String, String>> payloadDetails =
+          listFinalRFID.map((rfid) => {"RFID": rfid}).toList();
 
-    updatedLastDataBillList[0]['TotalPhomNotBinding'] =
-        totalPhomNotBindingController.text;
+      // 2. Xây dựng đối tượng payload chính theo cấu trúc backend yêu cầu
+      final Map<String, dynamic> payload = {
+        "companyName": companyName,
+        "data": [
+          {
+            "ID_bill": bill_br_id.text,
+            "Userid": user?.userId ?? '',
+            "TotalScanOut": totalScanOut,
+            "DepID":
+                searchResult.isNotEmpty
+                    ? searchResult[0]['DepID']?.toString().trim() ?? ''
+                    : '',
+            "payloadDetails": payloadDetails,
+          },
+        ],
+      };
 
-    try {} catch (e) {
+      print("DỮ LIỆU GỬI ĐI (KHỚP VỚI BACKEND): ${payload}");
+
+      // 3. Gọi API với endpoint và payload đã được định dạng đúng
+      final response = await ApiService(
+        baseUrl,
+      ).post('/phom/submitReturnPhom', payload); // Sửa endpoint nếu cần
+
+      if (response.data["statusCode"] == 200) {
+        Get.snackbar(
+          "Thành công",
+          response.data["message"] ?? "Đã hoàn tất trả phom.",
+          backgroundColor: Colors.green,
+        );
+        // Reset lại trang sau khi thành công
+        _resetSearchState();
+        bill_br_id.clear();
+        totalPhomNotBindingController.clear();
+      } else {
+        _handleApiError(response.data, "hoàn tất trả phom");
+      }
+    } catch (e, stackTrace) {
+      print("LỖI KHI HOÀN TẤT: $e");
+      print("STACK TRACE: $stackTrace");
       _handleException(e, "hoàn tất trả phom");
     } finally {
       isLoading.value = false;
@@ -220,31 +320,14 @@ class LendReturnController extends GetxController {
 
   void onClearScanned() {
     listFinalRFID.clear();
-
     _seenTags.clear();
-    invalidTags.clear(); // Cũng xóa danh sách tag lỗi
-    ScannedCount.value = 0;
-  }
+    invalidTags.clear();
 
-  Future<void> onClearPage() async {
-    await stopContinuousScan();
-    bill_br_id.clear();
-    _resetSearchState();
-  }
-
-  Future<void> _connectRFID() async {
-    try {
-      final connected = await RFIDService.connect();
-      if (connected) {
-      } else {
-        Get.snackbar(
-          'Lỗi',
-          'Kết nối RFID thất bại',
-          backgroundColor: Colors.red.withOpacity(0.8),
-        );
+    // Reset lại tất cả các bộ đếm của từng dòng về 0
+    for (var item in searchResult) {
+      if (item.containsKey('scannedCount')) {
+        item['scannedCount'].value = 0.0;
       }
-    } catch (e) {
-      _handleException(e, "kết nối RFID");
     }
   }
 
@@ -254,8 +337,7 @@ class LendReturnController extends GetxController {
     LastDataBill.clear();
     listFinalRFID.clear();
     _seenTags.clear();
-    invalidTags.clear(); // Xóa danh sách tag lỗi khi reset
-    ScannedCount.value = 0;
+    invalidTags.clear();
     isAvalableScan.value = false;
   }
 
@@ -275,13 +357,13 @@ class LendReturnController extends GetxController {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const TextWidget(text: "Các thẻ sau không thuộc phiếu mượn này:"),
+              TextWidget(
+                text:
+                    'Các thẻ sau không thuộc phiếu mượn này: ${invalidTags.length}',
+              ),
               const SizedBox(height: 10),
-
               ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: Get.height * 0.4, // Giới hạn chiều cao
-                ),
+                constraints: BoxConstraints(maxHeight: Get.height * 0.4),
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: invalidTags.length,
@@ -303,19 +385,17 @@ class LendReturnController extends GetxController {
           TextButton(
             child: const Text("Đã hiểu"),
             onPressed: () {
-              Get.back(); // Đóng dialog
+              Get.back();
             },
           ),
         ],
       ),
-
       barrierDismissible: false,
     );
   }
 
   void _handleApiError(dynamic responseData, String action) {
     final message = responseData["message"] ?? "Lỗi không xác định";
-
     Get.snackbar(
       "Lỗi",
       "Lỗi khi $action: $message",
