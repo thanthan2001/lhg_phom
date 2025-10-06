@@ -79,14 +79,10 @@ class HomeController extends GetxController {
         print("data ${response.data["data"]}");
         items.value =
             (response.data["data"] as List).map((e) {
-              final map = Map<String, dynamic>.from(e as Map);
-
-              // Trim tất cả string trong map gốc
+              final map = Map<String, dynamic>.from(e as Map);
               map.updateAll(
                 (key, value) => value is String ? value.trim() : value,
-              );
-
-              // Nếu có details là list => trim tiếp
+              );
               if (map['details'] is List) {
                 map['details'] =
                     (map['details'] as List).map((detail) {

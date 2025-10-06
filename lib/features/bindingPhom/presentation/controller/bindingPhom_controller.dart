@@ -62,7 +62,7 @@ class BindingPhomController extends GetxController {
   Future<void> onClear() async {
     totalCount.value = 0;
     isScan.value = false;
-    isScanning.value = false; // Đặt lại trạng thái quét
+    isScanning.value = false; 
     materialCodeController.clear();
     TagsList.clear();
     phomName.value = '';
@@ -138,9 +138,7 @@ class BindingPhomController extends GetxController {
       await RFIDService.stopScan();
       isScanning.value = false;
       isLoading.value = false;
-      final companyName = user?.companyName;
-
-      // Nếu không có RFID nào được quét thì không cần gọi API
+      final companyName = user?.companyName;
       if (listTagRFID.isEmpty) {
         return;
       }

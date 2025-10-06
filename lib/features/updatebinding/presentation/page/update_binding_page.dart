@@ -41,7 +41,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment:
-                          CrossAxisAlignment.start, // Align text to start
+                          CrossAxisAlignment.start, 
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         const TextWidget(
@@ -49,7 +49,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                           size: 16,
                           fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 8), // Add some space
+                        const SizedBox(height: 8), 
                         Obx(
                           () => TextWidget(
                             text:
@@ -66,7 +66,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10), // Increased space
+              const SizedBox(height: 10), 
               Container(
                 width: double.infinity,
                 child: ButtonWidget(
@@ -78,11 +78,8 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   borderRadius: 5,
                 ),
               ),
-              const SizedBox(height: 10),
-
-              // _buildLeftRightButtons(),
-              const SizedBox(height: 10),
-              // _buildShelfDropdown(),
+              const SizedBox(height: 10),
+              const SizedBox(height: 10),
               const SizedBox(height: 10),
 
               Obx(() {
@@ -155,7 +152,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   return;
                 }
                 if (controller.isLoading.value)
-                  return; // Prevent opening if still loading
+                  return; 
 
                 showSearchableSelectionDialog2(
                   title: 'Chọn mã số phom',
@@ -167,7 +164,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
                   onSelected:
                       (val) =>
                           controller.selectedCodePhom.value =
-                              val, // Not strictly needed if onSelectedAndCallApi handles it
+                              val, 
                 );
               },
             ),
@@ -239,7 +236,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
               ),
             ),
           ),
-          const SizedBox(width: 10), // Add space between buttons and text
+          const SizedBox(width: 10), 
         ],
       );
     });
@@ -324,9 +321,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
       'LastBrand',
       'Material',
       'LastSize',
-      'LastQty',
-      // 'LeftCount',
-      // 'RightCount',
+      'LastQty',
       'BindingCount',
       'Scanning',
     ];
@@ -339,25 +334,23 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
       'Nhãn Hiệu',
       'Chất Liệu',
       'Size',
-      'SL',
-      // 'Trái',
-      // 'Phải',
+      'SL',
       'Binding (Đôi)',
       'Đang quét',
     ];
 
     return SingleChildScrollView(
       scrollDirection:
-          Axis.horizontal, // Allows table to scroll horizontally if too wide
+          Axis.horizontal, 
       child: DataTable(
         border: TableBorder.all(
-          color: Colors.grey.shade400, // Có thể tùy chỉnh màu border
-          width: 1, // Có thể tùy chỉnh độ dày border
+          color: Colors.grey.shade400, 
+          width: 1, 
         ),
         headingRowColor: MaterialStateProperty.all(
-          AppColors.grey2, // Use primary color for header background
+          AppColors.grey2, 
         ),
-        columnSpacing: 15, // Adjust spacing between columns
+        columnSpacing: 15, 
         headingRowHeight: 40,
         dataRowMinHeight: 35,
         dataRowMaxHeight: 45,

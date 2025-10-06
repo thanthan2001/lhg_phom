@@ -224,7 +224,7 @@ class TransferLendController extends GetxController {
         final responseBody = response.data;
         print(
           "API Response (layphieumuon): $responseBody",
-        ); // Log the full response
+        ); 
 
         if (!responseBody["infoBill"]["isConfirm"]) {
           Get.snackbar(
@@ -238,7 +238,7 @@ class TransferLendController extends GetxController {
           return;
         }
 
-        isShowDep.value = true; // Show department dropdowns section
+        isShowDep.value = true; 
 
         if (responseBody["data"] != null &&
             responseBody["data"]["jsonArray"] != null &&
@@ -262,7 +262,7 @@ class TransferLendController extends GetxController {
                 );
               } else {
                 selectedDepartment.value =
-                    apiDepId; // Hiển thị ID nếu không có tên
+                    apiDepId; 
                 selectedDepartmentId.value = apiDepId;
                 print(
                   "⚠️ Không tìm thấy tên cho DepID '$apiDepId' (Đơn vị chuyển). Hiển thị ID: '${selectedDepartment.value}'",
@@ -285,7 +285,7 @@ class TransferLendController extends GetxController {
                   int.tryParse(item['LastSum']?.toString() ?? '0') ?? 0;
               inventoryData.add([
                 item['ID_bill']?.toString() ?? '',
-                item['DepID']?.toString() ?? '', // This is item's DepID
+                item['DepID']?.toString() ?? '', 
                 item['LastMatNo']?.toString() ?? '',
                 item['LastName']?.toString() ?? '',
                 item['LastSize']?.toString() ?? '',

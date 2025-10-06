@@ -307,7 +307,6 @@ class LendAllPage extends GetView<LendAllController> {
   });
 }
 
-
   Widget _buildDateRangePicker(BuildContext context) {
     return Obx(() {
       final from = controller.selectedDateFrom.value;

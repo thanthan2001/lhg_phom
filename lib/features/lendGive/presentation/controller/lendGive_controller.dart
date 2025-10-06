@@ -76,7 +76,6 @@ class LendGiveController extends GetxController {
 
     bill_br_id.clear();
     totalPhomNotBindingController.text = '0';
-
     inventoryData.clear();
     inventoryDataMap.clear();
     processedRfidsInSession.clear();
@@ -84,7 +83,6 @@ class LendGiveController extends GetxController {
     invalidRfids.clear();
     mismatchedRfids.clear();
     excessRfids.clear();
-
     isAvalableScan.value = false;
     lastScanStatus.value = '';
     totalScannedCount.value = 0.0;

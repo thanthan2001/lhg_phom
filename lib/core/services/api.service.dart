@@ -5,7 +5,7 @@ import 'package:http_parser/http_parser.dart';
 
 class ApiService {
   final String baseUrl;
-  String? bearerToken; // Biến chứa token
+  String? bearerToken; 
   final Map<String, String> headers = {'Content-Type': 'application/json'};
 
   ApiService(this.baseUrl, [this.bearerToken]) {

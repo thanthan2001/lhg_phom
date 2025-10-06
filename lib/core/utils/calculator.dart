@@ -7,7 +7,7 @@ class CalculatorUtils {
     double lat2,
     double lon2,
   ) {
-    const double earthRadius = 6371; // Bán kính trái đất, đơn vị kilometer
+    const double earthRadius = 6371; 
 
     if ((lat1 == lat2) && (lon1 == lon2)) {
       return 0;

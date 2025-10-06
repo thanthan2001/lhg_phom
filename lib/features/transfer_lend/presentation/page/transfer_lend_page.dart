@@ -150,7 +150,7 @@ class TransferLendPage extends GetView<TransferLendController> {
                 ? Colors.grey[300]
                 : (index != null && index % 2 == 0
                     ? Colors.grey[100]
-                    : Colors.transparent), // ví dụ tô màu dòng chẵn
+                    : Colors.transparent), 
       ),
       children:
           cells.map((cell) {
@@ -209,7 +209,7 @@ class TransferLendPage extends GetView<TransferLendController> {
                     title: 'Chọn đơn vị',
                     itemList:
                         controller.departmentList
-                            .toList(), // Chuyển RxList thành List
+                            .toList(), 
                     selectedItem: controller.selectedDepartment.value,
                     onSelected: (val) {
                       controller.selectedDepartment.value = val;
@@ -234,7 +234,7 @@ class TransferLendPage extends GetView<TransferLendController> {
                     title: 'Chọn đơn vị',
                     itemList:
                         controller.departmentList
-                            .toList(), // Chuyển RxList thành List
+                            .toList(), 
                     selectedItem: controller.selectedDepartmentReceiver.value,
                     onSelected: (val) {
                       controller.selectedDepartmentReceiver.value = val;

@@ -48,7 +48,7 @@ android {
     google()
     mavenCentral()
     flatDir {
-        dirs("libs")
+        dirs("libs") 
     }
 }
 dependencies {

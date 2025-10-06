@@ -11,20 +11,20 @@ class ForgotPasswordController extends GetxController {
   ForgotPasswordController(this._saveUserUseCase);
 
   var isShowPwd = false.obs;
-  var selectedFactory = "".obs; // Lưu nhà máy được chọn
+  var selectedFactory = "".obs; 
   late TextEditingController userID = TextEditingController();
   late TextEditingController identityCard = TextEditingController();
   late TextEditingController dateOfBirth = TextEditingController();
   late TextEditingController newPassword = TextEditingController();
   late TextEditingController confirmPassword = TextEditingController();
 
-  final isLanguageSelectorExpanded = false.obs; // NEW: Language Selector
+  final isLanguageSelectorExpanded = false.obs; 
   final currentFlag = AppImagesString.fEn.obs;
 
   @override
   void onInit() {
     super.onInit();
-    loadSavedLanguage(); // Gọi hàm lấy ngôn ngữ đã lưu khi khởi động
+    loadSavedLanguage(); 
   }
 
   void toggleLanguageSelector() {
@@ -34,7 +34,7 @@ class ForgotPasswordController extends GetxController {
   void loadSavedLanguage() async {
     String? savedLanguage = await prefs.getLanguage();
     if (savedLanguage != null) {
-      selectLanguage(savedLanguage, save: false); // Cập nhật giao diện
+      selectLanguage(savedLanguage, save: false); 
     }
   }
 
@@ -59,7 +59,7 @@ class ForgotPasswordController extends GetxController {
     }
 
     if (save) {
-      prefs.setLanguage(languageName); // Lưu ngôn ngữ vào bộ nhớ
+      prefs.setLanguage(languageName); 
     }
 
     isLanguageSelectorExpanded.value = false;

@@ -298,7 +298,6 @@ class LendRegisterPage extends GetView<LendRegisterController> {
   });
 }
 
-
   Widget _buildDateRangePicker(BuildContext context) {
     return Obx(() {
       final from = controller.selectedDateFrom.value;

@@ -4,8 +4,6 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../configs/app_colors.dart';
 
-
-
 class ImageProviderSquareWidget extends StatelessWidget {
   final double height;
   final double width;

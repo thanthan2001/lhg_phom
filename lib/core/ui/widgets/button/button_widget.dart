@@ -41,12 +41,12 @@ class ButtonWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent, // Đảm bảo hiệu ứng splash hiển thị đúng
+      color: Colors.transparent, 
       child: InkWell(
         onTap: ontap,
         borderRadius: BorderRadius.circular(borderRadius!),
-        splashColor: Colors.white.withOpacity(0.3), // Hiệu ứng sóng nhẹ
-        highlightColor: Colors.white.withOpacity(0.1), // Hiệu ứng khi giữ nút
+        splashColor: Colors.white.withOpacity(0.3), 
+        highlightColor: Colors.white.withOpacity(0.1), 
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6.0),
           width: width,
@@ -61,9 +61,9 @@ class ButtonWidget extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.15),
-                spreadRadius: 1, // Bán kính lan rộng
-                blurRadius: 6, // Độ mờ của bóng
-                offset: const Offset(0, 2), // Độ dịch chuyển theo trục X,Y
+                spreadRadius: 1, 
+                blurRadius: 6, 
+                offset: const Offset(0, 2), 
               ),
             ],
           ),
@@ -72,7 +72,7 @@ class ButtonWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                
+
                 Flexible(
                   child:
                       child ??

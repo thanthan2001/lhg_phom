@@ -20,7 +20,7 @@ class DatetimeUtil {
       DateFormat formatter = DateFormat('dd/MM/yyyy');
       return formatter.format(dateTime);
     } else {
-      DateTime now = DateTime.now(); // Lấy thời gian hiện tại
+      DateTime now = DateTime.now(); 
       DateFormat formatter = DateFormat('dd/MM/yyyy');
       return formatter.format(now);
     }

@@ -274,8 +274,11 @@ class HomePage extends GetView<HomeController> {
     );
   }
 
-  int _calculateTotal(List<Map<String, dynamic>> details) {
-    return details.fold<int>(0, (sum, item) => sum + (item['quantity'] as int));
+  double _calculateTotal(List<Map<String, dynamic>> details) {
+    return details.fold<double>(0.0, (sum, item) {
+      final quantity = (item['quantity'] as num?)?.toDouble() ?? 0.0;
+      return sum + quantity;
+    });
   }
 
   Widget _buildAppBar() {

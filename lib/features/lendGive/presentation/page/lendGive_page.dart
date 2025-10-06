@@ -125,7 +125,7 @@ class LendGivePage extends GetView<LendGiveController> {
                     children: [
                       TextSpan(
                         text:
-                            '${controller.totalScannedCount.value}', // Hiển thị số double
+                            '${controller.totalScannedCount.value}', 
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
@@ -135,7 +135,7 @@ class LendGivePage extends GetView<LendGiveController> {
                       TextSpan(
                         text:
                             ' / ${controller.totalExpectedCount.value * 2} (chiếc)',
-                      ), // Hiển thị tổng số chiếc cần quét
+                      ), 
                     ],
                   ),
                 ),

@@ -273,11 +273,7 @@ class UpdateBindingController extends GetxController {
     if (phomName.value.isEmpty) {
       Get.snackbar('Lỗi', 'Vui lòng chọn tên phom.');
       return false;
-    }
-    // if (selectedShelf.value.isEmpty) {
-    //   Get.snackbar('Lỗi', 'Vui lòng chọn kệ.');
-    //   return false;
-    // }
+    }
     return true;
   }
 
@@ -315,7 +311,7 @@ class UpdateBindingController extends GetxController {
             'Hoàn tất: $successCount thành công, $failureCount thất bại.',
             backgroundColor: Colors.orange,
             colorText: Colors.white,
-            duration: const Duration(seconds: 5), // Hiển thị lâu hơn để đọc
+            duration: const Duration(seconds: 5), 
           );
 
           for (var failure in failures) {}
@@ -339,7 +335,7 @@ class UpdateBindingController extends GetxController {
         colorText: Colors.white,
       );
     } finally {
-      isLoading.value = false; // Tắt loading
+      isLoading.value = false; 
     }
   }
 

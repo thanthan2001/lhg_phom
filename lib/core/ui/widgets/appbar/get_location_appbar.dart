@@ -44,10 +44,10 @@ class GetLocationAppbar extends StatelessWidget implements PreferredSizeWidget {
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(
           2.0,
-        ), // Adjust the height of the bottom border
+        ), 
         child: Container(
-          color: AppColors.primary, // Border color
-          height: 2, // Border height
+          color: AppColors.primary, 
+          height: 2, 
         ),
       ),
     );

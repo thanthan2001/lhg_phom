@@ -15,15 +15,14 @@ class BindingPhomPage extends GetView<BindingPhomController> {
 
   @override
   Widget build(BuildContext context) {
-    // GestureDetector để ẩn bàn phím khi người dùng chạm ra ngoài
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
-        controller.selectedRowIndex.value = -1; // Bỏ chọn hàng trong bảng
+        controller.selectedRowIndex.value = -1; 
       },
       child: Scaffold(
         appBar: _buildAppBar(),
-        body: _buildBody(context), // Truyền context để sử dụng Theme
+        body: _buildBody(context), 
       ),
     );
   }
@@ -45,7 +44,6 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     );
   }
 
-  // Sử dụng ListView để có hiệu suất tốt hơn và tránh lỗi tràn pixel
   Widget _buildBody(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16.0),
@@ -62,7 +60,6 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     );
   }
 
-  // Nhóm các thành phần tìm kiếm vào một Card để có cấu trúc rõ ràng
   Widget _buildSearchCard(BuildContext context) {
     return Card(
       elevation: 2,
@@ -88,7 +85,6 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     );
   }
 
-  // Card cho các điều khiển RFID
   Widget _buildRfidControlCard(BuildContext context) {
     return Card(
       elevation: 2,
@@ -104,16 +100,13 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-            // const SizedBox(height: 16),
-            // _buildShelfDropdown(), // Thêm widget chọn kệ đã bị thiếu
-            // const SizedBox(height: 16),
-            // _buildLeftRightButtons(), // Thêm widget chọn Trái/Phải
+
             const SizedBox(height: 20),
             _buildRfidScanButtons(),
             const SizedBox(height: 16),
-            _buildScanStatus(), // Hiển thị trạng thái quét
+            _buildScanStatus(), 
             const SizedBox(height: 10),
-            _buildListRfidScan(), // Hiển thị danh sách RFID đã quét
+            _buildListRfidScan(), 
           ],
         ),
       ),
@@ -124,7 +117,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias, // Để bo góc cho bảng bên trong
+      clipBehavior: Clip.antiAlias, 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -137,7 +130,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
-          // Obx duy nhất xử lý cả việc hiển thị và cập nhật bảng
+
           Obx(() {
             if (controller.inventoryData.isEmpty) {
               return const Padding(
@@ -152,7 +145,6 @@ class BindingPhomPage extends GetView<BindingPhomController> {
               );
             }
 
-            // Logic của DataTable được đưa trực tiếp vào đây
             final columns =
                 [
                       'Mã vật tư',
@@ -192,7 +184,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                     controller.inventoryData.length,
                     (index) {
                       final rowData = controller.inventoryData[index];
-                      // .value được truy cập ở đây để Obx lắng nghe
+
                       final isSelected =
                           controller.selectedRowIndex.value == index;
                       return DataRow(
@@ -212,7 +204,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                           if (states.contains(MaterialState.selected)) {
                             return AppColors.primary.withOpacity(0.2);
                           }
-                          return null; // Dùng màu mặc định
+                          return null; 
                         }),
                         cells:
                             rowData
@@ -244,7 +236,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
             borderRadius: 8,
             onCompleted: (value) {
               controller.callLastName(value);
-              // Tự động chuyển focus sau khi nhập xong để tiện lợi hơn
+
               FocusScope.of(Get.context!).nextFocus();
             },
           ),
@@ -304,7 +296,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
             height: 48,
             text: "Tìm kiếm",
             ontap: controller.searchPhomBinding,
-            backgroundColor: AppColors.primary, // Dùng màu chủ đạo
+            backgroundColor: AppColors.primary, 
             textColor: Colors.white,
             borderRadius: 8,
             leadingIcon: const Icon(
@@ -337,7 +329,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
   Widget _buildLeftRightButtons() {
     return Obx(() {
       final isLeft = controller.isLeftSide.value;
-      // Dùng ToggleButtons để có UX tốt hơn cho việc chọn 1 trong 2
+
       return Row(
         children: [
           Expanded(
@@ -371,7 +363,6 @@ class BindingPhomPage extends GetView<BindingPhomController> {
 
   Widget _buildRfidScanButtons() {
     return Obx(() {
-      // Nếu đang tải, chỉ hiển thị nút Stop
       if (controller.isLoading.value) {
         return Row(
           children: [
@@ -391,13 +382,13 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           ],
         );
       }
-      // Trạng thái bình thường
+
       return Row(
         children: [
           Expanded(
             child: ButtonWidget(
               height: 50,
-              backgroundColor: Colors.green, // Màu xanh cho hành động chính
+              backgroundColor: Colors.green, 
               textColor: AppColors.white,
               ontap: controller.onStartRead,
               text: "Scan",
@@ -427,7 +418,6 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     });
   }
 
-  // Widget hiển thị trạng thái và số lượng quét
   Widget _buildScanStatus() {
     return Center(
       child: Obx(
@@ -444,14 +434,13 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     );
   }
 
-  // Hiển thị danh sách các tag RFID đã quét
   Widget _buildListRfidScan() {
     return Obx(
       () =>
           controller.TagsList.isEmpty
               ? const SizedBox.shrink()
               : Container(
-                height: 150, // Giới hạn chiều cao
+                height: 150, 
                 decoration: BoxDecoration(
                   color: AppColors.grey.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),

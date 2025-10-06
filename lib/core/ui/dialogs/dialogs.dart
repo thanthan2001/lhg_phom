@@ -146,7 +146,7 @@ class DialogsUtils {
                               ),
                             ),
                             onPressed: () {
-                              Get.back(); // Đóng dialog
+                              Get.back(); 
                             },
                           ),
                         ),
@@ -174,7 +174,7 @@ class DialogsUtils {
                               if (onPresss != null) {
                                 onPresss();
                               }
-                              Get.back(); // Đóng dialog
+                              Get.back(); 
                             },
                           ),
                         ),
@@ -298,7 +298,7 @@ class DialogsUtils {
                             ),
                             onPressed: () {
                               if (onPress != null) {
-                                onPress(); // Thực hiện hành động onPress
+                                onPress(); 
                               } else {
                                 Get.back();
                               }

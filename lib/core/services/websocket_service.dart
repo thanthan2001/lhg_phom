@@ -14,8 +14,8 @@ class WebSocketService {
     socket = IO.io(
       url,
       IO.OptionBuilder()
-          .setTransports(['websocket']) // Sử dụng WebSocket làm transport
-          .disableAutoConnect() // Tắt auto connect
+          .setTransports(['websocket']) 
+          .disableAutoConnect() 
           .build(),
     );
 

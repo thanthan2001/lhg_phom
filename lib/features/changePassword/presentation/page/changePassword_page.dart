@@ -40,10 +40,7 @@ class ChangePasswordPage extends GetView<ChangePasswordController> {
                   onToggle: controller.togglePasswordVisibility,
                 ),
                 SizedBox(height: Get.height * 0.5),
-                ButtonWidget(
-                  ontap: () {}, 
-                  text: "save".tr,
-                ),
+                ButtonWidget(ontap: () {}, text: "save".tr),
               ],
             ),
           ),

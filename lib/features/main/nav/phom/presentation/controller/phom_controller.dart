@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../../core/configs/prefs_contants.dart';
 
 class PhomController extends GetxController {
-  var phoms = <Map<String, dynamic>>[].obs; // Danh sách phom
+  var phoms = <Map<String, dynamic>>[].obs; 
 
   @override
   void onInit() {

@@ -91,7 +91,7 @@ class RFIDService {
   static Future<List<String>> scanSingleTagMultiple({
     Duration timeout = const Duration(milliseconds: 100),
   }) async {
-    final Set<String> uniqueEPCs = {}; // Tránh trùng lặp
+    final Set<String> uniqueEPCs = {}; 
     final completer = Completer<List<String>>();
 
     _registerHandlerOnce();
