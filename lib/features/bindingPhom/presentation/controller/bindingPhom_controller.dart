@@ -62,7 +62,7 @@ class BindingPhomController extends GetxController {
   Future<void> onClear() async {
     totalCount.value = 0;
     isScan.value = false;
-    isScanning.value = false; 
+    isScanning.value = false;
     materialCodeController.clear();
     TagsList.clear();
     phomName.value = '';
@@ -138,7 +138,8 @@ class BindingPhomController extends GetxController {
       await RFIDService.stopScan();
       isScanning.value = false;
       isLoading.value = false;
-      final companyName = user?.companyName;
+      final companyName = user?.companyName;
+
       if (listTagRFID.isEmpty) {
         return;
       }
@@ -275,6 +276,10 @@ class BindingPhomController extends GetxController {
       phomBindingList.clear();
       rfidController.clear();
       totalCount.value = 0;
+
+      // Clear native cache to start fresh
+      await RFIDService.clearScannedTags();
+
       update();
       await RFIDService.scanContinuous((epc) {
         if (!isScanning.value) return;
@@ -299,7 +304,7 @@ class BindingPhomController extends GetxController {
           );
           phomBindingList.add(item);
           rfidController.text = listTagRFID.join(', ');
-          totalCount.value += 0.5;
+          totalCount.value += 1;
         }
       });
 
@@ -520,11 +525,11 @@ class BindingPhomController extends GetxController {
 
         totalCount.value = 0;
 
-        Get.snackbar(
-          '✅ Gửi thành công',
-          'Thành công: $successCount, Thất bại: $failCount\nRFID lỗi: $failedRFIDs',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 5),
+        DialogsUtils.showAlertDialog2(
+          title: 'Thành Công',
+          message:
+              'Đã binding thành công!\n\nThành công: $successCount thẻ\nThất bại: $failCount thẻ${failedRFIDs.isNotEmpty ? '\n\nRFID lỗi: $failedRFIDs' : ''}',
+          typeDialog: TypeDialog.success,
         );
       } else {
         Get.snackbar(

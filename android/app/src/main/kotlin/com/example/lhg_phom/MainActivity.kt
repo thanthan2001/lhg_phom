@@ -40,6 +40,10 @@ class MainActivity : FlutterActivity() {
                     rfidHandler?.stopScan()
                     result.success(true)
                 }
+                "clearScannedTags" -> {
+                    rfidHandler?.clearScannedTags()
+                    result.success(true)
+                }
                 "disconnectRFID" -> {
                     rfidHandler?.disconnect()
                     result.success(true)

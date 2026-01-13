@@ -17,15 +17,30 @@ class HomeController extends GetxController {
   HomeController(this._getuserUseCase);
   String? companyName = "";
   @override
-  void onInit() async {
-    user = await _getuserUseCase.getUser();
-    if (user?.companyName == null || user!.companyName!.isEmpty) {
-      throw Exception('Không tìm thấy thông tin người dùng hoặc công ty.');
-    }
-    companyName = user!.companyName;
-    await fetchData();
-    loadLanguage();
+  void onInit() {
     super.onInit();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    isLoading.value = true;
+    try {
+      user = await _getuserUseCase.getUser();
+      if (user?.companyName == null || user!.companyName!.isEmpty) {
+        Get.snackbar(
+          'Lỗi',
+          'Không tìm thấy thông tin người dùng hoặc công ty.',
+        );
+        return;
+      }
+      companyName = user!.companyName;
+      await fetchData();
+      await loadLanguage();
+    } catch (e) {
+      Get.snackbar('Lỗi', 'Không thể khởi tạo dữ liệu: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   @override
@@ -79,10 +94,12 @@ class HomeController extends GetxController {
         print("data ${response.data["data"]}");
         items.value =
             (response.data["data"] as List).map((e) {
-              final map = Map<String, dynamic>.from(e as Map);
+              final map = Map<String, dynamic>.from(e as Map);
+
               map.updateAll(
                 (key, value) => value is String ? value.trim() : value,
-              );
+              );
+
               if (map['details'] is List) {
                 map['details'] =
                     (map['details'] as List).map((detail) {

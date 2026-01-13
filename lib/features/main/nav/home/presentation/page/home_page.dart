@@ -19,13 +19,23 @@ class HomePage extends GetView<HomeController> {
             _buildAppBar(),
             _searchBar(),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.only(bottom: 10),
-                itemCount: controller.items.length,
-                itemBuilder:
-                    (context, index) =>
-                        _buildExpandableCard(controller.items[index], index),
-              ),
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (controller.items.isEmpty) {
+                  return const Center(child: Text('Không có dữ liệu'));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  itemCount: controller.items.length,
+                  itemBuilder:
+                      (context, index) =>
+                          _buildExpandableCard(controller.items[index], index),
+                );
+              }),
             ),
           ],
         ),
@@ -310,17 +320,17 @@ class HomePage extends GetView<HomeController> {
               _HomeInfo(
                 icon: Icons.insert_drive_file_outlined,
                 title: "total_phom".tr,
-                value: controller.items[0]["TongPhom"].toString(),
+                value: controller.items[0]["TongPhom"].toString() ?? "0",
               ),
               _HomeInfo(
                 icon: Icons.grid_view_rounded,
                 title: "total_phom_code".tr,
-                value: controller.items.length.toString(),
+                value: controller.items.length.toString() ?? "0",
               ),
               _HomeInfo(
                 icon: Icons.warehouse_outlined,
                 title: "total_inventory".tr,
-                value: controller.items[0]["TongTonKho"].toString(),
+                value: controller.items[0]["TongTonKho"].toString() ?? "0",
               ),
             ],
           ),

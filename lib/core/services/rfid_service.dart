@@ -70,6 +70,15 @@ class RFIDService {
     _onScanCallback = null;
   }
 
+  /// Clear scanned tags cache at native level
+  static Future<void> clearScannedTags() async {
+    try {
+      await _channel.invokeMethod('clearScannedTags');
+    } catch (e) {
+      print('Error clearing scanned tags: $e');
+    }
+  }
+
   static Future<String?> scanSingleTag({
     Duration timeout = const Duration(seconds: 3),
   }) async {
@@ -91,7 +100,7 @@ class RFIDService {
   static Future<List<String>> scanSingleTagMultiple({
     Duration timeout = const Duration(milliseconds: 100),
   }) async {
-    final Set<String> uniqueEPCs = {}; 
+    final Set<String> uniqueEPCs = {};
     final completer = Completer<List<String>>();
 
     _registerHandlerOnce();

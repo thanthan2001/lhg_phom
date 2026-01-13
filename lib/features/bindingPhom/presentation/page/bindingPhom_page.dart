@@ -18,12 +18,9 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
-        controller.selectedRowIndex.value = -1; 
+        controller.selectedRowIndex.value = -1;
       },
-      child: Scaffold(
-        appBar: _buildAppBar(),
-        body: _buildBody(context), 
-      ),
+      child: Scaffold(appBar: _buildAppBar(), body: _buildBody(context)),
     );
   }
 
@@ -100,13 +97,14 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-
+            const SizedBox(height: 16),
+            _buildLeftRightButtons(),
             const SizedBox(height: 20),
             _buildRfidScanButtons(),
             const SizedBox(height: 16),
-            _buildScanStatus(), 
+            _buildScanStatus(),
             const SizedBox(height: 10),
-            _buildListRfidScan(), 
+            _buildListRfidScan(),
           ],
         ),
       ),
@@ -117,7 +115,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias, 
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -204,7 +202,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                           if (states.contains(MaterialState.selected)) {
                             return AppColors.primary.withOpacity(0.2);
                           }
-                          return null; 
+                          return null;
                         }),
                         cells:
                             rowData
@@ -296,7 +294,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
             height: 48,
             text: "Tìm kiếm",
             ontap: controller.searchPhomBinding,
-            backgroundColor: AppColors.primary, 
+            backgroundColor: AppColors.primary,
             textColor: Colors.white,
             borderRadius: 8,
             leadingIcon: const Icon(
@@ -388,7 +386,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           Expanded(
             child: ButtonWidget(
               height: 50,
-              backgroundColor: Colors.green, 
+              backgroundColor: Colors.green,
               textColor: AppColors.white,
               ontap: controller.onStartRead,
               text: "Scan",
@@ -425,7 +423,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           text:
               controller.totalCount.value == 0
                   ? "Chưa quét đôi nào"
-                  : "Đã quét: ${controller.totalCount.value} đôi",
+                  : "Đã quét: ${controller.totalCount.value} chiếc",
           size: 16,
           color: AppColors.black,
           fontWeight: FontWeight.w500,
@@ -440,7 +438,7 @@ class BindingPhomPage extends GetView<BindingPhomController> {
           controller.TagsList.isEmpty
               ? const SizedBox.shrink()
               : Container(
-                height: 150, 
+                height: 150,
                 decoration: BoxDecoration(
                   color: AppColors.grey.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),

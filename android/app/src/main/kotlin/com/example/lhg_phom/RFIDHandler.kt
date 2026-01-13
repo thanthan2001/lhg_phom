@@ -17,6 +17,9 @@ class RFIDHandler(
 ) {
     private var soundPool: SoundPool? = null
     private var soundId: Int? = null
+    
+    // Set to track scanned EPCs and prevent duplicates at native level
+    private val scannedEPCs = mutableSetOf<String>()
 
   
 
@@ -66,18 +69,27 @@ class RFIDHandler(
   
             override fun tagCallback(tag: ReadTag?) {
                 tag?.epcId?.let { epc ->
+                    val normalizedEpc = epc.trim()
   
-                    Log.d("RFID", "📦 Tag scanned on background thread: $epc")
+                    Log.d("RFID", "📦 Tag scanned on background thread: $normalizedEpc")
 
-  
-  
-                    Handler(Looper.getMainLooper()).post {
-  
-  
-                        Log.d("RFID", "🚀 Sending tag to Flutter on main thread: $epc")
-                        channel.invokeMethod("onTagScanned", epc)
+                    // Check for duplicates at native level
+                    synchronized(scannedEPCs) {
+                        if (scannedEPCs.contains(normalizedEpc)) {
+                            Log.w("RFID", "⚠️ Duplicate tag ignored at native level: $normalizedEpc")
+                            return
+                        }
+                        
+                        // Add to set to prevent future duplicates
+                        scannedEPCs.add(normalizedEpc)
+                        Log.d("RFID", "✅ New tag added to native set. Total: ${scannedEPCs.size}")
                     }
   
+                    // Only send to Flutter if it's a new tag
+                    Handler(Looper.getMainLooper()).post {
+                        Log.d("RFID", "🚀 Sending unique tag to Flutter: $normalizedEpc")
+                        channel.invokeMethod("onTagScanned", normalizedEpc)
+                    }
                 }
             }
 
@@ -85,8 +97,6 @@ class RFIDHandler(
             override fun StopReadCallBack() {
                 Handler(Looper.getMainLooper()).post {
                     Log.d("RFID", "🛑 Scan stopped callback received")
-  
-  
                 }
             }
         })
@@ -126,6 +136,14 @@ class RFIDHandler(
         Log.d("RFID", "⏹️ Scan stopped by user")
         Handler(Looper.getMainLooper()).post {
             channel.invokeMethod("onScanStopped", null)
+        }
+    }
+    
+    // Clear scanned EPCs when starting a new scan session
+    fun clearScannedTags() {
+        synchronized(scannedEPCs) {
+            scannedEPCs.clear()
+            Log.d("RFID", "🗑️ Cleared scanned tags cache")
         }
     }
 }

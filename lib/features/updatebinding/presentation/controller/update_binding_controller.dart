@@ -3,6 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/configs/app_colors.dart';
+import '../../../../core/configs/enum.dart';
+import '../../../../core/ui/dialogs/dialogs.dart';
 import '../../../../core/services/dio.api.service.dart';
 import '../../../../core/services/models/phom_model.dart';
 import '../../../../core/services/models/user/domain/usecase/get_user_use_case.dart';
@@ -36,25 +38,41 @@ class UpdateBindingController extends GetxController {
   final RxList<String> codePhomList = <String>[].obs;
   final RxList<String> sizeList = <String>[].obs;
   final isLeftSide = true.obs;
-  var listTagRFID = [];
+  final listTagRFID =
+      <String>{}.obs; // Use Set instead of List to prevent duplicates
   final RxList<Map<String, dynamic>> searchResults =
       <Map<String, dynamic>>[].obs;
   final phomBindingList = <PhomBindingItem>[].obs;
   void onSelectLeft() => isLeftSide.value = true;
   void onSelectRight() => isLeftSide.value = false;
-  Future<void> onClear() async {
-    isScanning.value = false;
-    isScan.value = false;
-    isLoading.value = true;
-    selectedCodePhom.value = '';
 
+  // Clear only scan data, keep search parameters
+  Future<void> clearScanData() async {
+    // Stop scanning if active
+    if (isScanning.value) {
+      await onStopRead();
+    }
+
+    // Only clear scan-related data
+    totalCount.value = 0;
+    listTagRFID.clear();
+    phomBindingList.clear();
+  }
+
+  // Clear all data including search parameters
+  Future<void> onClear() async {
+    // Stop scanning if active
+    if (isScanning.value) {
+      await onStopRead();
+    }
+
+    isScan.value = false;
+    selectedCodePhom.value = '';
     totalCount.value = 0;
     selectedSize.value = '';
-
     searchResults.clear();
     listTagRFID.clear();
     phomBindingList.clear();
-    isLoading.value = false;
   }
 
   Future<void> onSearch() async {
@@ -151,18 +169,33 @@ class UpdateBindingController extends GetxController {
       phomBindingList.clear();
       rfidController.clear();
       totalCount.value = 0;
+
+      // Clear native cache to start fresh
+      await RFIDService.clearScannedTags();
+
       update();
 
       isScanning.value = true;
+      isLoading.value = false; // Turn off loading once scanning starts
 
       await RFIDService.scanContinuous((epc) {
         if (!isScanning.value) return;
 
-        if (!listTagRFID.contains(epc)) {
-          listTagRFID.add(epc);
+        // Trim and normalize EPC
+        final normalizedEpc = epc.trim();
+
+        // Double check: check both in Set AND in phomBindingList to prevent race condition
+        final existsInSet = listTagRFID.contains(normalizedEpc);
+        final existsInList = phomBindingList.any(
+          (item) => item.rfid == normalizedEpc,
+        );
+
+        if (!existsInSet && !existsInList) {
+          // Add to set first to prevent race condition
+          listTagRFID.add(normalizedEpc);
 
           final item = PhomBindingItem(
-            rfid: epc,
+            rfid: normalizedEpc,
             lastMatNo: selectedCodePhom.value.trim(),
             lastName: phomName.value.trim(),
 
@@ -173,7 +206,7 @@ class UpdateBindingController extends GetxController {
                 searchResults.isNotEmpty ? searchResults[0]["Material"] : "",
             lastSize:
                 searchResults.isNotEmpty ? searchResults[0]["LastSize"] : "",
-            lastSide: "Left",
+            lastSide: isLeftSide.value ? "Left" : "Right",
             dateIn: currentDate,
             userID: user.userId ?? "",
             shelfName: "K1",
@@ -182,15 +215,22 @@ class UpdateBindingController extends GetxController {
 
           phomBindingList.add(item);
 
-          totalCount.value += 0.5;
+          // Update count based on actual list size to avoid race conditions
+          totalCount.value = phomBindingList.length.toDouble();
+
+          print(
+            '✅ Added new tag: $normalizedEpc | Total: ${totalCount.value} | Set size: ${listTagRFID.length}',
+          );
+        } else {
+          print(
+            '⚠️ Duplicate tag ignored: $normalizedEpc (InSet: $existsInSet, InList: $existsInList)',
+          );
         }
       });
     } catch (e) {
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi bắt đầu quét: $e');
-    } finally {
-      if (isScanning.value == false) {
-        isLoading.value = false;
-      }
+      isScanning.value = false;
+      isLoading.value = false;
     }
   }
 
@@ -273,7 +313,8 @@ class UpdateBindingController extends GetxController {
     if (phomName.value.isEmpty) {
       Get.snackbar('Lỗi', 'Vui lòng chọn tên phom.');
       return false;
-    }
+    }
+
     return true;
   }
 
@@ -284,13 +325,29 @@ class UpdateBindingController extends GetxController {
 
     isLoading.value = true;
 
+    // Show progress notification
+    Get.snackbar(
+      '⏳ Đang xử lý',
+      'Đang lưu ${phomBindingList.length} thẻ RFID...',
+      backgroundColor: AppColors.primary1,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
+    );
+
     try {
       final data = {
         "companyName": companyName,
         "details": phomBindingList.map((item) => item.toJson()).toList(),
       };
 
-      final response = await ApiService(baseUrl).post('/phom/updatephom', data);
+      final response = await ApiService(baseUrl)
+          .post('/phom/updatephom', data)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw Exception('Request timeout - Vui lòng thử lại');
+            },
+          );
 
       if (response.data['statusCode'] == 200) {
         final responseData = response.data['data'];
@@ -299,19 +356,20 @@ class UpdateBindingController extends GetxController {
         final List failures = responseData['failures'] ?? [];
 
         if (failureCount == 0) {
-          Get.snackbar(
-            '✅ Thành Công',
-            'Đã cập nhật thành công tất cả $successCount thẻ.',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
+          DialogsUtils.showAlertDialog2(
+            title: 'Thành Công',
+            message: 'Đã cập nhật thành công tất cả $successCount thẻ RFID.',
+            typeDialog: TypeDialog.success,
           );
+          // Clear only scan data, keep search parameters for next batch
+          await clearScanData();
         } else {
           Get.snackbar(
             '⚠️ Cảnh Báo',
             'Hoàn tất: $successCount thành công, $failureCount thất bại.',
             backgroundColor: Colors.orange,
             colorText: Colors.white,
-            duration: const Duration(seconds: 5), 
+            duration: const Duration(seconds: 5),
           );
 
           for (var failure in failures) {}
@@ -335,7 +393,7 @@ class UpdateBindingController extends GetxController {
         colorText: Colors.white,
       );
     } finally {
-      isLoading.value = false; 
+      isLoading.value = false;
     }
   }
 
@@ -358,21 +416,9 @@ class UpdateBindingController extends GetxController {
   }
 
   @override
-  void onInit() async {
-    isLoading.value = true;
-    user = await _getuserUseCase.getUser();
-    if (user == null ||
-        user!.companyName == null ||
-        user!.companyName!.isEmpty) {
-      Get.snackbar('Lỗi', 'Không tìm thấy thông tin người dùng hoặc công ty.');
-      isLoading.value = false;
-      return;
-    }
-
-    companyName = user!.companyName;
-
-    await getLastMatNo();
-    isLoading.value = false;
+  void onInit() {
+    super.onInit();
+    _initializeData();
 
     RFIDService.setOnHardwareScan(() {
       print(
@@ -385,7 +431,29 @@ class UpdateBindingController extends GetxController {
         onStartRead();
       }
     });
-    super.onInit();
+  }
+
+  Future<void> _initializeData() async {
+    isLoading.value = true;
+    try {
+      user = await _getuserUseCase.getUser();
+      if (user == null ||
+          user!.companyName == null ||
+          user!.companyName!.isEmpty) {
+        Get.snackbar(
+          'Lỗi',
+          'Không tìm thấy thông tin người dùng hoặc công ty.',
+        );
+        return;
+      }
+
+      companyName = user!.companyName;
+      await getLastMatNo();
+    } catch (e) {
+      Get.snackbar('Lỗi', 'Không thể khởi tạo dữ liệu: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   @override

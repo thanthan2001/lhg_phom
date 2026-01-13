@@ -22,19 +22,24 @@ class LendGivePage extends GetView<LendGiveController> {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildSearchArea(),
-                      const SizedBox(height: 12),
-                      _buildScanStatus(),
-                      const SizedBox(height: 12),
-                      Expanded(child: Obx(() => _buildInventoryTable())),
-                      const SizedBox(height: 12),
-                      _buildTotalPhomNotBinding(),
-                      const SizedBox(height: 12),
-                      _buildScanButtons(),
-                    ],
+                  // 👉 Bọc toàn bộ bằng SingleChildScrollView
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildSearchArea(),
+                        const SizedBox(height: 12),
+                        _buildScanStatus(),
+                        const SizedBox(height: 12),
+                        _buildInventoryTable(),
+                        const SizedBox(height: 20),
+                        _buildReceiverCardNumber(),
+                        const SizedBox(height: 12),
+                        // _buildTotalPhomNotBinding(),
+                        // const SizedBox(height: 12),
+                        _buildScanButtons(),
+                      ],
+                    ),
                   ),
                 ),
                 if (controller.isLoading.value)
@@ -124,8 +129,7 @@ class LendGivePage extends GetView<LendGiveController> {
                     style: const TextStyle(fontSize: 16),
                     children: [
                       TextSpan(
-                        text:
-                            '${controller.totalScannedCount.value}', 
+                        text: '${controller.totalScannedCount.value}',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
@@ -133,9 +137,8 @@ class LendGivePage extends GetView<LendGiveController> {
                         ),
                       ),
                       TextSpan(
-                        text:
-                            ' / ${controller.totalExpectedCount.value * 2} (chiếc)',
-                      ), 
+                        text: ' / ${controller.totalExpectedCount.value} (đôi)',
+                      ),
                     ],
                   ),
                 ),
@@ -186,43 +189,64 @@ class LendGivePage extends GetView<LendGiveController> {
       );
     }
 
-    return DataTable2(
-      columnSpacing: 12,
-      horizontalMargin: 12,
-      minWidth: 800,
-      fixedLeftColumns: 1,
-      dataRowHeight: 45,
-      headingRowHeight: 50,
-      headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
-      columns:
-          controller.headers
-              .map(
-                (header) => DataColumn2(
-                  label: Text(
-                    header,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  size: header == 'Tên Phom' ? ColumnSize.L : ColumnSize.M,
-                ),
-              )
-              .toList(),
-      rows:
-          controller.inventoryData.map((row) {
-            final scanned = double.tryParse(row[6]) ?? 0.0;
-            final expected = double.tryParse(row[5]) ?? 0.0;
-            Color? rowColor;
+    // Tính toán chiều cao động dựa trên số hàng
+    final rowCount = controller.inventoryData.length;
+    final tableHeight =
+        (rowCount * 45.0) + 50.0 + 24.0; // rows + header + padding
+    final maxHeight = 400.0; // Chiều cao tối đa để có thể scroll
+    final actualHeight = tableHeight > maxHeight ? maxHeight : tableHeight;
 
-            if (scanned > 0 && scanned < expected) {
-              rowColor = Colors.orange.withOpacity(0.1);
-            } else if (scanned >= expected) {
-              rowColor = Colors.green.withOpacity(0.1);
-            }
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      height: actualHeight,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: 600,
+          child: DataTable2(
+            columnSpacing: 12,
+            horizontalMargin: 12,
+            minWidth: 600,
+            dataRowHeight: 45,
+            headingRowHeight: 50,
+            headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
+            columns:
+                controller.headers
+                    .map(
+                      (header) => DataColumn2(
+                        label: Text(
+                          header,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        size:
+                            header == 'Tên Phom' ? ColumnSize.L : ColumnSize.M,
+                      ),
+                    )
+                    .toList(),
+            rows:
+                controller.inventoryData.map((row) {
+                  final scanned = double.tryParse(row[3]) ?? 0.0;
+                  final expected = double.tryParse(row[2]) ?? 0.0;
+                  Color? rowColor;
 
-            return DataRow(
-              color: MaterialStateProperty.all(rowColor),
-              cells: row.map((cell) => DataCell(Text(cell))).toList(),
-            );
-          }).toList(),
+                  if (scanned > 0 && scanned < expected) {
+                    rowColor = Colors.orange.withOpacity(0.1);
+                  } else if (scanned >= expected) {
+                    rowColor = Colors.green.withOpacity(0.1);
+                  }
+
+                  return DataRow(
+                    color: MaterialStateProperty.all(rowColor),
+                    cells: row.map((cell) => DataCell(Text(cell))).toList(),
+                  );
+                }).toList(),
+          ),
+        ),
+      ),
     );
   }
 
@@ -261,6 +285,16 @@ class LendGivePage extends GetView<LendGiveController> {
     );
   }
 
+  Widget _buildReceiverCardNumber() {
+    return CustomTextFieldWidget(
+      labelText: "Số thẻ người nhận",
+      controller: controller.receiverCardNumberController,
+      obscureText: false,
+      keyboardType: TextInputType.text,
+      textColor: AppColors.black,
+    );
+  }
+
   Widget _buildDoneButton() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
@@ -270,13 +304,15 @@ class LendGivePage extends GetView<LendGiveController> {
           height: 50,
           ontap:
               (controller.isLoading.value ||
+                      controller.isScanning.value ||
                       controller.scannedRfidDetailsList.isEmpty)
                   ? () {}
                   : () {
                     controller.onFinish();
                   },
           backgroundColor:
-              controller.scannedRfidDetailsList.isEmpty
+              (controller.isScanning.value ||
+                      controller.scannedRfidDetailsList.isEmpty)
                   ? Colors.grey
                   : AppColors.green,
         ),
