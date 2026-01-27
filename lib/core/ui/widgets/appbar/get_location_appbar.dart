@@ -11,37 +11,48 @@ class GetLocationAppbar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      leading:
-          IconButton(onPressed: () {Get.back(result: {"closeDialog":true});}, icon: const Icon(Icons.arrow_back_ios)),
+      leading: IconButton(
+        onPressed: () {
+          Get.back(result: {"closeDialog": true});
+        },
+        icon: const Icon(Icons.arrow_back_ios),
+      ),
       title: const Text(
         "AppTextString.fLocationAppbar",
         style: TextStyle(
-            fontSize: AppDimens.textSize22, fontWeight: FontWeight.w500),
+          fontSize: AppDimens.textSize22,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       centerTitle: true,
       actions: [
         Container(
-          margin: EdgeInsets.only(right: Get.width*0.04),
+          margin: EdgeInsets.only(right: Get.width * 0.04),
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-              color: AppColors.gray2, borderRadius: BorderRadius.circular(100)),
-          child: IconButton(icon:const Icon(Icons.location_on_rounded), onPressed: () {  },),
-        )
-      ],
-
-      //bottom line
-      bottom: PreferredSize(
-          preferredSize:
-              const Size.fromHeight(2.0), // Adjust the height of the bottom border
-          child: Container(
-            color: AppColors.primary, // Border color
-            height: 2, // Border height
+            color: AppColors.gray2,
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.location_on_rounded),
+            onPressed: () {},
           ),
         ),
+      ],
+
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(
+          2.0,
+        ), 
+        child: Container(
+          color: AppColors.primary, 
+          height: 2, 
+        ),
+      ),
     );
   }
-  
+
   @override
   Size get preferredSize => AppBar().preferredSize;
 }

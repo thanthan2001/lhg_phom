@@ -19,12 +19,23 @@ class HomePage extends GetView<HomeController> {
             _buildAppBar(),
             _searchBar(),
             Expanded(
-              child: ListView.builder(
-                itemCount: controller.items.length,
-                itemBuilder:
-                    (context, index) =>
-                        _buildExpandableCard(controller.items[index], index),
-              ),
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (controller.items.isEmpty) {
+                  return const Center(child: Text('Không có dữ liệu'));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  itemCount: controller.items.length,
+                  itemBuilder:
+                      (context, index) =>
+                          _buildExpandableCard(controller.items[index], index),
+                );
+              }),
             ),
           ],
         ),
@@ -32,90 +43,184 @@ class HomePage extends GetView<HomeController> {
     );
   }
 
-  // Card Phom
   Widget _buildExpandableCard(Map<String, dynamic> item, int index) {
     return Obx(() {
       final isExpanded = controller.expandedIndex.value == index;
-      final textColor = _getColorBasedOnExpand(isExpanded);
+      final textColor = isExpanded ? AppColors.white : AppColors.black;
 
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isExpanded ? AppColors.primary : AppColors.white,
           border: Border.all(color: AppColors.primary, width: 1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: () => controller.toggleExpand(index),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildInfoTextColumn(
-                          'phom_code'.tr,
-                          '${item['code']}',
-                          textColor,
-                        ),
-                        _buildInfoTextColumn(
-                          'phom_name'.tr,
-                          '${item['name']}',
-                          textColor,
-                        ),
-                        _buildInfoTextColumn(
-                          'material'.tr,
-                          '${item['material']}',
-                          textColor,
-                        ),
-                        _buildInfoTextColumn(
-                          'total'.tr,
-                          '${_calculateTotal(item['details'])}',
-                          textColor,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Icon(
-                    isExpanded
-                        ? Icons.keyboard_arrow_down
-                        : Icons.arrow_forward_ios_rounded,
-                    color: textColor,
-                    size: 24,
-                  ),
-                ],
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            if (!isExpanded)
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 3),
               ),
-            ),
-            if (isExpanded) _buildExpandedDetails(item['details']),
           ],
+        ),
+        child: InkWell(
+          onTap: () => controller.toggleExpand(index),
+          borderRadius: BorderRadius.circular(11),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              _buildHeaderCell(
+                                'phom_code'.tr,
+                                textColor,
+                                flex: 3,
+                              ),
+                              _buildHeaderCell(
+                                'phom_name'.tr,
+                                textColor,
+                                flex: 3,
+                              ),
+                              _buildHeaderCell(
+                                'material'.tr,
+                                textColor,
+                                flex: 2,
+                              ),
+                              _buildHeaderCell('total'.tr, textColor, flex: 2),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildValueCell(
+                                '${item['code']}',
+                                textColor,
+                                flex: 3,
+                              ),
+                              _buildValueCell(
+                                '${item['name']}',
+                                textColor,
+                                flex: 3,
+                              ),
+                              _buildValueCell(
+                                '${item['material']}',
+                                textColor,
+                                flex: 2,
+                              ),
+                              _buildValueCell(
+                                '${_calculateTotal(item['details'])}',
+                                textColor,
+                                flex: 2,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Icon(
+                        isExpanded
+                            ? Icons.keyboard_arrow_down
+                            : Icons.arrow_forward_ios_rounded,
+                        color: isExpanded ? AppColors.white : AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+                if (isExpanded) _buildExpandedDetails(item['details']),
+              ],
+            ),
+          ),
         ),
       );
     });
   }
 
+  Widget _buildHeaderCell(String text, Color color, {int flex = 1}) {
+    return Expanded(
+      flex: flex,
+
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: color,
+            fontSize: 13,
+          ),
+          maxLines: 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildValueCell(String text, Color color, {int flex = 1}) {
+    return Expanded(
+      flex: flex,
+
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: TextStyle(color: color, fontSize: 14),
+          maxLines: 1,
+        ),
+      ),
+    );
+  }
+
   Widget _searchBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 15),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               decoration: InputDecoration(
                 hintText: "input_to_search".tr,
+                prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 1.5,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 0,
+                ),
               ),
             ),
           ),
           const SizedBox(width: 10),
           ButtonWidget(
-            borderRadius: 5,
+            borderRadius: 8,
             height: 48,
             width: 100,
             backgroundColor: AppColors.primary1,
@@ -127,89 +232,105 @@ class HomePage extends GetView<HomeController> {
     );
   }
 
-  Widget _buildInfoTextColumn(String label, String value, Color color) {
-    return Column(
-      children: [
-        TextWidget(text: label, fontWeight: FontWeight.bold, color: color),
-        TextWidget(text: value, color: color),
-      ],
-    );
-  }
-
-  Color _getColorBasedOnExpand(bool isExpanded) =>
-      isExpanded ? AppColors.white : AppColors.black;
-
   Widget _buildExpandedDetails(List<Map<String, dynamic>> details) {
-    return Column(
-      children:
-          details.map((detail) {
-            return Container(
-              margin: const EdgeInsets.symmetric(vertical: 5),
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildDetailColumn("size".tr, "${detail['size']}"),
-                  _buildDetailColumn("quantity".tr, "${detail['quantity']}"),
-                  _buildDetailColumn("inventory".tr, "${detail['stock']}"),
-                ],
-              ),
-            );
-          }).toList(),
+    return Padding(
+      padding: const EdgeInsets.only(top: 12.0),
+      child: Column(
+        children:
+            details.map((detail) {
+              return Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildDetailColumn("size".tr, "${detail['size']}"),
+                    _buildDetailColumn("quantity".tr, "${detail['quantity']}"),
+                    _buildDetailColumn("inventory".tr, "${detail['stock']}"),
+                  ],
+                ),
+              );
+            }).toList(),
+      ),
     );
   }
 
   Widget _buildDetailColumn(String label, String value) {
-    return Column(
-      children: [
-        TextWidget(text: label, fontWeight: FontWeight.bold),
-        TextWidget(text: value),
-      ],
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          TextWidget(
+            text: label,
+            fontWeight: FontWeight.bold,
+            textAlign: TextAlign.center,
+            color: AppColors.black,
+          ),
+          const SizedBox(height: 2),
+          TextWidget(
+            text: value,
+            color: AppColors.black,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
-  int _calculateTotal(List<Map<String, dynamic>> details) {
-    return details.fold<int>(0, (sum, item) => sum + (item['quantity'] as int));
+  double _calculateTotal(List<Map<String, dynamic>> details) {
+    return details.fold<double>(0.0, (sum, item) {
+      final quantity = (item['quantity'] as num?)?.toDouble() ?? 0.0;
+      return sum + quantity;
+    });
   }
 
-  // AppBar
   Widget _buildAppBar() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: const BoxDecoration(color: AppColors.primary),
+      padding: const EdgeInsets.fromLTRB(15, 15, 15, 20),
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextSpanWidget(
             text1: "hello".tr,
-            text2: "LHG",
+            text2: " LHG",
             fontWeight2: FontWeight.bold,
             textColor1: Colors.white,
             textColor2: Colors.white,
+            size: 16,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _HomeInfo(
-                icon: Icons.insert_drive_file,
+                icon: Icons.insert_drive_file_outlined,
                 title: "total_phom".tr,
-                value: "19.000",
+                value: controller.items[0]["TongPhom"].toString() ?? "0",
               ),
               _HomeInfo(
-                icon: Icons.grid_view,
+                icon: Icons.grid_view_rounded,
                 title: "total_phom_code".tr,
-                value: "300",
+                value: controller.items.length.toString() ?? "0",
               ),
               _HomeInfo(
-                icon: Icons.warehouse,
+                icon: Icons.warehouse_outlined,
                 title: "total_inventory".tr,
-                value: "15.000",
+                value: controller.items[0]["TongTonKho"].toString() ?? "0",
               ),
             ],
           ),
@@ -233,14 +354,20 @@ class _HomeInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(icon, color: Colors.white, size: 30),
-        const SizedBox(height: 5),
-        Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
+        const SizedBox(height: 8),
+        Text(
+          title,
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        const SizedBox(height: 4),
         Text(
           value,
           style: const TextStyle(
             color: Colors.white,
+
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),

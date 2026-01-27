@@ -15,17 +15,13 @@ class SplashPage extends GetView<SplashController> {
       backgroundColor: AppColors.secondary1,
       body: Stack(
         children: [
-          // Logo có hiệu ứng scale mượt
           Center(
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(seconds: 5),
               curve: Curves.easeOutBack,
               builder: (context, value, child) {
-                return Transform.scale(
-                  scale: value,
-                  child: child,
-                );
+                return Transform.scale(scale: value, child: child);
               },
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -41,31 +37,33 @@ class SplashPage extends GetView<SplashController> {
             ),
           ),
 
-          // Tiến trình & % hiển thị
           Positioned(
             bottom: Get.height * 0.1,
             left: 70.0,
             right: 70.0,
             child: Column(
               children: [
-                Obx(() => LinearProgressIndicator(
-                      value: controller.loadingValue.value,
-                      backgroundColor: AppColors.grey1,
-                      borderRadius: BorderRadius.circular(5.0),
-                      color: AppColors.primary,
-                      minHeight: 8.0,
-                    )),
+                Obx(
+                  () => LinearProgressIndicator(
+                    value: controller.loadingValue.value,
+                    backgroundColor: AppColors.grey1,
+                    borderRadius: BorderRadius.circular(5.0),
+                    color: AppColors.primary,
+                    minHeight: 8.0,
+                  ),
+                ),
                 const SizedBox(height: 10.0),
-                Obx(() => AnimatedOpacity(
-                      opacity: controller.loadingValue.value > 0 ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 500),
-                      child: TextWidget(
-                        text:
-                            '${(controller.loadingValue.value * 100).toInt()}%',
-                        size: 12,
-                        color: AppColors.primary,
-                      ),
-                    )),
+                Obx(
+                  () => AnimatedOpacity(
+                    opacity: controller.loadingValue.value > 0 ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 500),
+                    child: TextWidget(
+                      text: '${(controller.loadingValue.value * 100).toInt()}%',
+                      size: 12,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

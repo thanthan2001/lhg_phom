@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import '../../../../../../core/configs/app_colors.dart';
 import '../../../../../../core/routes/routes.dart';
 import '../../../../../../core/ui/widgets/text/text_widget.dart';
-import '../../../../../../core/services/model/lend_model.dart';
+import '../../../../core/services/models/lend_model.dart';
 import '../../../../core/ui/widgets/textfield/custom_textfield_widget.dart';
 import '../controller/lendRegister_controller.dart';
 
@@ -297,7 +297,6 @@ class LendRegisterPage extends GetView<LendRegisterController> {
     );
   });
 }
-
 
   Widget _buildDateRangePicker(BuildContext context) {
     return Obx(() {

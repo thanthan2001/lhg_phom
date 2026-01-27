@@ -1,34 +1,31 @@
-// login_controller.dart - Không thay đổi
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
-import 'package:lhg_phom/core/services/model/user/domain/usecase/save_user_use_case.dart';
+import 'package:lhg_phom/core/services/models/user/domain/usecase/save_user_use_case.dart';
 import 'package:lhg_phom/features/login/presentation/widgets/factory_selection.dart';
 
 class ForgotPasswordController extends GetxController {
-  final Prefs prefs = Prefs.preferences; 
+  final Prefs prefs = Prefs.preferences;
   final SaveUserUseCase _saveUserUseCase;
   ForgotPasswordController(this._saveUserUseCase);
 
   var isShowPwd = false.obs;
-  var selectedFactory = "".obs; // Lưu nhà máy được chọn
+  var selectedFactory = "".obs; 
   late TextEditingController userID = TextEditingController();
   late TextEditingController identityCard = TextEditingController();
   late TextEditingController dateOfBirth = TextEditingController();
   late TextEditingController newPassword = TextEditingController();
   late TextEditingController confirmPassword = TextEditingController();
 
-  //Expanded Select Language
-  final isLanguageSelectorExpanded = false.obs; // NEW: Language Selector
+  final isLanguageSelectorExpanded = false.obs; 
   final currentFlag = AppImagesString.fEn.obs;
 
   @override
   void onInit() {
     super.onInit();
-    loadSavedLanguage(); // Gọi hàm lấy ngôn ngữ đã lưu khi khởi động
+    loadSavedLanguage(); 
   }
-  // NEW: Toggle function for language selector
 
   void toggleLanguageSelector() {
     isLanguageSelectorExpanded.value = !isLanguageSelectorExpanded.value;
@@ -37,11 +34,10 @@ class ForgotPasswordController extends GetxController {
   void loadSavedLanguage() async {
     String? savedLanguage = await prefs.getLanguage();
     if (savedLanguage != null) {
-      selectLanguage(savedLanguage, save: false); // Cập nhật giao diện
+      selectLanguage(savedLanguage, save: false); 
     }
   }
 
-  // NEW: Language selection logic (you need to implement this)
   void selectLanguage(String languageName, {bool save = true}) {
     switch (languageName) {
       case 'en':
@@ -63,7 +59,7 @@ class ForgotPasswordController extends GetxController {
     }
 
     if (save) {
-      prefs.setLanguage(languageName); // Lưu ngôn ngữ vào bộ nhớ
+      prefs.setLanguage(languageName); 
     }
 
     isLanguageSelectorExpanded.value = false;
@@ -73,16 +69,12 @@ class ForgotPasswordController extends GetxController {
     isShowPwd.value = !isShowPwd.value;
   }
 
-  // Hiển thị modal chọn nhà máy
   void showFactoryModal(BuildContext context) {
-    Get.dialog(
-      FactorySelectionWidget(),
-      barrierDismissible: true, // Cho phép đóng khi chạm bên ngoài
-    );
+    Get.dialog(FactorySelectionWidget(), barrierDismissible: true);
   }
 
   void login() {
-    print("Login button clicked"); // Debug xem hàm có chạy không
-    Get.offAllNamed('/main'); // Chuyển sang màng hình home
+    print("Login button clicked");
+    Get.offAllNamed('/main');
   }
 }

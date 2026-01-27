@@ -1,6 +1,10 @@
 import 'package:intl/intl.dart';
 
 class DatetimeUtil {
+  static String currentDate() {
+    return DateFormat('yyyy-MM-dd').format(DateTime.now());
+  }
+
   static String formatDateTimeFormat(DateTime dateTime) {
     String formattedDate = DateFormat('d MMMM, EEEE').format(dateTime);
     return formattedDate;
@@ -16,7 +20,7 @@ class DatetimeUtil {
       DateFormat formatter = DateFormat('dd/MM/yyyy');
       return formatter.format(dateTime);
     } else {
-      DateTime now = DateTime.now(); // Lấy thời gian hiện tại
+      DateTime now = DateTime.now(); 
       DateFormat formatter = DateFormat('dd/MM/yyyy');
       return formatter.format(now);
     }

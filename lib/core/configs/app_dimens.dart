@@ -25,21 +25,20 @@ class AppDimens {
   static const double textSize56 = 56.0;
   static const double textSize60 = 60.0;
 
-  static const double radius5=5.0;
-  static const double radius10=10.0;
-  static const double radius15=15.0;
-  static const double circle=100000.0;
+  static const double radius5 = 5.0;
+  static const double radius10 = 10.0;
+  static const double radius15 = 15.0;
+  static const double circle = 100000.0;
 
-  //spacing
-  static const double rowSpacing=15;
-  static const double columnSpacing=15;
+  static const double rowSpacing = 15;
+  static const double columnSpacing = 15;
 
-  static const double spacing5=5.0;
-  static const double spacing10=10.0;
-  static const double spacing15=15.0;
-  static const double spacing20=20.0;
-  static const double spacing25=25.0;
-  static const double spacing30=30.0;
-  static const double spacing35=35.0;
-  static const double spacing40=40.0;
+  static const double spacing5 = 5.0;
+  static const double spacing10 = 10.0;
+  static const double spacing15 = 15.0;
+  static const double spacing20 = 20.0;
+  static const double spacing25 = 25.0;
+  static const double spacing30 = 30.0;
+  static const double spacing35 = 35.0;
+  static const double spacing40 = 40.0;
 }

@@ -5,7 +5,7 @@ import '../../../../../../core/configs/app_colors.dart';
 import '../../../../../../core/routes/routes.dart';
 import '../../../../../../core/ui/widgets/text/text_widget.dart';
 import '../controller/lend_controller.dart';
-import '../../../../../../core/services/model/lend_model.dart';
+import '../../../../../../core/services/models/lend_model.dart';
 
 class LendPage extends GetView<LendController> {
   const LendPage({super.key});
@@ -55,11 +55,7 @@ class LendPage extends GetView<LendController> {
         const SizedBox(width: 10),
         _buildButton("lend_return".tr, AppColors.yellow, Routes.lendReturn),
         const SizedBox(width: 10),
-        _buildButton(
-          "lend_others".tr,
-          AppColors.red,
-          Routes.lendOthers,
-        ),
+        _buildButton("lend_others".tr, AppColors.red, Routes.lendOthers),
       ],
     );
   }
@@ -141,7 +137,6 @@ class LendPage extends GetView<LendController> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          // ignore: deprecated_member_use
           color: cardColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(5),
           border: Border.all(color: cardColor, width: 1),

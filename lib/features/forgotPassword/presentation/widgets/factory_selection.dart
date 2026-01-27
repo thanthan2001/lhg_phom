@@ -22,12 +22,10 @@ class FactorySelectionWidget extends GetView<ForgotPasswordController> {
 
     final RxList<String> filteredFactories = RxList<String>(allFactories);
 
-    // Local RxString to manage selection within the dialog
     final RxString selectedFactory = RxString(
       loginController.selectedFactory.value,
     );
 
-    // Function to filter the factory list
     void filterFactories(String text) {
       searchText.value = text;
       filteredFactories.value =
@@ -96,7 +94,6 @@ class FactorySelectionWidget extends GetView<ForgotPasswordController> {
                           onChanged: (value) {
                             selectedFactory.value =
                                 value == true ? factory : "";
-                            print(selectedFactory);
                           },
                           activeColor: AppColors.primary1,
                         ),
@@ -111,7 +108,6 @@ class FactorySelectionWidget extends GetView<ForgotPasswordController> {
               child: TextButton(
                 child: Text("Done", style: TextStyle(color: AppColors.primary)),
                 onPressed: () {
-                  // Update the LoginController's selectedFactory
                   loginController.selectedFactory.value = selectedFactory.value;
                   Get.back();
                 },

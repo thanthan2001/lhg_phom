@@ -3,11 +3,11 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../../core/configs/prefs_contants.dart';
-import '../../../../../../core/services/model/lend_model.dart';
+import '../../../../../../core/services/models/lend_model.dart';
 
 class LendController extends GetxController {
   var registerlendItems = <LendItemModel>[].obs;
-  var formlendItems = <LendItemModel>[].obs; 
+  var formlendItems = <LendItemModel>[].obs;
 
   @override
   void onInit() {
@@ -17,17 +17,19 @@ class LendController extends GetxController {
     formLend();
   }
 
-  // Dữ liệu mẫu
- void registerLend() {
+  void registerLend() {
     registerlendItems.value =
-        exampleLendItems.where((item) => item.trangThai == 'đăng ký mượn').toList();
+        exampleLendItems
+            .where((item) => item.trangThai == 'đăng ký mượn')
+            .toList();
   }
 
- void formLend() {
+  void formLend() {
     formlendItems.value =
-        exampleLendItems.where((item) => item.trangThai != 'đăng ký mượn').toList();
+        exampleLendItems
+            .where((item) => item.trangThai != 'đăng ký mượn')
+            .toList();
   }
-
 
   Future<void> loadLanguage() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -52,5 +54,4 @@ class LendController extends GetxController {
     }
     Get.updateLocale(Locale(langCode));
   }
-
 }

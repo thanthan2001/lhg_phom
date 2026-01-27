@@ -1,31 +1,33 @@
-// login_controller.dart - Không thay đổi
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
-import 'package:lhg_phom/core/services/model/user/domain/usecase/save_user_use_case.dart';
+import 'package:lhg_phom/core/services/models/user/domain/usecase/save_user_use_case.dart';
 import 'package:lhg_phom/features/login/presentation/widgets/factory_selection.dart';
+import 'package:dio/dio.dart';
+
+import '../../../../core/services/dio.api.service.dart';
+import '../../../../core/services/models/user/model/user_model.dart';
 
 class LoginController extends GetxController {
-  final Prefs prefs = Prefs.preferences; 
+  final Prefs prefs = Prefs.preferences;
   final SaveUserUseCase _saveUserUseCase;
   LoginController(this._saveUserUseCase);
 
   var isShowPwd = false.obs;
-  var selectedFactory = "".obs; // Lưu nhà máy được chọn
+  var selectedFactory = "".obs;
   late TextEditingController userID = TextEditingController();
   late TextEditingController pwd = TextEditingController();
 
-  //Expanded Select Language
-  final isLanguageSelectorExpanded = false.obs; // NEW: Language Selector
+  final isLanguageSelectorExpanded = false.obs;
   final currentFlag = AppImagesString.fEn.obs;
-
+  final String baseUrl = dotenv.env['BASE_URL'] ?? '';
   @override
   void onInit() {
     super.onInit();
-    loadSavedLanguage(); // Gọi hàm lấy ngôn ngữ đã lưu khi khởi động
+    loadSavedLanguage();
   }
-  // NEW: Toggle function for language selector
 
   void toggleLanguageSelector() {
     isLanguageSelectorExpanded.value = !isLanguageSelectorExpanded.value;
@@ -34,11 +36,10 @@ class LoginController extends GetxController {
   void loadSavedLanguage() async {
     String? savedLanguage = await prefs.getLanguage();
     if (savedLanguage != null) {
-      selectLanguage(savedLanguage, save: false); // Cập nhật giao diện
+      selectLanguage(savedLanguage, save: false);
     }
   }
 
-  // NEW: Language selection logic (you need to implement this)
   void selectLanguage(String languageName, {bool save = true}) {
     switch (languageName) {
       case 'en':
@@ -60,7 +61,7 @@ class LoginController extends GetxController {
     }
 
     if (save) {
-      prefs.setLanguage(languageName); // Lưu ngôn ngữ vào bộ nhớ
+      prefs.setLanguage(languageName);
     }
 
     isLanguageSelectorExpanded.value = false;
@@ -70,16 +71,71 @@ class LoginController extends GetxController {
     isShowPwd.value = !isShowPwd.value;
   }
 
-  // Hiển thị modal chọn nhà máy
   void showFactoryModal(BuildContext context) {
-    Get.dialog(
-      FactorySelectionWidget(),
-      barrierDismissible: true, // Cho phép đóng khi chạm bên ngoài
-    );
+    Get.dialog(FactorySelectionWidget(), barrierDismissible: true);
   }
 
-  void login() {
-    print("Login button clicked"); // Debug xem hàm có chạy không
-    Get.offAllNamed('/main'); // Chuyển sang màng hình home
+  bool verifyInputLogin(userID, pwd, selectedFactory) {
+    if (userID.text.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please enter your User ID",
+        snackPosition: SnackPosition.TOP,
+      );
+      return false;
+    }
+    if (pwd.text.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please enter your Password",
+        snackPosition: SnackPosition.TOP,
+      );
+      return false;
+    }
+    if (selectedFactory.value.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please select a factory",
+        snackPosition: SnackPosition.TOP,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> login() async {
+    var data = {
+      "userID": userID.text,
+      "pwd": pwd.text,
+      "companyName": selectedFactory.value.toLowerCase(),
+    };
+
+    verifyInputLogin(userID, pwd, selectedFactory);
+    if (verifyInputLogin(userID, pwd, selectedFactory)) {
+      try {
+        var response = await ApiService(baseUrl).post('/auth/login', data);
+
+        if (response.statusCode == 200) {
+          var user = UserModel.fromJson(response.data['data']);
+
+          user.companyName = selectedFactory.value.toLowerCase();
+          await _saveUserUseCase.userSave(user);
+
+          Get.offAllNamed('/main');
+        } else {
+          Get.snackbar(
+            "Error",
+            "Login failed: ${response.statusMessage}",
+            snackPosition: SnackPosition.TOP,
+          );
+        }
+      } catch (e) {
+        Get.snackbar(
+          "Error",
+          "An error occurred: $e",
+          snackPosition: SnackPosition.TOP,
+        );
+      }
+    }
   }
 }

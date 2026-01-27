@@ -8,6 +8,5 @@ class MainBinding extends Bindings {
   void dependencies() {
     Get.lazyPut(() => Prefs(), fenix: true);
     Get.lazyPut(() => MainController());
-    // Get.lazyPut(() => SaveUserUseCase(Get.find()));
   }
 }

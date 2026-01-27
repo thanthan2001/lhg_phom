@@ -30,7 +30,7 @@ class TextColumWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Canh trái
+      crossAxisAlignment: CrossAxisAlignment.start, 
       children: [
         TextWidget(
           text: text1.tr,

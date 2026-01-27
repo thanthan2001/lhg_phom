@@ -26,101 +26,102 @@ import '../../features/main/di/main_binding.dart';
 import '../../features/main/presentation/page/main_page.dart';
 import '../../features/splash/di/splash_binding.dart';
 import '../../features/splash/presentation/page/splash_page.dart';
+import '../../features/transfer_lend/di/transfer_lend_binding.dart';
+import '../../features/transfer_lend/presentation/page/transfer_lend_page.dart';
+import '../../features/updatebinding/di/update_binding.dart';
+import '../../features/updatebinding/presentation/page/update_binding_page.dart';
 import 'routes.dart';
 
 class Pages {
   static const initial = Routes.none;
   static const main = Routes.main;
   static final routes = [
-    // màng hình chờ loading
     GetPage(
       name: Routes.none,
       page: () => const SplashPage(),
       binding: SplashBinding(),
     ),
 
-    // màng hình login
     GetPage(
       name: Routes.login,
       page: () => const LoginPage(),
       binding: LoginBinding(),
     ),
 
-    // // màng hình chính
     GetPage(
       name: Routes.main,
       page: () => const MainPage(),
       binding: MainBinding(),
     ),
 
-    // trang thông tin người dùng
     GetPage(
       name: Routes.informationUser,
       page: () => const InformationUserPage(),
       binding: InformationUserBinding(),
     ),
 
-    // trang đổi ngôn ngữ
     GetPage(
       name: Routes.settingLanguage,
       page: () => const LanguageSettingPage(),
       binding: LanguageSettingBinding(),
     ),
 
-    // trang đổi mật khẩu
     GetPage(
       name: Routes.changePassword,
       page: () => const ChangePasswordPage(),
       binding: ChangePasswordBinding(),
     ),
 
-    // trang quên mật khẩu
     GetPage(
       name: Routes.forgotPassword,
       page: () => const ForgotPasswordPage(),
       binding: ForgotPasswordBinding(),
     ),
 
-    //trang trang binding phom
     GetPage(
       name: Routes.bindingPhom,
       page: () => const BindingPhomPage(),
       binding: BindingPhomBinding(),
     ),
 
-    //trang trả phom
     GetPage(
       name: Routes.lendReturn,
       page: () => const LendReturnPage(),
       binding: LendReturnBinding(),
     ),
 
-    //trang phát cho mượn
     GetPage(
       name: Routes.lendGive,
       page: () => const LendGivePage(),
       binding: LendGiveBinding(),
     ),
 
-    //trang chi tiết cho mượn
     GetPage(
       name: Routes.lendDetails,
       page: () => const LendDetailsPage(),
       binding: LendDetailsBinding(),
     ),
 
-    //trang đăng ký cho mượn
     GetPage(
       name: Routes.lendRegister,
       page: () => const LendRegisterPage(),
       binding: LendRegisterBinding(),
     ),
 
-    //trang tất cả cho mượn
     GetPage(
       name: Routes.lendAll,
       page: () => const LendAllPage(),
       binding: LendAllBinding(),
+    ),
+    GetPage(
+      name: Routes.updateBinding,
+      page: () => const UpdateBindingPage(),
+      binding: UpdateBinding(),
+    ),
+    GetPage(
+      name: Routes.lendOthers,
+      page: () => const TransferLendPage(),
+      binding: TransferLendBinding(),
     ),
   ];
 }

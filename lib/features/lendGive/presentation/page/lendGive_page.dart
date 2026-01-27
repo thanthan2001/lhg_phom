@@ -1,11 +1,10 @@
+import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_colors.dart';
 import 'package:lhg_phom/core/ui/widgets/textfield/custom_textfield_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
-import '../../../../core/ui/dialogs/showSearchableSelectionDialog.dart';
-import '../../../../core/ui/widgets/textfield/custom_dropdownfield_widget.dart';
 import '../controller/lendGive_controller.dart';
 
 class LendGivePage extends GetView<LendGiveController> {
@@ -14,38 +13,47 @@ class LendGivePage extends GetView<LendGiveController> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        controller.selectedRowIndex.value = -1;
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: SafeArea(
         child: Scaffold(
-  appBar: _buildAppBar(),
-  body: SingleChildScrollView(
-    padding: const EdgeInsets.all(10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabelTextField("Số thẻ người mượn:", controller.userIDController),
-        _buildLabelTextField("Tên người mượn:", controller.userNameController),
-        const SizedBox(height: 10),
-        _buildDepartmentAndDate(),
-        const SizedBox(height: 10),
-        _buildCodePhomAndSum(),
-        const SizedBox(height: 10),
-        _buildRfidScan(),
-        const SizedBox(height: 10),
-        _buildTable(),
-        const SizedBox(height: 20),
-      ],
-    ),
-  ),
-  bottomNavigationBar: Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    child: _buildDoneButton(),
-  ),
-),
-
+          appBar: _buildAppBar(),
+          body: Obx(
+            () => Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  // 👉 Bọc toàn bộ bằng SingleChildScrollView
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildSearchArea(),
+                        const SizedBox(height: 12),
+                        _buildScanStatus(),
+                        const SizedBox(height: 12),
+                        _buildInventoryTable(),
+                        const SizedBox(height: 20),
+                        _buildReceiverCardNumber(),
+                        const SizedBox(height: 12),
+                        // _buildTotalPhomNotBinding(),
+                        // const SizedBox(height: 12),
+                        _buildScanButtons(),
+                      ],
+                    ),
+                  ),
+                ),
+                if (controller.isLoading.value)
+                  Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          bottomNavigationBar: _buildDoneButton(),
+        ),
       ),
     );
   }
@@ -63,30 +71,203 @@ class LendGivePage extends GetView<LendGiveController> {
         icon: const Icon(Icons.arrow_back_ios, color: AppColors.white),
         onPressed: Get.back,
       ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.clear_all, color: Colors.white),
+          onPressed: controller.onClear,
+          tooltip: 'Xóa và làm mới',
+        ),
+      ],
     );
   }
 
-  Widget _buildLabelTextField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Row(
-        children: [
-          TextWidget(
-            text: label,
-            color: AppColors.black,
-            fontWeight: FontWeight.bold,
-            size: 16,
+  Widget _buildSearchArea() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          flex: 3,
+          child: CustomTextFieldWidget(
+            labelText: "Mã số đơn mượn",
+            controller: controller.bill_br_id,
+            obscureText: false,
+            textColor: AppColors.black,
           ),
-          const SizedBox(width: 5),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 2,
+          child: ButtonWidget(
+            height: 48,
+            backgroundColor: AppColors.primary1,
+            textColor: Colors.white,
+            ontap: controller.onSearch,
+            text: "Tìm kiếm",
+            borderRadius: 8,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScanStatus() {
+    return Obx(
+      () => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    text: 'Đã quét: ',
+                    style: const TextStyle(fontSize: 16),
+                    children: [
+                      TextSpan(
+                        text: '${controller.totalScannedCount.value}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                          fontSize: 18,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' / ${controller.totalExpectedCount.value} (đôi)',
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      controller.isScanning.value ? 'ĐANG QUÉT' : 'ĐÃ DỪNG',
+                      style: TextStyle(
+                        color:
+                            controller.isScanning.value
+                                ? Colors.redAccent
+                                : Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (controller.isScanning.value)
+                      const SizedBox(
+                        width: 8,
+                        height: 15,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            if (controller.lastScanStatus.value.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  'Trạng thái: ${controller.lastScanStatus.value}',
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInventoryTable() {
+    if (!controller.isAvalableScan.value || controller.inventoryData.isEmpty) {
+      return const Center(
+        child: Text("Nhập mã phiếu và nhấn 'Tìm kiếm' để bắt đầu."),
+      );
+    }
+
+    // Tính toán chiều cao động dựa trên số hàng
+    final rowCount = controller.inventoryData.length;
+    final tableHeight =
+        (rowCount * 45.0) + 50.0 + 24.0; // rows + header + padding
+    final maxHeight = 400.0; // Chiều cao tối đa để có thể scroll
+    final actualHeight = tableHeight > maxHeight ? maxHeight : tableHeight;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      height: actualHeight,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: 600,
+          child: DataTable2(
+            columnSpacing: 12,
+            horizontalMargin: 12,
+            minWidth: 600,
+            dataRowHeight: 45,
+            headingRowHeight: 50,
+            headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
+            columns:
+                controller.headers
+                    .map(
+                      (header) => DataColumn2(
+                        label: Text(
+                          header,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        size:
+                            header == 'Tên Phom' ? ColumnSize.L : ColumnSize.M,
+                      ),
+                    )
+                    .toList(),
+            rows:
+                controller.inventoryData.map((row) {
+                  final scanned = double.tryParse(row[3]) ?? 0.0;
+                  final expected = double.tryParse(row[2]) ?? 0.0;
+                  Color? rowColor;
+
+                  if (scanned > 0 && scanned < expected) {
+                    rowColor = Colors.orange.withOpacity(0.1);
+                  } else if (scanned >= expected) {
+                    rowColor = Colors.green.withOpacity(0.1);
+                  }
+
+                  return DataRow(
+                    color: MaterialStateProperty.all(rowColor),
+                    cells: row.map((cell) => DataCell(Text(cell))).toList(),
+                  );
+                }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScanButtons() {
+    return Obx(
+      () => Row(
+        children: [
           Expanded(
-            child: CustomTextFieldWidget(
-              decorationType: InputDecorationType.underline,
-              enableColor: AppColors.grey2,
-              height: 30,
-              controller: controller,
-              obscureText: false,
-              borderRadius: 5,
-              textColor: AppColors.black,
+            child: ButtonWidget(
+              height: 50,
+              backgroundColor:
+                  controller.isScanning.value
+                      ? AppColors.yellow
+                      : AppColors.primary1,
+              textColor: Colors.white,
+              ontap:
+                  controller.isAvalableScan.value
+                      ? controller.toggleScan
+                      : () {},
+              text: controller.isScanning.value ? "Dừng Quét" : "Bắt đầu Quét",
+              borderRadius: 8,
             ),
           ),
         ],
@@ -94,211 +275,48 @@ class LendGivePage extends GetView<LendGiveController> {
     );
   }
 
-  Widget _buildCodePhomAndSum() {
-    return Row(
-      children: [
-        Expanded(
-          child: Obx(() => CustomDropdownField(
-                labelText: 'Mã số phom:',
-                selectedValue: controller.selectedCodePhom.value,
-                onTap: () => showSearchableSelectionDialog(
-                  title: 'Chọn mã số phom',
-                  itemList: controller.codePhomList,
-                  selectedItem: controller.selectedCodePhom.value,
-                  onSelected: (val) => controller.selectedCodePhom.value = val,
-                ),
-              )),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: CustomTextFieldWidget(
-            enableColor: AppColors.grey2,
-            height: 40,
-            labelText: "Tổng số lượng:",
-            labelColor: AppColors.black,
-            controller: controller.sumController,
-            obscureText: false,
-            borderRadius: 5,
-            textColor: AppColors.black,
-          ),
-        ),
-      ],
+  Widget _buildTotalPhomNotBinding() {
+    return CustomTextFieldWidget(
+      labelText: "Số đôi chưa gán dữ liệu",
+      controller: controller.totalPhomNotBindingController,
+      obscureText: false,
+      keyboardType: TextInputType.number,
+      textColor: AppColors.black,
     );
   }
 
-  Widget _buildDepartmentAndDate() {
-    return Row(
-      children: [
-        Expanded(
-          child: Obx(() => CustomDropdownField(
-                labelText: 'Đơn vị:',
-                selectedValue: controller.selectedDepartment.value,
-                onTap: () => showSearchableSelectionDialog(
-                  title: 'Chọn đơn vị',
-                  itemList: controller.departmentList,
-                  selectedItem: controller.selectedDepartment.value,
-                  onSelected: (val) =>
-                      controller.selectedDepartment.value = val,
-                ),
-              )),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              CustomTextFieldWidget(
-                enableColor: AppColors.grey2,
-                height: 40,
-                labelText: "Ngày mượn:",
-                labelColor: AppColors.black,
-                controller: controller.dateController,
-                obscureText: false,
-                borderRadius: 5,
-                textColor: AppColors.black,
-                keyboardType: TextInputType.datetime,
-                onChanged: (value) {
-                  // Xử lý validation nếu cần
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.calendar_month_outlined,
-                    size: 30, color: AppColors.primary1),
-                onPressed: () async {
-                  final pickedDate = await showDatePicker(
-                    context: Get.context!,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    controller.dateController.text =
-                        "${pickedDate.day.toString().padLeft(2, '0')}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.year}";
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRfidScan() {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: CustomTextFieldWidget(
-            enableColor: AppColors.grey2,
-            backgroundColor: AppColors.grey1,
-            height: 40,
-            labelText: "RFID:",
-            labelColor: AppColors.black,
-            controller: controller.rfidController,
-            obscureText: false,
-            borderRadius: 5,
-            textColor: AppColors.black,
-          ),
-        ),
-        const SizedBox(width: 10),
-        ButtonWidget(
-          width: 100,
-          height: 48,
-          backgroundColor: AppColors.primary1,
-          textColor: Colors.white,
-          ontap: controller.onScan,
-          text: "Scan",
-          borderRadius: 5,
-        ),
-      ],
+  Widget _buildReceiverCardNumber() {
+    return CustomTextFieldWidget(
+      labelText: "Số thẻ người nhận",
+      controller: controller.receiverCardNumberController,
+      obscureText: false,
+      keyboardType: TextInputType.text,
+      textColor: AppColors.black,
     );
   }
 
   Widget _buildDoneButton() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: ButtonWidget(
-        text: "Hoàn tất",
-        height: 50,
-        ontap: controller.onFinish,
-      ),
-    );
-  }
-
-  Widget _buildTable() {
-    return RawScrollbar(
-      controller: controller.tableScrollController,
-      thumbVisibility: true,
-      trackVisibility: true,
-      radius: const Radius.circular(5),
-      thickness: 2,
-      thumbColor: AppColors.primary,
-      trackColor: AppColors.grey3,
-      trackBorderColor: AppColors.grey3,
-      child: SingleChildScrollView(
-        controller: controller.tableScrollController,
-        scrollDirection: Axis.horizontal,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Obx(
-            () => ConstrainedBox(
-              constraints: BoxConstraints(minWidth: Get.width - 20),
-              child: Table(
-                border: TableBorder.all(
-                  color: AppColors.grey,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-                defaultColumnWidth: const IntrinsicColumnWidth(),
-                children: [
-                  _buildTableRow(
-                    ['Size', 'Tồn kho', 'Trái', 'Phải', 'Số lượng'],
-                    isHeader: true,
-                  ),
-                  ...controller.inventoryData.asMap().entries.map(
-                        (entry) => _buildTableRow(
-                          entry.value,
-                          index: entry.key,
-                        ),
-                      ),
-                ],
-              ),
-            ),
-          ),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+      child: Obx(
+        () => ButtonWidget(
+          text: "Hoàn tất",
+          height: 50,
+          ontap:
+              (controller.isLoading.value ||
+                      controller.isScanning.value ||
+                      controller.scannedRfidDetailsList.isEmpty)
+                  ? () {}
+                  : () {
+                    controller.onFinish();
+                  },
+          backgroundColor:
+              (controller.isScanning.value ||
+                      controller.scannedRfidDetailsList.isEmpty)
+                  ? Colors.grey
+                  : AppColors.green,
         ),
       ),
-    );
-  }
-
-  TableRow _buildTableRow(List<String> values,
-      {bool isHeader = false, int? index}) {
-    final isSelected =
-        index != null && controller.selectedRowIndex.value == index;
-
-    return TableRow(
-      decoration: BoxDecoration(
-        color: isHeader
-            ? AppColors.grey3
-            : isSelected
-                ? AppColors.primary2.withOpacity(0.3)
-                : null,
-      ),
-      children: values.map((value) {
-        final cell = Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextWidget(
-            text: value,
-            size: 14,
-            fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-          ),
-        );
-        return isHeader
-            ? cell
-            : GestureDetector(
-                onTap: () => controller.selectedRowIndex.value = index,
-                child: cell,
-              );
-      }).toList(),
     );
   }
 }

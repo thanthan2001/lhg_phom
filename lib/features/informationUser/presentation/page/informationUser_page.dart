@@ -11,10 +11,7 @@ class InformationUserPage extends GetView<InformationUserController> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Scaffold(
-        appBar: _buildAppBar(),
-        body: _buildBody(),
-      ),
+      child: Scaffold(appBar: _buildAppBar(), body: _buildBody()),
     );
   }
 
@@ -22,10 +19,7 @@ class InformationUserPage extends GetView<InformationUserController> {
     return AppBar(
       backgroundColor: AppColors.primary,
       centerTitle: true,
-      title: TextWidget(
-        text: "user_information".tr,
-        color: AppColors.white,
-      ),
+      title: TextWidget(text: "user_information".tr, color: AppColors.white),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios, color: AppColors.white),
         onPressed: () => Get.back(),
@@ -36,11 +30,7 @@ class InformationUserPage extends GetView<InformationUserController> {
   Widget _buildBody() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildAvatar(),
-        const SizedBox(height: 20),
-        _buildUserInfo(),
-      ],
+      children: [_buildAvatar(), const SizedBox(height: 20), _buildUserInfo()],
     );
   }
 
@@ -51,7 +41,7 @@ class InformationUserPage extends GetView<InformationUserController> {
         Container(
           height: 120,
           width: double.infinity,
-          // ignore: deprecated_member_use
+
           color: AppColors.primary2.withOpacity(0.5),
         ),
         Positioned(
@@ -64,11 +54,7 @@ class InformationUserPage extends GetView<InformationUserController> {
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(50),
             ),
-            child: Icon(
-              Icons.person,
-              size: 70,
-              color: AppColors.white,
-            ),
+            child: Icon(Icons.person, size: 70, color: AppColors.white),
           ),
         ),
       ],
@@ -94,31 +80,30 @@ class InformationUserPage extends GetView<InformationUserController> {
   }
 
   Widget _buildUserInfoRow(String label, String value) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: "$label: ",
-            style: TextStyle(
-              fontWeight: FontWeight.bold, 
-              color: Colors.black,
-              fontSize: 16,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: "$label: ",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                fontSize: 16,
+              ),
             ),
-          ),
-          TextSpan(
-            text: value,
-            style: TextStyle(
-              fontWeight: FontWeight.w500, 
-              color: Colors.black,
-              fontSize: 16,
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+                fontSize: 16,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 }

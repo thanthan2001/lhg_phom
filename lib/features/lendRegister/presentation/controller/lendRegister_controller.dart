@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../../core/services/model/lend_model.dart';
+import '../../../../core/services/models/lend_model.dart';
 
 class LendRegisterController extends GetxController {
   var registerlendItems = <LendItemModel>[].obs;
@@ -9,7 +9,6 @@ class LendRegisterController extends GetxController {
 
   var searchQuery = ''.obs;
 
-  // Bộ lọc
   var selectedNgayMuon = ''.obs;
   var selectedDonVi = ''.obs;
   var selectedMaPhom = ''.obs;
@@ -23,11 +22,12 @@ class LendRegisterController extends GetxController {
     registerLend();
   }
 
- void registerLend() {
+  void registerLend() {
     allRegisterLendItems =
-        exampleLendItems.where((item) => item.trangThai == 'đăng ký mượn').toList();
-    registerlendItems.value = allRegisterLendItems;   
-    print('registerlendItems: ${registerlendItems.length}');
+        exampleLendItems
+            .where((item) => item.trangThai == 'đăng ký mượn')
+            .toList();
+    registerlendItems.value = allRegisterLendItems;
   }
 
   void searchLendItems(String query) {
@@ -36,44 +36,51 @@ class LendRegisterController extends GetxController {
   }
 
   void applyFilters() {
-  final dateFormatter = DateFormat('dd/MM/yyyy');
+    final dateFormatter = DateFormat('dd/MM/yyyy');
 
-  registerlendItems.value = allRegisterLendItems.where((item) {
-    final name = item.idNguoiMuon?.userName?.toLowerCase() ?? '';
-    final donVi = item.donVi?.toLowerCase() ?? '';
-    final ngayMuonStr = item.ngayMuon ?? '';
-    final maPhom = item.maPhom?.toLowerCase() ?? '';
+    registerlendItems.value =
+        allRegisterLendItems.where((item) {
+          final name = item.idNguoiMuon?.userName?.toLowerCase() ?? '';
+          final donVi = item.donVi?.toLowerCase() ?? '';
+          final ngayMuonStr = item.ngayMuon ?? '';
+          final maPhom = item.maPhom?.toLowerCase() ?? '';
 
-    DateTime? itemDate;
-    try {
-      itemDate = dateFormatter.parseStrict(ngayMuonStr);
-    } catch (e) {
-      // Không parse được ngày → bỏ qua item này
-      return false;
-    }
+          DateTime? itemDate;
+          try {
+            itemDate = dateFormatter.parseStrict(ngayMuonStr);
+          } catch (e) {
+            return false;
+          }
 
-    final inDateRange =
-        (selectedDateFrom.value == null || itemDate.isAfter(selectedDateFrom.value!.subtract(const Duration(days: 1)))) &&
-        (selectedDateTo.value == null || itemDate.isBefore(selectedDateTo.value!.add(const Duration(days: 1))));
+          final inDateRange =
+              (selectedDateFrom.value == null ||
+                  itemDate.isAfter(
+                    selectedDateFrom.value!.subtract(const Duration(days: 1)),
+                  )) &&
+              (selectedDateTo.value == null ||
+                  itemDate.isBefore(
+                    selectedDateTo.value!.add(const Duration(days: 1)),
+                  ));
 
-    final matches = 
-        (selectedDonVi.value.isEmpty || donVi == selectedDonVi.value.toLowerCase()) &&
-        (selectedMaPhom.value.isEmpty || maPhom.contains(selectedMaPhom.value.toLowerCase())) &&
-        (selectedUserName.value.isEmpty || name.contains(selectedUserName.value.toLowerCase())) &&
-        inDateRange;
+          final matches =
+              (selectedDonVi.value.isEmpty ||
+                  donVi == selectedDonVi.value.toLowerCase()) &&
+              (selectedMaPhom.value.isEmpty ||
+                  maPhom.contains(selectedMaPhom.value.toLowerCase())) &&
+              (selectedUserName.value.isEmpty ||
+                  name.contains(selectedUserName.value.toLowerCase())) &&
+              inDateRange;
 
-    return matches;
-  }).toList();
-}
-
+          return matches;
+        }).toList();
+  }
 
   void resetFilters() {
-  selectedDonVi.value = '';
-  selectedMaPhom.value = '';
-  selectedUserName.value = '';
-  selectedDateFrom.value = null;
-  selectedDateTo.value = null;
-  applyFilters();
-}
-
+    selectedDonVi.value = '';
+    selectedMaPhom.value = '';
+    selectedUserName.value = '';
+    selectedDateFrom.value = null;
+    selectedDateTo.value = null;
+    applyFilters();
+  }
 }

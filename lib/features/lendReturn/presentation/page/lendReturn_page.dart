@@ -1,13 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_colors.dart';
-import 'package:lhg_phom/core/ui/widgets/textfield/custom_textfield_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
-
-import '../../../../core/ui/dialogs/showSearchableSelectionDialog.dart';
-import '../../../../core/ui/widgets/textfield/custom_dropdownfield_widget.dart';
+import 'package:lhg_phom/core/ui/dialogs/showSearchableSelectionDialog.dart';
+import 'package:lhg_phom/core/ui/widgets/textfield/custom_dropdownfield_widget.dart';
 import '../controller/lendReturn_controller.dart';
 
 class LendReturnPage extends GetView<LendReturnController> {
@@ -16,38 +13,44 @@ class LendReturnPage extends GetView<LendReturnController> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        controller.selectedRowIndex.value = -1;
-      },
-      child: SafeArea(
-        child: Scaffold(
-  appBar: _buildAppBar(),
-  body: SingleChildScrollView(
-    padding: const EdgeInsets.all(10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabelTextField("Số thẻ người trả:", controller.userIDController),
-        _buildLabelTextField("Tên người trả:", controller.userNameController),
-        const SizedBox(height: 10),
-        _buildDepartmentAndDate(),
-        const SizedBox(height: 10),
-        _buildCodePhomAndSum(),
-        const SizedBox(height: 10),
-        _buildRfidScan(),
-        const SizedBox(height: 10),
-        _buildTable(),
-        const SizedBox(height: 20),
-      ],
-    ),
-  ),
-  bottomNavigationBar: Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    child: _buildDoneButton(),
-  ),
-),
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildDepartmentSelection(),
+              const SizedBox(height: 20),
+              _buildTotalScanCard(),
+              const SizedBox(height: 20),
+              _buildScanControlCard(), 
 
+              const SizedBox(height: 20),
+              Obx(() {
+                if (controller.scannedItems.isNotEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.only(bottom: 8.0, left: 4.0),
+                    child: TextWidget(
+                      text: "Kết quả quét hợp lệ:",
+                      fontWeight: FontWeight.bold,
+                      size: 16,
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
+              _buildResultsContent(),
+            ],
+          ),
+        ),
+        bottomNavigationBar: Obx(
+          () =>
+              controller.scannedItems.isNotEmpty
+                  ? _buildDoneButton()
+                  : const SizedBox.shrink(),
+        ),
       ),
     );
   }
@@ -55,252 +58,344 @@ class LendReturnPage extends GetView<LendReturnController> {
   AppBar _buildAppBar() {
     return AppBar(
       title: const TextWidget(
-        text: "Trả phom",
+        text: "Trả Phom",
         color: AppColors.white,
         size: 18,
+        fontWeight: FontWeight.bold,
       ),
       backgroundColor: AppColors.primary,
       centerTitle: true,
+      elevation: 2,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: AppColors.white),
+        icon: const Icon(
+          Icons.arrow_back_ios_new,
+          color: AppColors.white,
+          size: 20,
+        ),
         onPressed: Get.back,
       ),
     );
   }
 
-  Widget _buildLabelTextField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Row(
-        children: [
-          TextWidget(
-            text: label,
-            color: AppColors.black,
-            fontWeight: FontWeight.bold,
-            size: 16,
-          ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: CustomTextFieldWidget(
-              decorationType: InputDecorationType.underline,
-              enableColor: AppColors.grey2,
-              height: 30,
-              controller: controller,
-              obscureText: false,
-              borderRadius: 5,
-              textColor: AppColors.black,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCodePhomAndSum() {
-    return Row(
-      children: [
-        Expanded(
-          child: Obx(() => CustomDropdownField(
-                labelText: 'Mã số phom:',
-                selectedValue: controller.selectedCodePhom.value,
-                onTap: () => showSearchableSelectionDialog(
-                  title: 'Chọn mã số phom',
-                  itemList: controller.codePhomList,
-                  selectedItem: controller.selectedCodePhom.value,
-                  onSelected: (val) => controller.selectedCodePhom.value = val,
-                ),
-              )),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: CustomTextFieldWidget(
-            enableColor: AppColors.grey2,
-            height: 40,
-            labelText: "Tổng số lượng:",
-            labelColor: AppColors.black,
-            controller: controller.sumController,
-            obscureText: false,
-            borderRadius: 5,
-            textColor: AppColors.black,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDepartmentAndDate() {
-    return Row(
-      children: [
-        Expanded(
-          child: Obx(() => CustomDropdownField(
-                labelText: 'Đơn vị:',
-                selectedValue: controller.selectedDepartment.value,
-                onTap: () => showSearchableSelectionDialog(
+  Widget _buildDepartmentSelection() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Obx(
+          () => CustomDropdownField(
+            labelText: 'Đơn vị trả phom:',
+            selectedValue: controller.selectedDepartment.value,
+            onTap:
+                () => showSearchableSelectionDialog(
                   title: 'Chọn đơn vị',
-                  itemList: controller.departmentList,
+                  itemList: controller.departmentList.toList(),
                   selectedItem: controller.selectedDepartment.value,
-                  onSelected: (val) =>
-                      controller.selectedDepartment.value = val,
+                  onSelected: (val) {
+                    controller.selectedDepartment.value = val;
+                    controller.selectedDepartmentId.value =
+                        controller.depNameToIdMap[val] ?? "";
+                  },
                 ),
-              )),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              CustomTextFieldWidget(
-                enableColor: AppColors.grey2,
-                height: 40,
-                labelText: "Ngày trả:",
-                labelColor: AppColors.black,
-                controller: controller.dateController,
-                obscureText: false,
-                borderRadius: 5,
-                textColor: AppColors.black,
-                keyboardType: TextInputType.datetime,
-                onChanged: (value) {
-                  // Xử lý validation nếu cần
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.calendar_month_outlined,
-                    size: 30, color: AppColors.primary1),
-                onPressed: () async {
-                  final pickedDate = await showDatePicker(
-                    context: Get.context!,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    controller.dateController.text =
-                        "${pickedDate.day.toString().padLeft(2, '0')}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.year}";
-                  }
-                },
-              ),
-            ],
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildRfidScan() {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: CustomTextFieldWidget(
-            enableColor: AppColors.grey2,
-            backgroundColor: AppColors.grey1,
-            height: 40,
-            labelText: "RFID:",
-            labelColor: AppColors.black,
-            controller: controller.rfidController,
-            obscureText: false,
-            borderRadius: 5,
-            textColor: AppColors.black,
-          ),
-        ),
-        const SizedBox(width: 10),
-        ButtonWidget(
-          width: 100,
-          height: 48,
-          backgroundColor: AppColors.primary1,
-          textColor: Colors.white,
-          ontap: controller.onScan,
-          text: "Scan",
-          borderRadius: 5,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDoneButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: ButtonWidget(
-        text: "Hoàn tất",
-        height: 50,
-        ontap: controller.onFinish,
       ),
     );
   }
 
-  Widget _buildTable() {
-    return RawScrollbar(
-      controller: controller.tableScrollController,
-      thumbVisibility: true,
-      trackVisibility: true,
-      radius: const Radius.circular(5),
-      thickness: 2,
-      thumbColor: AppColors.primary,
-      trackColor: AppColors.grey3,
-      trackBorderColor: AppColors.grey3,
-      child: SingleChildScrollView(
-        controller: controller.tableScrollController,
-        scrollDirection: Axis.horizontal,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Obx(
-            () => ConstrainedBox(
-              constraints: BoxConstraints(minWidth: Get.width - 20),
-              child: Table(
-                border: TableBorder.all(
-                  color: AppColors.grey,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-                defaultColumnWidth: const IntrinsicColumnWidth(),
+  Widget _buildTotalScanCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildTableRow(
-                    ['Size', 'Tồn kho', 'Trái', 'Phải', 'Số lượng'],
-                    isHeader: true,
+                  const TextWidget(
+                    text: "Tổng chip đã quét", 
+                    color: AppColors.grey,
+                    size: 13,
                   ),
-                  ...controller.inventoryData.asMap().entries.map(
-                        (entry) => _buildTableRow(
-                          entry.value,
-                          index: entry.key,
-                        ),
-                      ),
+                  const SizedBox(height: 2),
+                  Obx(
+                    () => TextWidget(
+                      text:
+                          "${controller.totalScannedEPCs.value}", 
+                      fontWeight: FontWeight.bold,
+                      size: 24,
+                      color: AppColors.purple,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  TableRow _buildTableRow(List<String> values,
-      {bool isHeader = false, int? index}) {
-    final isSelected =
-        index != null && controller.selectedRowIndex.value == index;
+  Widget _buildScanControlCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const TextWidget(
+                    text: "Phom hợp lệ",
+                    color: AppColors.grey,
+                    size: 13,
+                  ),
+                  const SizedBox(height: 2),
 
-    return TableRow(
-      decoration: BoxDecoration(
-        color: isHeader
-            ? AppColors.grey3
-            : isSelected
-                ? AppColors.primary2.withOpacity(0.3)
-                : null,
+                  Obx(
+                    () => TextWidget(
+                      text:
+                          "${double.parse((controller.listFinalRFID.length / 2).toString())}",
+                      fontWeight: FontWeight.bold,
+                      size: 24,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(flex: 7, child: _buildRfidScanButtons()),
+          ],
+        ),
       ),
-      children: values.map((value) {
-        final cell = Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextWidget(
-            text: value,
-            size: 14,
-            fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+    );
+  }
+
+  Widget _buildRfidScanButtons() {
+    return Obx(() {
+      final isScanning = controller.isScanning.value;
+      return Row(
+        children: [
+          SizedBox(
+            width: 50,
+            child: ButtonWidget(
+              height: 48,
+              backgroundColor: AppColors.grey2,
+              ontap:
+                  controller.scannedItems.isEmpty &&
+                          controller.returnedTags.isEmpty &&
+                          controller.unborrowedTags.isEmpty
+                      ? () {}
+                      : controller.onClearScanned,
+              borderRadius: 8,
+              text: 'Xóa',
+              child: const Icon(
+                Icons.clear_all_rounded,
+                color: AppColors.black,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: ButtonWidget(
+              height: 48,
+              backgroundColor: isScanning ? AppColors.yellow : Colors.green,
+              textColor: Colors.white,
+              ontap:
+                  isScanning
+                      ? controller.stopContinuousScan
+                      : controller.startContinuousScan,
+              borderRadius: 8,
+              text: '',
+              child:
+                  isScanning
+                      ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text('Dừng'),
+                        ],
+                      )
+                      : const Text('Scan'),
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildResultsContent() {
+    return Obx(() {
+      if (controller.scannedItems.isEmpty) {
+        return _buildInitialState();
+      }
+      return _buildScannedItemsList();
+    });
+  }
+
+  Widget _buildInitialState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 50.0),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.rss_feed,
+              size: 60,
+              color: AppColors.grey.withOpacity(0.7),
+            ),
+            const SizedBox(height: 16),
+            const TextWidget(
+              text: "Vui lòng nhấn 'Scan' để bắt đầu quét phom.",
+              color: AppColors.grey,
+              textAlign: TextAlign.center,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScannedItemsList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: controller.scannedItems.length,
+      itemBuilder: (context, index) {
+        final item = controller.scannedItems[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const TextWidget(
+                            text: "Mã phom",
+                            size: 12,
+                            color: AppColors.grey,
+                          ),
+                          const SizedBox(height: 2),
+                          TextWidget(
+                            text: item['LastNo']?.toString() ?? 'N/A',
+                            fontWeight: FontWeight.bold,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8, width: 16),
+                      Column(
+                        children: [
+                          const TextWidget(
+                            text: "Size",
+                            size: 12,
+                            color: AppColors.grey,
+                          ),
+                          const SizedBox(height: 2),
+                          TextWidget(
+                            text: item['LastSize']?.toString() ?? 'N/A',
+                            fontWeight: FontWeight.bold,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(
+                  height: 60,
+                  child: VerticalDivider(thickness: 1, width: 24),
+                ),
+                Column(
+                  children: [
+                    const TextWidget(
+                      text: "Đã quét",
+                      size: 12,
+                      color: AppColors.grey,
+                    ),
+                    const SizedBox(height: 4),
+                    Obx(
+                      () => Chip(
+                        label: Text(
+                          (item['scannedCount'].value).toString(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
-        return isHeader
-            ? cell
-            : GestureDetector(
-                onTap: () => controller.selectedRowIndex.value = index,
-                child: cell,
-              );
-      }).toList(),
+      },
+    );
+  }
+  Widget _buildDoneButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Obx(
+        () => ButtonWidget(
+          text: controller.isFinishing.value ? "" : "Hoàn Tất",
+          height: 50,
+          borderRadius: 12,
+          ontap: controller.isFinishing.value ? () {} : controller.onFinish,
+          backgroundColor: AppColors.primary,
+          child:
+              controller.isFinishing.value
+                  ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: Colors.white,
+                    ),
+                  )
+                  : null,
+        ),
+      ),
     );
   }
 }

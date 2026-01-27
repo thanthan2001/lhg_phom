@@ -41,7 +41,6 @@ class UserPage extends GetView<UserController> {
     );
   }
 
-  /// Thẻ hiển thị thông tin người dùng
   Widget _buildProfileCard() {
     return Card(
       color: AppColors.white,
@@ -72,10 +71,15 @@ class UserPage extends GetView<UserController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TextWidget(
-          text: "TRẦN VĂN BÉ THÂN",
-          size: 16,
-          fontWeight: FontWeight.bold,
+        GetBuilder<UserController>(
+          builder: (controller) {
+            return TextWidget(
+              text: controller.userName,
+              fontWeight: FontWeight.bold,
+              size: 18,
+              color: AppColors.primary,
+            );
+          },
         ),
         const SizedBox(height: 5),
         const TextWidget(text: "IT - Software", color: Colors.grey, size: 14),
@@ -89,7 +93,6 @@ class UserPage extends GetView<UserController> {
     );
   }
 
-  /// Thẻ chứa phần "Thông tin"
   Widget _buildInfoSection() {
     return _buildCardWithTitle(
       title: 'information'.tr,
@@ -105,22 +108,21 @@ class UserPage extends GetView<UserController> {
     );
   }
 
-  /// Thẻ chứa phần "Cài đặt"
   Widget _buildSettingsSection() {
     return _buildCardWithTitle(
       title: 'setting'.tr,
       children: [
         Obx(
-        () => _buildMenuItem(
-          Icons.language,
-          controller.language.value,
-          leadingIcon: Image.asset(controller.languageIcon.value, width: 30,),
-          onTap: () {
-            Get.toNamed(Routes.settingLanguage);
-            controller.loadLanguage();
-          },
+          () => _buildMenuItem(
+            Icons.language,
+            controller.language.value,
+            leadingIcon: Image.asset(controller.languageIcon.value, width: 30),
+            onTap: () {
+              Get.toNamed(Routes.settingLanguage);
+              controller.loadLanguage();
+            },
+          ),
         ),
-      ),
         _line(),
         _buildMenuItem(
           Icons.lock,
@@ -142,7 +144,6 @@ class UserPage extends GetView<UserController> {
     );
   }
 
-  /// Widget Card bao bọc từng mục "Thông tin" & "Cài đặt"
   Widget _buildCardWithTitle({
     required String title,
     required List<Widget> children,
@@ -169,7 +170,6 @@ class UserPage extends GetView<UserController> {
     );
   }
 
-  /// Widget item trong menu
   Widget _buildMenuItem(
     IconData icon,
     String text, {
@@ -185,7 +185,6 @@ class UserPage extends GetView<UserController> {
     );
   }
 
-  /// Widget bật/tắt giao diện tối
   Widget _buildDarkModeToggle() {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),

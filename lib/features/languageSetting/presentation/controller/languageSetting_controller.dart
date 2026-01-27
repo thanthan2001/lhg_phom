@@ -25,7 +25,6 @@ class LanguageSettingController extends GetxController {
     await prefs.setString(PrefsConstants.languageCode, langCode);
     updateLanguage(langCode);
 
-    // Cập nhật languageIcon trong UserController
     final userController = Get.find<UserController>();
     userController.updateLanguage(langCode);
   }

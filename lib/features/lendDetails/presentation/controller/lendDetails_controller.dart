@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lhg_phom/core/services/model/lend_model.dart';
+import 'package:lhg_phom/core/services/models/lend_model.dart';
 
 class LendDetailsController extends GetxController {
   late String idMuon;
   late LendItemModel item;
 
-  // Scroll Controllers
   final tableScrollController = ScrollController();
 
-  // State
   final isLoading = false.obs;
   final scrollProgress = 0.0.obs;
   var selectedRowIndex = Rx<int?>(null);
 
-  // Table data
   final inventoryData = <List<String>>[].obs;
 
   void onFinish() {
@@ -44,8 +41,6 @@ class LendDetailsController extends GetxController {
               ],
             )
             .toList();
-
-    print("Inventory data: $inventoryData");
   }
 
   @override

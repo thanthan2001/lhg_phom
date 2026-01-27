@@ -12,17 +12,23 @@ class ShelfPage extends GetView<ShelfController> {
     return SafeArea(
       child: Scaffold(
         appBar: _buildAppBar(),
-        body: Obx(() => controller.shelves.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : _buildShelfList()),
+        body: Obx(
+          () =>
+              controller.shelves.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildShelfList(),
+        ),
       ),
     );
   }
 
-  // AppBar widget
   AppBar _buildAppBar() {
     return AppBar(
-      title: TextWidget(text: "list_shelf".tr, size: 18, color: AppColors.white),
+      title: TextWidget(
+        text: "list_shelf".tr,
+        size: 18,
+        color: AppColors.white,
+      ),
       centerTitle: true,
       backgroundColor: AppColors.primary,
       actions: [
@@ -34,7 +40,6 @@ class ShelfPage extends GetView<ShelfController> {
     );
   }
 
-  // Danh sách kệ
   Widget _buildShelfList() {
     return Padding(
       padding: const EdgeInsets.only(top: 10.0),
@@ -48,17 +53,13 @@ class ShelfPage extends GetView<ShelfController> {
     );
   }
 
-  // Widget hiển thị từng kệ
   Widget _buildShelfItem(Map<String, dynamic> shelf) {
     return GestureDetector(
-      onTap: () {
-
-      },
+      onTap: () {},
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          // ignore: deprecated_member_use
           color: AppColors.primary2.withOpacity(0.2),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.primary2, width: 1),

@@ -16,7 +16,7 @@ class ForgotPasswordPage extends GetView<ForgotPasswordController> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); 
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
@@ -106,7 +106,6 @@ class ForgotPasswordPage extends GetView<ForgotPasswordController> {
                         ),
                         SizedBox(height: 20),
 
-                        // Nút chọn nhà máy
                         Obx(
                           () => GestureDetector(
                             onTap: () => controller.showFactoryModal(context),
@@ -128,7 +127,10 @@ class ForgotPasswordPage extends GetView<ForgotPasswordController> {
                                     controller.selectedFactory.value.isEmpty
                                         ? "choose_factory".tr
                                         : controller.selectedFactory.value,
-                                    style: TextStyle(fontSize: 16, color: AppColors.primary),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.primary,
+                                    ),
                                   ),
                                   Icon(
                                     Icons.arrow_drop_down,
@@ -155,8 +157,7 @@ class ForgotPasswordPage extends GetView<ForgotPasswordController> {
                             ),
                           ],
                         ),
-                        ButtonWidget(
-                          ontap:() {}, text: "Submit"),
+                        ButtonWidget(ontap: () {}, text: "Submit"),
                       ],
                     ),
                   ),

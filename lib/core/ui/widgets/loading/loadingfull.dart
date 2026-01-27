@@ -1,4 +1,3 @@
-// ignore: file_names
 import 'package:flutter/cupertino.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -16,10 +15,13 @@ class LoadingFull extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(10)),
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: LoadingAnimationWidget.staggeredDotsWave(
-                color: AppColors.white, size: 90),
+              color: AppColors.white,
+              size: 90,
+            ),
           ),
         ),
       ),
