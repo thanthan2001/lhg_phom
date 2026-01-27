@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-
 import '../../../configs/app_colors.dart';
 import '../text/text_widget.dart';
 
@@ -45,7 +43,9 @@ class ButtonWidget extends StatelessWidget {
       child: InkWell(
         onTap: ontap,
         borderRadius: BorderRadius.circular(borderRadius!),
+        // ignore: deprecated_member_use
         splashColor: Colors.white.withOpacity(0.3), 
+        // ignore: deprecated_member_use
         highlightColor: Colors.white.withOpacity(0.1), 
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6.0),

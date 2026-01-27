@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../configs/app_colors.dart';
 
@@ -33,23 +32,6 @@ class ImageProviderSquareWidget extends StatelessWidget {
         imageUrl,
         errorBuilder: (context, url, error) => const Icon(Icons.error),
         fit: BoxFit.cover,
-      ),
-    );
-  }
-
-  _buildLoading() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(
-            Radius.circular(borderRadius),
-          ),
-        ),
       ),
     );
   }

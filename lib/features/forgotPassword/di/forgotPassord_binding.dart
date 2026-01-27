@@ -9,6 +9,6 @@ class ForgotPasswordBinding extends Bindings {
   void dependencies() {
     Get.lazyPut(() => Prefs(), fenix: true);
     Get.lazyPut(() => SaveUserUseCase(Get.find()));
-    Get.lazyPut(() => ForgotPasswordController(Get.find()));
+    Get.lazyPut(() => ForgotPasswordController());
   }
 }

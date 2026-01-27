@@ -5,12 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/configs/prefs_contants.dart';
 import '../../../../core/data/pref/prefs.dart';
-import '../../../../core/services/models/user/domain/usecase/get_user_use_case.dart';
 
 class InformationUserController extends GetxController {
   final Prefs prefs = Prefs.preferences;
-  final GetuserUseCase _getuserUseCase;
-  InformationUserController(this._getuserUseCase);
 
   final String idUser = "67845";
   final String department = "IT Software";

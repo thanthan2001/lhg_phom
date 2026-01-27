@@ -12,7 +12,7 @@ class CustomTextFieldWidget extends StatefulWidget {
   final double borderRadius;
   final Color? hintColor;
   final String? hintText;
-  String? errorText;
+  final String? errorText;
   final bool obscureText;
   final Color? backgroundColor;
   final Color? focusedColor;

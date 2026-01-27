@@ -5,7 +5,6 @@ import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
 import '../../../../core/routes/routes.dart';
 import '../controller/forgotPassword_controller.dart';
 import '../../../../core/configs/app_colors.dart';
-import '../../../../core/configs/app_dimens.dart';
 import '../../../../core/ui/widgets/text/text_widget.dart';
 import '../../../../core/ui/widgets/textfield/custom_textfield_widget.dart';
 

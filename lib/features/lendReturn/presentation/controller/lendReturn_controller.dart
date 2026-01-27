@@ -31,10 +31,15 @@ class LendReturnController extends GetxController {
   final unborrowedTags = <Map<String, String>>[].obs;
   final canClear = false.obs;
   final isFinishing = false.obs;
-  final List<Map<String, String>> _sessionValidTags = [];
   final List<Map<String, String>> _sessionReturnedTags = [];
   final List<Map<String, String>> _sessionUnborrowedTags = [];
   final totalScannedEPCs = 0.obs;
+  final totalPairs = 0.0.obs;
+
+  // Safe feedback helper - uses print for async contexts
+  void _showFeedback(String title, String message) {
+    print('[$title] $message');
+  }
   @override
   void onInit() async {
     super.onInit();
@@ -55,7 +60,7 @@ class LendReturnController extends GetxController {
     if (user == null ||
         user!.companyName == null ||
         user!.companyName!.isEmpty) {
-      Get.snackbar('Lỗi', 'Không tìm thấy thông tin người dùng hoặc công ty.');
+      _showFeedback('Lỗi', 'Không tìm thấy thông tin người dùng hoặc công ty.');
       return;
     }
     companyName = user!.companyName;
@@ -112,9 +117,20 @@ class LendReturnController extends GetxController {
 
   Future<void> startContinuousScan() async {
     if (isScanning.value) return;
+    
+    // Connect to RFID device first
+    final connected = await RFIDService.connect();
+    if (!connected) {
+      _showFeedback('Lỗi', 'Không thể kết nối với thiết bị RFID');
+      return;
+    }
+    
     _resetScanState();
     isScanning.value = true;
     try {
+      // Clear native cache to start fresh
+      await RFIDService.clearScannedTags();
+      
       await RFIDService.scanContinuous(sendEPCToServer);
     } catch (e) {
       isScanning.value = false;
@@ -154,38 +170,47 @@ class LendReturnController extends GetxController {
       final status = response.data['status'];
       final message = response.data['message'] ?? 'Lỗi không xác định';
       final responseData = response.data['data'] as List<dynamic>?;
-      final String lastno =
+      final Map<String, dynamic>? itemData =
           responseData != null && responseData.isNotEmpty
-              ? responseData[0]['LastNo']?.toString().trim() ?? 'N/A'
-              : 'N/A';
-      final String lastsize =
-          responseData != null && responseData.isNotEmpty
-              ? responseData[0]['LastSize']?.toString().trim() ?? 'N/A'
-              : 'N/A';
-      final String shortcut =
-          responseData != null && responseData.isNotEmpty
-              ? responseData[0]['RFID_Shortcut']?.toString().trim() ?? epc
-              : epc;
-      var existingItem = scannedItems.firstWhere(
-        (item) => item['LastNo'] == lastno && item['LastSize'] == lastsize,
-        orElse: () => <String, dynamic>{},
-      );
+              ? responseData.first as Map<String, dynamic>?
+              : null;
 
-      if (existingItem.isNotEmpty) {
-        existingItem['scannedCount'].value += 0.5;
-      } else {
-        scannedItems.add({
-          'LastNo': lastno,
-          'LastSize': lastsize,
-          'scannedCount': 0.5.obs,
-        });
-      }
+      final String lastno = itemData?['LastNo']?.toString().trim() ?? 'N/A';
+      final String lastsize = itemData?['LastSize']?.toString().trim() ?? 'N/A';
+      final String rawSide = itemData?['LastSide']?.toString().trim() ?? '';
+      final String side = _normalizeSide(rawSide);
+      final String shortcut =
+          itemData?['RFID_Shortcut']?.toString().trim() ?? epc;
+      final String key = "$lastno-$lastsize";
+
       if (status == 1) {
-        _sessionValidTags.add({'lastNo': lastno, 'lastSize': lastsize});
+        if (side == 'unknown') {
+          _sessionUnborrowedTags.add({
+            'lastno': lastno,
+            'lastsize': lastsize,
+            'rfid_shortcut': shortcut,
+            'message': 'Không xác định bên phom',
+          });
+          unborrowedTags.add({
+            'rfid_shortcut': shortcut,
+            'message': 'Không xác định bên phom',
+          });
+        } else {
+          _updateScannedCounts(
+            key: key,
+            lastNo: lastno,
+            lastSize: lastsize,
+            side: side,
+          );
+        }
       } else if (status == 0) {
         _sessionReturnedTags.add({
           'lastno': lastno,
           'lastsize': lastsize,
+          'rfid_shortcut': shortcut,
+          'message': message,
+        });
+        returnedTags.add({
           'rfid_shortcut': shortcut,
           'message': message,
         });
@@ -196,8 +221,13 @@ class LendReturnController extends GetxController {
           'rfid_shortcut': shortcut,
           'message': message,
         });
+        unborrowedTags.add({
+          'rfid_shortcut': shortcut,
+          'message': message,
+        });
       }
-    } catch (e) {
+    } catch (e) {
+
       final errorMessage = 'Lỗi kết nối server hoặc dữ liệu không hợp lệ';
       unborrowedTags.add({'rfid_shortcut': epc, 'message': errorMessage});
       _sessionUnborrowedTags.add({
@@ -210,9 +240,69 @@ class LendReturnController extends GetxController {
     }
   }
 
+  String _normalizeSide(String rawSide) {
+    final sideLower = rawSide.toLowerCase();
+    if (sideLower.startsWith('l')) return 'left';
+    if (sideLower.startsWith('r') || sideLower.startsWith('p')) return 'right';
+    return 'unknown';
+  }
+
+  void _updateScannedCounts({
+    required String key,
+    required String lastNo,
+    required String lastSize,
+    required String side,
+  }) {
+    final index = scannedItems.indexWhere((item) => item['key'] == key);
+    Map<String, dynamic> entry;
+    if (index == -1) {
+      entry = {
+        'key': key,
+        'LastNo': lastNo,
+        'LastSize': lastSize,
+        'leftCount': 0,
+        'rightCount': 0,
+        'pairs': 0.0,
+        'difference': 0,
+      };
+      scannedItems.add(entry);
+    } else {
+      entry = Map<String, dynamic>.from(scannedItems[index]);
+    }
+
+    final prevPairs = (entry['pairs'] as double?) ?? 0.0;
+    if (side == 'left') {
+      entry['leftCount'] = (entry['leftCount'] as int) + 1;
+    } else if (side == 'right') {
+      entry['rightCount'] = (entry['rightCount'] as int) + 1;
+    }
+
+    final leftCount = entry['leftCount'] as int;
+    final rightCount = entry['rightCount'] as int;
+    final newPairs = (leftCount < rightCount ? leftCount : rightCount).toDouble();
+
+    entry['pairs'] = newPairs;
+    entry['difference'] = (leftCount - rightCount).abs();
+
+    if (index == -1) {
+      scannedItems[scannedItems.length - 1] = entry;
+    } else {
+      scannedItems[index] = entry;
+    }
+
+    totalPairs.value += newPairs - prevPairs;
+    scannedItems.refresh();
+  }
+
   Future<void> onFinish() async {
+    // Không cho submit khi đang quét
+    if (isScanning.value) {
+      _showFeedback('Cảnh báo', 'Vui lòng dừng quét trước khi hoàn tất');
+      return;
+    }
+    
     if (listFinalRFID.isEmpty) {
-      Get.snackbar("Thông báo", "Chưa có phom hợp lệ nào được quét.");
+      _showFeedback('Thông báo', 'Chưa có phom hợp lệ nào được quét.');
       return;
     }
     isFinishing.value = true;
@@ -235,13 +325,10 @@ class LendReturnController extends GetxController {
         );
         _resetScanState();
       } else {
-        Get.snackbar(
-          "Lỗi",
-          response.data["message"] ?? "Có lỗi xảy ra từ server.",
-        );
+        _showFeedback('Lỗi', response.data["message"] ?? "Có lỗi xảy ra từ server.");
       }
     } catch (e) {
-      Get.snackbar("Thông báo", "Lỗi kết nối server.");
+      _showFeedback('Thông báo', 'Lỗi kết nối server.');
     } finally {
       isFinishing.value = false;
     }
@@ -249,7 +336,7 @@ class LendReturnController extends GetxController {
 
   void onClearScanned() {
     _resetScanState();
-    Get.snackbar("Thông báo", "Đã xóa toàn bộ dữ liệu quét.");
+    _showFeedback('Thông báo', 'Đã xóa toàn bộ dữ liệu quét.');
   }
 
   void _resetScanState() {
@@ -258,20 +345,19 @@ class LendReturnController extends GetxController {
     scannedItems.clear();
     returnedTags.clear();
     unborrowedTags.clear();
-    _sessionValidTags.clear();
     _sessionReturnedTags.clear();
     _sessionUnborrowedTags.clear();
     totalScannedEPCs.value = 0;
-  }
+    totalPairs.value = 0.0;
+  }
+
   void _showScanSummaryDialog() {
-    if (_sessionValidTags.isEmpty &&
-        _sessionReturnedTags.isEmpty &&
-        _sessionUnborrowedTags.isEmpty) {
-      Get.snackbar(
-        "Thông báo",
-        "Không có thẻ mới nào được quét.",
-        duration: const Duration(seconds: 2),
-      );
+    final hasValid = scannedItems.isNotEmpty;
+    final hasErrors =
+        _sessionReturnedTags.isNotEmpty || _sessionUnborrowedTags.isNotEmpty;
+
+    if (!hasValid && !hasErrors) {
+      _showFeedback('Thông báo', 'Không có thẻ mới nào được quét.');
       return;
     }
     Get.dialog(
@@ -292,11 +378,12 @@ class LendReturnController extends GetxController {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildValidExpansionTile(
-                  "Hợp lệ:",
-                  _sessionValidTags,
-                  Colors.green,
-                ),
+                if (hasValid)
+                  _buildValidExpansionTile(
+                    "Hợp lệ:",
+                    scannedItems.toList(),
+                    Colors.green,
+                  ),
                 if (_sessionReturnedTags.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   _buildErrorExpansionTile(
@@ -317,22 +404,30 @@ class LendReturnController extends GetxController {
             ),
           ),
         ),
-        actions: [TextButton(child: const Text("Đóng"), onPressed: Get.back)],
+        actions: [
+          TextButton(
+            child: const Text("Đóng"),
+            onPressed: () {
+              try {
+                if (Get.context != null) {
+                  Navigator.of(Get.context!).pop();
+                }
+              } catch (e) {
+                print('Error closing dialog: $e');
+              }
+            },
+          ),
+        ],
       ),
       barrierDismissible: false,
     );
   }
 
-  Widget _buildSummaryRow(String title, int count, Color color) {
-    final double pairCount =
-        count / 2.0; 
-    final String displayText =
-        (pairCount % 1 == 0)
-            ? pairCount.toInt().toString()
-            : pairCount.toString();
-    final String finalCountText =
-        title.contains("Hợp lệ") ? "$displayText đôi" : "$count thẻ";
-
+  Widget _buildSummaryRow({
+    required String title,
+    required String displayText,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -352,7 +447,7 @@ class LendReturnController extends GetxController {
           ),
           const SizedBox(width: 8),
           TextWidget(
-            text: finalCountText,
+            text: displayText,
             color: color,
             fontWeight: FontWeight.bold,
             size: 16,
@@ -364,48 +459,50 @@ class LendReturnController extends GetxController {
 
   Widget _buildValidExpansionTile(
     String title,
-    List<Map<String, String>> tags,
+    List<Map<String, dynamic>> items,
     Color color,
   ) {
-    final Map<String, Map<String, dynamic>> aggregatedMap = {};
-    for (final tag in tags) {
-      final String key = "${tag['lastNo']}-${tag['lastSize']}";
-      if (aggregatedMap.containsKey(key)) {
-        aggregatedMap[key]!['count'] += 0.5;
-      } else {
-        aggregatedMap[key] = {
-          'lastNo': tag['lastNo'],
-          'lastSize': tag['lastSize'],
-          'count': 0.5,
-        };
-      }
-    }
-    final aggregatedList = aggregatedMap.values.toList();
+    final double totalPairCount = items.fold<double>(
+      0.0,
+      (sum, item) => sum + ((item['pairs'] as double?) ?? 0.0),
+    );
+
+    final String displayText =
+        (totalPairCount % 1 == 0)
+            ? "${totalPairCount.toInt()} đôi"
+            : "${totalPairCount} đôi";
 
     return Theme(
       data: Get.theme.copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        initiallyExpanded: tags.isNotEmpty,
+        initiallyExpanded: items.isNotEmpty,
         tilePadding: const EdgeInsets.all(0),
-        title: _buildSummaryRow(title, tags.length, color),
+        title: _buildSummaryRow(
+          title: title,
+          displayText: displayText,
+          color: color,
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 4.0),
             child: Column(
-              children: List.generate(aggregatedList.length, (index) {
-                final item = aggregatedList[index];
-                final double count = item['count'];
-                final String displayText =
-                    (count % 1 == 0)
-                        ? count.toInt().toString()
-                        : count.toString();
+              children: List.generate(items.length, (index) {
+                final item = items[index];
+                final leftCount = item['leftCount'] ?? 0;
+                final rightCount = item['rightCount'] ?? 0;
+                final difference = item['difference'] ?? 0;
+                final pairs = (item['pairs'] as double?) ?? 0.0;
+                final String pairText =
+                    (pairs % 1 == 0) ? pairs.toInt().toString() : pairs.toString();
+
                 return Container(
                   color:
                       index.isEven
                           ? AppColors.primary.withOpacity(0.04)
                           : Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                   child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                     title: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -414,28 +511,7 @@ class LendReturnController extends GetxController {
                             Expanded(
                               flex: 3,
                               child: TextWidget(
-                                text: "Mã Phom",
-                                size: 12,
-                                color: AppColors.grey,
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: TextWidget(
-                                text: "Size",
-                                size: 12,
-                                color: AppColors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: TextWidget(
-                                text: "${item['lastNo']}",
+                                text: item['LastNo']?.toString() ?? 'N/A',
                                 size: 14,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -443,7 +519,7 @@ class LendReturnController extends GetxController {
                             Expanded(
                               flex: 2,
                               child: TextWidget(
-                                text: "${item['lastSize']}",
+                                text: item['LastSize']?.toString() ?? 'N/A',
                                 size: 14,
                                 color: AppColors.black,
                                 fontWeight: FontWeight.bold,
@@ -451,21 +527,18 @@ class LendReturnController extends GetxController {
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    trailing: Chip(
-                      label: Text(
-                        displayText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: [
+                            _buildStatChip('Trái', leftCount.toString(), Colors.blueGrey),
+                            _buildStatChip('Phải', rightCount.toString(), Colors.teal),
+                            _buildStatChip('Chênh lệch', difference.toString(), Colors.deepOrange),
+                            _buildStatChip('Đôi', pairText, AppColors.primary),
+                          ],
                         ),
-                      ),
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 0,
-                      ),
+                      ],
                     ),
                   ),
                 );
@@ -474,6 +547,22 @@ class LendReturnController extends GetxController {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatChip(String label, String value, Color color) {
+    return Chip(
+      label: Text(
+        '$label: $value',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      backgroundColor: color.withOpacity(0.9),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
@@ -487,7 +576,11 @@ class LendReturnController extends GetxController {
       child: ExpansionTile(
         initiallyExpanded: tags.isNotEmpty,
         tilePadding: const EdgeInsets.all(0),
-        title: _buildSummaryRow(title, tags.length, color),
+        title: _buildSummaryRow(
+          title: title,
+          displayText: "${tags.length} thẻ",
+          color: color,
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 4.0),

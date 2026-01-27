@@ -488,7 +488,7 @@ class TransferLendController extends GetxController {
           '❌ Gửi EPC thất bại (getphomrfid): ${response.statusCode}, ${response.data}',
         );
       }
-    } catch (e, stackTrace) {}
+    } catch (e) {}
   }
 
   Future<void> onScanMultipleTags() async {
@@ -516,23 +516,5 @@ class TransferLendController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  Future<void> _connectRFID() async {
-    try {
-      final connected = await RFIDService.connect();
-      if (connected) {
-      } else {
-        Get.snackbar('Lỗi', 'Không thể kết nối thiết bị RFID');
-      }
-    } catch (e) {
-      Get.snackbar('Lỗi', 'Kết nối RFID thất bại: $e');
-    }
-  }
-
-  Future<void> _disconnectRFID() async {
-    try {
-      await RFIDService.disconnect();
-    } catch (e) {}
   }
 }

@@ -72,7 +72,15 @@ class LendReturnPage extends GetView<LendReturnController> {
           color: AppColors.white,
           size: 20,
         ),
-        onPressed: Get.back,
+        onPressed: () {
+          try {
+            if (Get.context != null) {
+              Navigator.of(Get.context!).pop();
+            }
+          } catch (e) {
+            print('Error closing page: $e');
+          }
+        },
       ),
     );
   }
@@ -166,7 +174,9 @@ class LendReturnPage extends GetView<LendReturnController> {
                   Obx(
                     () => TextWidget(
                       text:
-                          "${double.parse((controller.listFinalRFID.length / 2).toString())}",
+                          controller.totalPairs.value % 1 == 0
+                              ? "${controller.totalPairs.value.toInt()}"
+                              : "${controller.totalPairs.value}",
                       fontWeight: FontWeight.bold,
                       size: 24,
                       color: AppColors.primary,
@@ -207,7 +217,8 @@ class LendReturnPage extends GetView<LendReturnController> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 8),
+
           Expanded(
             child: ButtonWidget(
               height: 48,
@@ -285,6 +296,12 @@ class LendReturnPage extends GetView<LendReturnController> {
       itemCount: controller.scannedItems.length,
       itemBuilder: (context, index) {
         final item = controller.scannedItems[index];
+        final leftCount = item['leftCount'] ?? 0;
+        final rightCount = item['rightCount'] ?? 0;
+        final difference = item['difference'] ?? 0;
+        final pairs = (item['pairs'] as double?) ?? 0.0;
+        final pairText = pairs % 1 == 0 ? pairs.toInt().toString() : pairs.toString();
+
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           elevation: 2,
@@ -293,77 +310,55 @@ class LendReturnPage extends GetView<LendReturnController> {
           ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const TextWidget(
-                            text: "Mã phom",
-                            size: 12,
-                            color: AppColors.grey,
-                          ),
-                          const SizedBox(height: 2),
-                          TextWidget(
-                            text: item['LastNo']?.toString() ?? 'N/A',
-                            fontWeight: FontWeight.bold,
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8, width: 16),
-                      Column(
-                        children: [
-                          const TextWidget(
-                            text: "Size",
-                            size: 12,
-                            color: AppColors.grey,
-                          ),
-                          const SizedBox(height: 2),
-                          TextWidget(
-                            text: item['LastSize']?.toString() ?? 'N/A',
-                            fontWeight: FontWeight.bold,
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(
-                  height: 60,
-                  child: VerticalDivider(thickness: 1, width: 24),
-                ),
-                Column(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const TextWidget(
-                      text: "Đã quét",
-                      size: 12,
-                      color: AppColors.grey,
-                    ),
-                    const SizedBox(height: 4),
-                    Obx(
-                      () => Chip(
-                        label: Text(
-                          (item['scannedCount'].value).toString(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const TextWidget(
+                          text: "Mã phom",
+                          size: 12,
+                          color: AppColors.grey,
                         ),
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                        const SizedBox(height: 2),
+                        TextWidget(
+                          text: item['LastNo']?.toString() ?? 'N/A',
+                          fontWeight: FontWeight.bold,
+                          size: 16,
                         ),
-                      ),
+                      ],
                     ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const TextWidget(
+                          text: "Size",
+                          size: 12,
+                          color: AppColors.grey,
+                        ),
+                        const SizedBox(height: 2),
+                        TextWidget(
+                          text: item['LastSize']?.toString() ?? 'N/A',
+                          fontWeight: FontWeight.bold,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _buildMetricChip(label: 'Trái', value: leftCount.toString(), color: Colors.blueGrey),
+                    _buildMetricChip(label: 'Phải', value: rightCount.toString(), color: Colors.teal),
+                    _buildMetricChip(label: 'Chênh lệch', value: difference.toString(), color: Colors.deepOrange),
+                    _buildMetricChip(label: 'Đôi', value: pairText, color: AppColors.primary),
                   ],
                 ),
               ],
@@ -372,18 +367,42 @@ class LendReturnPage extends GetView<LendReturnController> {
         );
       },
     );
-  }
+  }
+
+  Widget _buildMetricChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Chip(
+      label: Text(
+        '$label: $value',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      backgroundColor: color.withOpacity(0.9),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
+
   Widget _buildDoneButton() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Obx(
-        () => ButtonWidget(
-          text: controller.isFinishing.value ? "" : "Hoàn Tất",
-          height: 50,
-          borderRadius: 12,
-          ontap: controller.isFinishing.value ? () {} : controller.onFinish,
-          backgroundColor: AppColors.primary,
-          child:
+        () {
+          final isDisabled = controller.isFinishing.value || controller.isScanning.value;
+          return ButtonWidget(
+            text: controller.isFinishing.value ? "" : "Hoàn Tất",
+            height: 50,
+            borderRadius: 12,
+            ontap: isDisabled ? () {} : controller.onFinish,
+            backgroundColor: isDisabled ? Colors.grey : AppColors.primary,
+            child:
               controller.isFinishing.value
                   ? const SizedBox(
                     width: 24,
@@ -394,7 +413,8 @@ class LendReturnPage extends GetView<LendReturnController> {
                     ),
                   )
                   : null,
-        ),
+          );
+        },
       ),
     );
   }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
 import '../../../configs/app_colors.dart';
-import '../../../configs/app_images_string.dart';
 import '../../../services/images_service.dart';
 
 class Background extends StatelessWidget {

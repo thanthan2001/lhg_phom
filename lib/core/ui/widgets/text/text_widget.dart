@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../configs/app_colors.dart';
 import '../../../configs/app_dimens.dart';
@@ -36,16 +35,14 @@ class TextWidget extends StatelessWidget {
       softWrap: true,
       overflow: TextOverflow.visible,
       textAlign: textAlign ?? TextAlign.center,
-      style: GoogleFonts.roboto(
-        textStyle: TextStyle(
-          color: color,
-          fontSize: size,
-          fontStyle: fontStyle,
-          shadows: listShadow,
-          fontWeight: fontWeight,
-          decoration: textDecoration,
-          decorationColor: color,
-        ),
+      style: TextStyle(
+        color: color,
+        fontSize: size,
+        fontStyle: fontStyle,
+        shadows: listShadow,
+        fontWeight: fontWeight,
+        decoration: textDecoration,
+        decorationColor: color,
       ),
     );
   }

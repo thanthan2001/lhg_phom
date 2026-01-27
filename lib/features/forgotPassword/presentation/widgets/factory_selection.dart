@@ -109,7 +109,7 @@ class FactorySelectionWidget extends GetView<ForgotPasswordController> {
                 child: Text("Done", style: TextStyle(color: AppColors.primary)),
                 onPressed: () {
                   loginController.selectedFactory.value = selectedFactory.value;
-                  Get.back();
+                  Navigator.of(context).pop();
                 },
               ),
             ),

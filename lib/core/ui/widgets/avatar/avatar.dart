@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lhg_phom/core/services/images_service.dart';
 
 import '../../../configs/app_colors.dart';
-import '../../../configs/app_images_string.dart';
 
 class Avatar extends StatelessWidget {
   final double radius;
@@ -18,6 +17,7 @@ class Avatar extends StatelessWidget {
         border: Border.all(color: AppColors.white, width: 2),
         boxShadow: [
           BoxShadow(
+            // ignore: deprecated_member_use
             color: AppColors.black.withOpacity(.2),
             blurRadius: 1,
             spreadRadius: 1,

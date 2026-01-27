@@ -44,15 +44,16 @@ android {
         }
     }
 }
-    repositories {
+repositories {
     google()
     mavenCentral()
     flatDir {
         dirs("libs") 
     }
 }
+
 dependencies {
-  implementation(files("libs/rfiddrive-release.aar"))
+    implementation(files("libs/rfiddrive-release.aar"))
 }
 
 flutter {

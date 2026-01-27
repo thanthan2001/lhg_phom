@@ -320,17 +320,21 @@ class HomePage extends GetView<HomeController> {
               _HomeInfo(
                 icon: Icons.insert_drive_file_outlined,
                 title: "total_phom".tr,
-                value: controller.items[0]["TongPhom"].toString() ?? "0",
+                value: controller.items.isNotEmpty 
+                    ? controller.items[0]["TongPhom"].toString() 
+                    : "0",
               ),
               _HomeInfo(
                 icon: Icons.grid_view_rounded,
                 title: "total_phom_code".tr,
-                value: controller.items.length.toString() ?? "0",
+                value: controller.items.length.toString(),
               ),
               _HomeInfo(
                 icon: Icons.warehouse_outlined,
                 title: "total_inventory".tr,
-                value: controller.items[0]["TongTonKho"].toString() ?? "0",
+                value: controller.items.isNotEmpty 
+                    ? controller.items[0]["TongTonKho"].toString() 
+                    : "0",
               ),
             ],
           ),

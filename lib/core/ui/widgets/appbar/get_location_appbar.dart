@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../configs/app_colors.dart';
 import '../../../configs/app_dimens.dart';
-import '../../../configs/app_text_string.dart';
 
 class GetLocationAppbar extends StatelessWidget implements PreferredSizeWidget {
   const GetLocationAppbar({super.key});

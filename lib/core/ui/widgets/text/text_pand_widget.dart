@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../configs/app_colors.dart';
 
@@ -28,31 +27,23 @@ class TextSpanWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return RichText(
       text: TextSpan(
-        style: GoogleFonts.nunitoSans(
-          textStyle: TextStyle(fontSize: size, color: AppColors.black),
-        ),
+        style: TextStyle(fontSize: size, color: AppColors.black),
         children: [
           TextSpan(
             text: text1.tr,
-            style: GoogleFonts.nunitoSans(
-              textStyle: TextStyle(
-                fontSize: size,
-
-                fontWeight: fontWeight1,
-                color: textColor1,
-              ),
+            style: TextStyle(
+              fontSize: size,
+              fontWeight: fontWeight1,
+              color: textColor1,
             ),
           ),
           const TextSpan(text: " "),
           TextSpan(
             text: text2.tr,
-            style: GoogleFonts.nunitoSans(
-              textStyle: TextStyle(
-                fontSize: size,
-
-                fontWeight: fontWeight2,
-                color: textColor2,
-              ),
+            style: TextStyle(
+              fontSize: size,
+              fontWeight: fontWeight2,
+              color: textColor2,
             ),
           ),
         ],

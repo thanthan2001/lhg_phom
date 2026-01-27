@@ -54,31 +54,32 @@ Future<void> showSearchableSelectionDialog({
               ),
             ),
             const SizedBox(height: 10),
-            Obx(
-              () => ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: Scrollbar(
-                  thumbVisibility: true,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: filteredList.length,
-                    itemBuilder: (_, index) {
-                      final item = filteredList[index];
-                      return ListTile(
-                        title: Text(item),
-                        trailing:
-                            item == selectedItem
-                                ? const Icon(Icons.check, color: Colors.green)
-                                : null,
-                        onTap: () {
-                          onSelected(item);
-                          Get.back();
-                        },
-                        selected: item == selectedItem,
-                        selectedTileColor: AppColors.primary2.withOpacity(0.1),
-                        selectedColor: AppColors.primary1,
-                      );
-                    },
+            Flexible(
+              child: Obx(
+                () => ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 180),
+                  child: Scrollbar(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: filteredList.length,
+                      itemBuilder: (_, index) {
+                        final item = filteredList[index];
+                        return ListTile(
+                          title: Text(item),
+                          trailing:
+                              item == selectedItem
+                                  ? const Icon(Icons.check, color: Colors.green)
+                                  : null,
+                          onTap: () {
+                            onSelected(item);
+                            Navigator.of(Get.context!).pop();
+                          },
+                          selected: item == selectedItem,
+                          selectedTileColor: AppColors.primary2.withOpacity(0.1),
+                          selectedColor: AppColors.primary1,
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -142,34 +143,35 @@ Future<void> showSearchableSelectionDialog2({
               ),
             ),
             const SizedBox(height: 10),
-            Obx(
-              () => ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: Scrollbar(
-                  thumbVisibility: true,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: filteredList.length,
-                    itemBuilder: (_, index) {
-                      final item = filteredList[index];
-                      return ListTile(
-                        title: Text(item),
-                        trailing:
-                            item == selectedItem
-                                ? const Icon(Icons.check, color: Colors.green)
-                                : null,
-                        onTap: () async {
-                          Get.back();
-                          onSelected(item);
-                          if (onSelectedAndCallApi != null) {
-                            await onSelectedAndCallApi(item);
-                          }
-                        },
-                        selected: item == selectedItem,
-                        selectedTileColor: AppColors.primary2.withOpacity(0.1),
-                        selectedColor: AppColors.primary1,
-                      );
-                    },
+            Flexible(
+              child: Obx(
+                () => ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 180),
+                  child: Scrollbar(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: filteredList.length,
+                      itemBuilder: (_, index) {
+                        final item = filteredList[index];
+                        return ListTile(
+                          title: Text(item),
+                          trailing:
+                              item == selectedItem
+                                  ? const Icon(Icons.check, color: Colors.green)
+                                  : null,
+                          onTap: () async {
+                            Navigator.of(Get.context!).pop();
+                            onSelected(item);
+                            if (onSelectedAndCallApi != null) {
+                              await onSelectedAndCallApi(item);
+                            }
+                          },
+                          selected: item == selectedItem,
+                          selectedTileColor: AppColors.primary2.withOpacity(0.1),
+                          selectedColor: AppColors.primary1,
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),

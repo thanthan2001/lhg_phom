@@ -18,24 +18,12 @@ class SplashController extends GetxController {
     try {
       final connected = await RFIDService.connect();
       if (connected) {
-        Get.snackbar(
-          '✅ Kết nối thành công',
-          'Đã kết nối với thiết bị RFID',
-          backgroundColor: Colors.green.withOpacity(0.8),
-        );
+        print('✅ Kết nối RFID thành công');
       } else {
-        Get.snackbar(
-          '❌Lỗi',
-          'Kết nối RFID thất bại',
-          backgroundColor: Colors.red.withOpacity(0.8),
-        );
+        print('❌ Kết nối RFID thất bại');
       }
     } catch (e) {
-      Get.snackbar(
-        '❌Lỗi',
-        'Kết nối RFID thất bại: $e',
-        backgroundColor: Colors.red.withOpacity(0.8),
-      );
+      print('❌ Lỗi kết nối RFID: $e');
     }
   }
 

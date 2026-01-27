@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class FullScreenImage extends StatelessWidget {
   final int initialIndex;
@@ -21,7 +20,7 @@ class FullScreenImage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () {
-            Get.back();   
+            Navigator.of(context).pop();
           },
         ),
       ),

@@ -206,11 +206,11 @@ class LendGivePage extends GetView<LendGiveController> {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SizedBox(
-          width: 600,
+          width: 1200,
           child: DataTable2(
             columnSpacing: 12,
             horizontalMargin: 12,
-            minWidth: 600,
+            minWidth: 1200,
             dataRowHeight: 45,
             headingRowHeight: 50,
             headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
@@ -229,14 +229,17 @@ class LendGivePage extends GetView<LendGiveController> {
                     .toList(),
             rows:
                 controller.inventoryData.map((row) {
-                  final scanned = double.tryParse(row[3]) ?? 0.0;
-                  final expected = double.tryParse(row[2]) ?? 0.0;
+                  final scannedPairs = double.tryParse(row[6]) ?? 0.0; // pairs (min left/right)
+                  final expectedPairs = double.tryParse(row[2]) ?? 0.0;
+                  final diff = int.tryParse(row[5]) ?? 0;
                   Color? rowColor;
 
-                  if (scanned > 0 && scanned < expected) {
-                    rowColor = Colors.orange.withOpacity(0.1);
-                  } else if (scanned >= expected) {
-                    rowColor = Colors.green.withOpacity(0.1);
+                  if (diff > 0) {
+                    rowColor = Colors.red.withOpacity(0.12);
+                  } else if (scannedPairs > 0 && scannedPairs < expectedPairs) {
+                    rowColor = Colors.orange.withOpacity(0.12);
+                  } else if (scannedPairs >= expectedPairs && expectedPairs > 0) {
+                    rowColor = Colors.green.withOpacity(0.12);
                   }
 
                   return DataRow(
@@ -272,16 +275,6 @@ class LendGivePage extends GetView<LendGiveController> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTotalPhomNotBinding() {
-    return CustomTextFieldWidget(
-      labelText: "Số đôi chưa gán dữ liệu",
-      controller: controller.totalPhomNotBindingController,
-      obscureText: false,
-      keyboardType: TextInputType.number,
-      textColor: AppColors.black,
     );
   }
 

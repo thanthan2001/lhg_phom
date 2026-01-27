@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
-import 'package:lhg_phom/core/configs/app_colors.dart';
 import 'package:lhg_phom/core/services/models/phom_model.dart';
 import 'package:lhg_phom/core/services/models/user/domain/usecase/get_user_use_case.dart';
 import 'package:lhg_phom/core/services/models/user/model/user_model.dart';
@@ -11,7 +10,6 @@ import 'package:lhg_phom/core/utils/date_time.dart';
 import '../../../../core/configs/enum.dart';
 import '../../../../core/services/dio.api.service.dart';
 import '../../../../core/services/rfid_service.dart';
-import 'package:intl/intl.dart';
 import 'dart:convert';
 
 import '../../../../core/ui/dialogs/dialogs.dart';
@@ -23,6 +21,32 @@ class BindingPhomController extends GetxController {
 
   BindingPhomController(this._getuserUseCase);
   Timer? _debounce;
+  
+  // Safe feedback helper - uses dialog for async contexts instead of snackbar
+  void _showFeedback(String title, String message, {bool isSuccess = false}) {
+    print('[$title] $message'); // Always log for debugging
+    
+    try {
+      if (Get.context != null && WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+        // Use dialog instead of snackbar for stability in async callbacks
+        Get.dialog(
+          AlertDialog(
+            title: Text(isSuccess ? '✅ $title' : '⚠️ $title'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(Get.context!).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+          barrierDismissible: true,
+        );
+      }
+    } catch (e) {
+      print('Failed to show dialog: $e');
+    }
+  }
 
   final materialCodeController = TextEditingController();
   final phomNameController = TextEditingController();
@@ -163,51 +187,17 @@ class BindingPhomController extends GetxController {
 
         if (errorItemsDetails.length > 0) {
           _showErrorDialog(errorItemsDetails);
+        } else {
+          _showFeedback('Thành công', 'Không có lỗi RFID', isSuccess: true);
         }
       } else {
-        Get.snackbar(
-          '✅ Thành công',
-          'Không có lỗi',
-          backgroundColor: Colors.greenAccent.withOpacity(0.8),
-        );
         print("Không tìm thấy thông tin chi tiết cho RFID lỗi.");
       }
     } catch (e) {
       isScanning.value = false;
       isLoading.value = false;
-      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi dừng quét: $e');
+      _showFeedback('Lỗi', 'Đã xảy ra lỗi khi dừng quét: $e');
     }
-  }
-
-  Future<void> _connectRFID() async {
-    try {
-      final connected = await RFIDService.connect();
-      if (connected) {
-        Get.snackbar(
-          '✅ Kết nối thành công',
-          'Đã kết nối với thiết bị RFID',
-          backgroundColor: Colors.green.withOpacity(0.8),
-        );
-      } else {
-        Get.snackbar(
-          '❌Lỗi',
-          'Kết nối RFID thất bại',
-          backgroundColor: Colors.red.withOpacity(0.8),
-        );
-      }
-    } catch (e) {
-      Get.snackbar(
-        '❌Lỗi',
-        'Kết nối RFID thất bại: $e',
-        backgroundColor: Colors.red.withOpacity(0.8),
-      );
-    }
-  }
-
-  Future<void> _disconnectRFID() async {
-    try {
-      await RFIDService.disconnect();
-    } catch (e) {}
   }
 
   Future<void> onScan() async {
@@ -221,11 +211,11 @@ class BindingPhomController extends GetxController {
 
         isShowingDetail.value = true;
       } else {
-        Get.snackbar('Lỗi', 'Không đọc được thẻ');
+        _showFeedback('Lỗi', 'Không đọc được thẻ');
         rfidController.text = 'fails';
       }
     } catch (e) {
-      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi quét RFID: $e');
+      _showFeedback('Lỗi', 'Đã xảy ra lỗi khi quét RFID: $e');
     } finally {
       isLoading.value = false;
     }
@@ -254,20 +244,24 @@ class BindingPhomController extends GetxController {
   Future<void> onStartRead() async {
     if (isScanning.value) return;
     if (!isScan.value) {
-      Get.snackbar(
-        '⚠️Thông báo',
-        'Thực hiện tìm kiếm trước khi scan',
-        backgroundColor: AppColors.primary2,
-      );
+      _showFeedback('Thông báo', 'Thực hiện tìm kiếm trước khi scan');
       return;
     }
 
     isLoading.value = true;
 
     try {
+      // Connect to RFID device first
+      final connected = await RFIDService.connect();
+      if (!connected) {
+        _showFeedback('Lỗi', 'Không thể kết nối với thiết bị RFID');
+        isLoading.value = false;
+        return;
+      }
+      
       final user = await _getuserUseCase.getUser();
       if (user == null) {
-        Get.snackbar('Lỗi', 'Không thể lấy thông tin người dùng.');
+        _showFeedback('Lỗi', 'Không thể lấy thông tin người dùng.');
         isLoading.value = false;
         return;
       }
@@ -281,6 +275,10 @@ class BindingPhomController extends GetxController {
       await RFIDService.clearScannedTags();
 
       update();
+      
+      isScanning.value = true;
+      isLoading.value = false; // Turn off loading once scanning starts
+      
       await RFIDService.scanContinuous((epc) {
         if (!isScanning.value) return;
         if (!listTagRFID.contains(epc)) {
@@ -307,12 +305,10 @@ class BindingPhomController extends GetxController {
           totalCount.value += 1;
         }
       });
-
-      isScanning.value = true;
     } catch (e) {
       isLoading.value = false;
       isScanning.value = false;
-      Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi bắt đầu quét: $e');
+      _showFeedback('Lỗi', 'Đã xảy ra lỗi khi bắt đầu quét: $e');
     }
   }
 
@@ -327,11 +323,7 @@ class BindingPhomController extends GetxController {
 
   Future<void> onScanMultipleTags() async {
     if (!isScan.value) {
-      Get.snackbar(
-        '⚠️Thông báo',
-        'Thực hiện tìm kiếm trước khi scan',
-        backgroundColor: AppColors.primary2,
-      );
+      _showFeedback('Thông báo', 'Thực hiện tìm kiếm trước khi scan');
       return;
     }
     isLoading.value = true;
@@ -365,10 +357,10 @@ class BindingPhomController extends GetxController {
         );
         rfidController.text = listTagRFID.join(', ');
       } else {
-        Get.snackbar('Lỗi', 'Không tìm thấy thẻ nào');
+        _showFeedback('Lỗi', 'Không tìm thấy thẻ nào');
       }
     } catch (e) {
-      Get.snackbar('Lỗi', 'Đã xảy ra lỗi: $e');
+      _showFeedback('Lỗi', 'Đã xảy ra lỗi: $e');
     } finally {
       isLoading.value = false;
     }
@@ -416,18 +408,15 @@ class BindingPhomController extends GetxController {
               }
             } else {
               phomName.value = '';
-              Get.snackbar('Lỗi', 'Không có dữ liệu từ API');
+              _showFeedback('Lỗi', 'Không có dữ liệu từ API');
             }
           } else {
             phomName.value = '';
 
-            Get.snackbar(
-              'Lỗi',
-              'Đã xảy ra lỗi khi gọi API: ${response.statusMessage}',
-            );
+            _showFeedback('Lỗi', 'Đã xảy ra lỗi khi gọi API: ${response.statusMessage}');
           }
         } catch (e) {
-          Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi gọi API: $e');
+          _showFeedback('Lỗi', 'Đã xảy ra lỗi khi gọi API: $e');
         }
       }
     });
@@ -491,12 +480,14 @@ class BindingPhomController extends GetxController {
   }
 
   Future<void> onFinish() async {
+    // Không cho submit khi đang quét
+    if (isScanning.value) {
+      _showFeedback('Cảnh báo', 'Vui lòng dừng quét trước khi hoàn tất');
+      return;
+    }
+    
     if (phomBindingList.isEmpty) {
-      Get.snackbar(
-        '⚠️Thông báo',
-        'Không có dữ liệu để gửi',
-        backgroundColor: AppColors.primary2,
-      );
+      _showFeedback('Thông báo', 'Không có dữ liệu để gửi');
       return;
     }
     try {
@@ -514,7 +505,6 @@ class BindingPhomController extends GetxController {
       final resData = response.data;
 
       if (resData['statusCode'] == 200) {
-        final insertedList = resData['data'] as List<dynamic>;
         final summary = resData['summary'];
         final successCount = summary['successCount'];
         final failCount = summary['failCount'];
@@ -532,18 +522,10 @@ class BindingPhomController extends GetxController {
           typeDialog: TypeDialog.success,
         );
       } else {
-        Get.snackbar(
-          "❌ Lỗi",
-          resData['message'] ?? "Không rõ lỗi",
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        _showFeedback('Lỗi', resData['message'] ?? "Không rõ lỗi");
       }
     } catch (e) {
-      Get.snackbar(
-        "Lỗi",
-        "Đã xảy ra lỗi: $e",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      _showFeedback('Lỗi', "Đã xảy ra lỗi: $e");
     }
   }
 

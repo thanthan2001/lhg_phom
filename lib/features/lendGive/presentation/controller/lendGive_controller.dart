@@ -54,8 +54,16 @@ class LendGiveController extends GetxController {
     'Tên Phom',
     'Size',
     'SL Mượn (Đôi)',
+    'Trái',
+    'Phải',
+    'Chênh Lệch',
     'Đã Quét (Đôi)',
   ];
+
+  // Safe feedback helper - uses print for async contexts
+  void _showFeedback(String title, String message) {
+    print('[$title] $message');
+  }
 
   void _resetScanStateForNewSession() {
     processedRfidsInSession.clear();
@@ -69,9 +77,14 @@ class LendGiveController extends GetxController {
     alreadyLentRfids.clear();
     inventoryDataMap.forEach((key, value) {
       value['scannedCount'] = 0.0;
+      value['leftCount'] = 0;
+      value['rightCount'] = 0;
     });
     for (var row in inventoryData) {
-      row[3] = '0.0';
+      row[3] = '0';  // Left count
+      row[4] = '0';  // Right count
+      row[5] = '0';  // Difference
+      row[6] = '0.0';  // Scanned count (moved to end)
     }
     inventoryData.refresh();
   }
@@ -95,18 +108,13 @@ class LendGiveController extends GetxController {
     totalScannedCount.value = 0.0;
     totalExpectedCount.value = 0;
     idBillFromSearch = null;
-    Get.snackbar(
-      "Thông báo",
-      "Đã xóa toàn bộ dữ liệu, sẵn sàng cho phiếu mượn mới.",
-      backgroundColor: Colors.blueAccent,
-      colorText: Colors.white,
-    );
+    _showFeedback('Thông báo', 'Đã xóa toàn bộ dữ liệu, sẵn sàng cho phiếu mượn mới.');
   }
 
   Future<void> onSearch() async {
     final String billIdToSearch = bill_br_id.text.trim();
     if (billIdToSearch.isEmpty) {
-      Get.snackbar('Lỗi', 'Vui lòng nhập mã số đơn mượn.');
+      _showFeedback('Lỗi', 'Vui lòng nhập mã số đơn mượn.');
       return;
     }
     isLoading.value = true;
@@ -130,16 +138,12 @@ class LendGiveController extends GetxController {
       final infoBill = response.data["infoBill"];
       if (infoBill == null) throw Exception('Không nhận được thông tin phiếu.');
       if (!infoBill["isConfirm"]) {
-        Get.snackbar(
-          'Cảnh báo',
-          'Phiếu mượn chưa được xác nhận. Không thể quét.',
-          backgroundColor: Colors.orange,
-        );
+        _showFeedback('Cảnh báo', 'Phiếu mượn chưa được xác nhận. Không thể quét.');
         return;
       }
       final List<dynamic>? jsonArray = response.data["data"]?["jsonArray"];
       if (jsonArray == null || jsonArray.isEmpty) {
-        Get.snackbar('Thông báo', 'Không tìm thấy dữ liệu cho phiếu mượn này.');
+        _showFeedback('Thông báo', 'Không tìm thấy dữ liệu cho phiếu mượn này.');
         return;
       }
 
@@ -159,13 +163,18 @@ class LendGiveController extends GetxController {
             item['LastName']?.toString() ?? '',
             lastSize,
             lastSum.toString(),
-            '0.0',
+            '0',  // leftCount (index 3)
+            '0',  // rightCount (index 4)
+            '0',  // difference (index 5)
+            '0.0',  // scannedCount (index 6) - chuyển về cuối
           ];
           tempInventoryData.add(row);
           tempInventoryMap[key] = {
             'rowData': row,
             'expectedCount': lastSum.toDouble(),
             'scannedCount': 0.0,
+            'leftCount': 0,
+            'rightCount': 0,
             'depId': item['DepID']?.toString() ?? '',
             'idBill': item['ID_bill']?.toString() ?? '',
             'matNo': lastMatNo,
@@ -177,14 +186,9 @@ class LendGiveController extends GetxController {
       inventoryDataMap.assignAll(tempInventoryMap);
       totalExpectedCount.value = currentTotalExpected;
       isAvalableScan.value = true;
-      Get.snackbar(
-        'Thành công',
-        'Đã tải thông tin phiếu mượn. Sẵn sàng để quét.',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      _showFeedback('Thành công', 'Đã tải thông tin phiếu mượn. Sẵn sàng để quét.');
     } catch (e) {
-      Get.snackbar('Lỗi tìm kiếm', 'Lỗi: ${e.toString()}');
+      _showFeedback('Lỗi tìm kiếm', 'Lỗi: ${e.toString()}');
     } finally {
       isLoading.value = false;
     }
@@ -200,18 +204,25 @@ class LendGiveController extends GetxController {
 
   Future<void> onScanMultipleTags() async {
     if (!isAvalableScan.value) {
-      Get.snackbar(
-        'Cảnh báo',
-        'Vui lòng tìm kiếm phiếu mượn hợp lệ trước khi quét.',
-      );
+      _showFeedback('Cảnh báo', 'Vui lòng tìm kiếm phiếu mượn hợp lệ trước khi quét.');
       return;
     }
     if (isScanning.value) return;
+
+    // Connect to RFID device first
+    final connected = await RFIDService.connect();
+    if (!connected) {
+      _showFeedback('Lỗi', 'Không thể kết nối với thiết bị RFID');
+      return;
+    }
 
     _resetScanStateForNewSession();
     isScanning.value = true;
 
     try {
+      // Clear native cache to start fresh
+      await RFIDService.clearScannedTags();
+      
       await RFIDService.scanContinuous((epc) {
         if (!isScanning.value) return;
         if (processedRfidsInSession.add(epc)) {
@@ -397,7 +408,15 @@ class LendGiveController extends GetxController {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Get.back(),
+                      onPressed: () {
+                        try {
+                          if (Get.context != null) {
+                            Navigator.of(Get.context!).pop();
+                          }
+                        } catch (e) {
+                          print('Error closing dialog: $e');
+                        }
+                      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -565,7 +584,7 @@ class LendGiveController extends GetxController {
                                 const SizedBox(width: 4),
                                 Chip(
                                   label: Text(
-                                    '${invalidRfids.length ~/ 2} đôi',
+                                    '${invalidRfids.length} chiếc',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 11,
@@ -625,7 +644,15 @@ class LendGiveController extends GetxController {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => Get.back(),
+                    onPressed: () {
+                      try {
+                        if (Get.context != null) {
+                          Navigator.of(Get.context!).pop();
+                        }
+                      } catch (e) {
+                        print('Error closing dialog: $e');
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -671,6 +698,17 @@ class LendGiveController extends GetxController {
       String lastMatNo = item['LastMatNo']?.toString() ?? 'N/A';
       String lastNo = item['LastNo']?.toString().trim() ?? 'N/A';
       String lastSize = item['LastSize']?.toString().trim() ?? 'N/A';
+      String rawSide = item['LastSide']?.toString().trim() ?? 'Unknown';
+      String lastSide;
+      final sideLower = rawSide.toLowerCase();
+      if (sideLower.startsWith('l')) {
+        lastSide = 'left';
+      } else if (sideLower.startsWith('r') || sideLower.startsWith('p')) {
+        // "p" để hỗ trợ "phai" hoặc các ký hiệu viết tắt
+        lastSide = 'right';
+      } else {
+        lastSide = 'unknown';
+      }
       String key = "${lastMatNo}_$lastSize";
 
       // ***** KIỂM TRA TRƯỜNG HỢP PHOM ĐÃ ĐƯỢC MƯỢN *****
@@ -698,37 +736,62 @@ class LendGiveController extends GetxController {
       }
 
       var entry = inventoryDataMap[key]!;
-      double currentScanned = entry['scannedCount'];
       double expected = entry['expectedCount'];
 
-      if (currentScanned < expected) {
-        entry['scannedCount'] = currentScanned + 0.5;
-        totalScannedCount.value += 0.5;
+      // Pairs trước khi cập nhật
+      final prevPairs = (entry['leftCount'] < entry['rightCount']
+              ? entry['leftCount']
+              : entry['rightCount'])
+          .toDouble();
 
-        // Lưu lastNo để hiển thị (chỉ lưu lần đầu)
-        if (entry['displayMatNo'] == null || entry['displayMatNo'].isEmpty) {
-          entry['displayMatNo'] = lastNo;
-        }
-
-        List<String> rowData = entry['rowData'];
-        rowData[3] = entry['scannedCount'].toString();
-        inventoryData.refresh();
-        scannedRfidDetailsList.add({
-          "StateScan": 0,
-          "ID_BILL": entry['idBill'],
-          "DepID": entry['depId'],
-          "ScanDate": DateFormat('yyyy-MM-dd').format(DateTime.now()),
-          "RFID": epc,
-          "UserID": user!.userId!,
-          "DateBorrow": convertDate(dateController.text),
-        });
-        lastScanStatus.value = 'Hợp lệ: $lastNo - Size $lastSize';
-      } else {
+      // Dừng nếu đã đủ số đôi
+      if (prevPairs >= expected) {
         lastScanStatus.value = 'Quét thừa: $lastNo - Size $lastSize';
         if (!excessRfids.any((e) => e['rfid'] == epc)) {
           excessRfids.add({'rfid': epc, 'matNo': lastNo, 'size': lastSize});
         }
+        return;
       }
+
+      // Track Left/Right count
+      if (lastSide == 'left') {
+        entry['leftCount'] = (entry['leftCount'] ?? 0) + 1;
+      } else if (lastSide == 'right') {
+        entry['rightCount'] = (entry['rightCount'] ?? 0) + 1;
+      }
+
+      // Lưu lastNo để hiển thị (chỉ lưu lần đầu)
+      if (entry['displayMatNo'] == null || entry['displayMatNo'].isEmpty) {
+        entry['displayMatNo'] = lastNo;
+      }
+
+      // Tính lại số đôi hợp lệ dựa trên min(left, right)
+      final newPairs = (entry['leftCount'] < entry['rightCount']
+              ? entry['leftCount']
+              : entry['rightCount'])
+          .toDouble();
+      final deltaPairs = newPairs - prevPairs;
+      entry['scannedCount'] = newPairs;
+      totalScannedCount.value += deltaPairs;
+
+      List<String> rowData = entry['rowData'];
+      rowData[3] = entry['leftCount'].toString();  // Left count
+      rowData[4] = entry['rightCount'].toString();  // Right count
+      int difference = (entry['leftCount'] - entry['rightCount']).abs();
+      rowData[5] = difference.toString();  // Difference
+      rowData[6] = newPairs.toString();  // Scanned pairs (min of left/right)
+      inventoryData.refresh();
+
+      scannedRfidDetailsList.add({
+        "StateScan": 0,
+        "ID_BILL": entry['idBill'],
+        "DepID": entry['depId'],
+        "ScanDate": DateFormat('yyyy-MM-dd').format(DateTime.now()),
+        "RFID": epc,
+        "UserID": user!.userId!,
+        "DateBorrow": convertDate(dateController.text),
+      });
+      lastScanStatus.value = 'Hợp lệ: $lastNo - Size $lastSize';
     } catch (e) {
       lastScanStatus.value = 'Lỗi xử lý RFID $epc';
     }
@@ -737,23 +800,14 @@ class LendGiveController extends GetxController {
   Future<void> onFinish() async {
     // Không cho hoàn tất khi đang quét
     if (isScanning.value) {
-      Get.snackbar(
-        "Cảnh báo",
-        "Vui lòng dừng quét trước khi hoàn tất.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      _showFeedback('Cảnh báo', 'Vui lòng dừng quét trước khi hoàn tất.');
       return;
     }
 
     // Kiểm tra số thẻ người nhận trước
     if (receiverCardNumberController.text.trim().isEmpty) {
-      Get.snackbar(
-        "Cảnh báo",
-        "Vui lòng nhập số thẻ người nhận trước khi hoàn tất.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      _showFeedback('Cảnh báo', 'Vui lòng nhập số thẻ người nhận trước khi hoàn tất.');
+
       return;
     }
 
@@ -769,7 +823,13 @@ class LendGiveController extends GetxController {
         textConfirm: "Vẫn hoàn tất",
         textCancel: "Hủy",
         onConfirm: () {
-          Get.back();
+          try {
+            if (Get.context != null) {
+              Navigator.of(Get.context!).pop();
+            }
+          } catch (e) {
+            print('Error closing dialog: $e');
+          }
           _proceedToFinish();
         },
       );
@@ -781,7 +841,7 @@ class LendGiveController extends GetxController {
 
   Future<void> _proceedToFinish() async {
     if (scannedRfidDetailsList.isEmpty) {
-      Get.snackbar("Thông báo", "Chưa có phom hợp lệ nào được quét.");
+      _showFeedback('Thông báo', 'Chưa có phom hợp lệ nào được quét.');
       return;
     }
 
@@ -803,7 +863,13 @@ class LendGiveController extends GetxController {
           middleText: "$successCount mục đã được lưu thành công!",
           textConfirm: "OK",
           onConfirm: () async {
-            Get.back();
+            try {
+              if (Get.context != null) {
+                Navigator.of(Get.context!).pop();
+              }
+            } catch (e) {
+              print('Error closing dialog: $e');
+            }
             await onClear();
           },
         );
@@ -811,7 +877,7 @@ class LendGiveController extends GetxController {
         throw Exception("Lưu thất bại. Mã lỗi: ${response.statusCode}");
       }
     } catch (e) {
-      Get.snackbar("Lỗi hệ thống", "Không thể gửi dữ liệu. ${e.toString()}");
+      _showFeedback('Lỗi hệ thống', 'Không thể gửi dữ liệu. ${e.toString()}');
     } finally {
       isLoading.value = false;
     }
@@ -839,7 +905,7 @@ class LendGiveController extends GetxController {
       RFIDService.setOnHardwareScan(toggleScan);
       dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
     } catch (e) {
-      Get.snackbar('Lỗi khởi tạo', e.toString());
+      _showFeedback('Lỗi khởi tạo', e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -847,11 +913,30 @@ class LendGiveController extends GetxController {
 
   @override
   void onClose() {
+    try {
+      // Đóng dialog/snackbar nếu đang mở
+      while (Get.isDialogOpen == true) {
+        Get.back();
+      }
+    } catch (e) {
+      print('Error closing dialogs: $e');
+    }
+
+    try {
+      // Dừng quét RFID nếu đang quét
+      if (isScanning.value) {
+        RFIDService.stopScan();
+      }
+    } catch (e) {
+      print('Error stopping RFID scan: $e');
+    }
+
+    // Dispose TextEditingControllers
     bill_br_id.dispose();
     totalPhomNotBindingController.dispose();
     receiverCardNumberController.dispose();
     dateController.dispose();
-    onStopRead(showReport: false);
+
     super.onClose();
   }
 }

@@ -3,8 +3,6 @@ import 'package:get/get.dart';
 
 import '../../../../core/configs/app_colors.dart';
 import '../../../../core/ui/dialogs/showSearchableSelectionDialog.dart';
-import '../../../../core/ui/widgets/button/button_widget.dart';
-import '../../../../core/ui/widgets/text/text_widget.dart';
 import '../../../../core/ui/widgets/textfield/custom_dropdownfield_widget.dart';
 
 import '../controller/update_binding_controller.dart';
@@ -28,7 +26,13 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
-            Get.back();
+            try {
+              if (Get.context != null) {
+                Navigator.of(Get.context!).pop();
+              }
+            } catch (e) {
+              print('Error closing page: $e');
+            }
           },
         ),
       ),
@@ -344,22 +348,6 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildShelfDropdown() {
-    return Obx(
-      () => CustomDropdownField(
-        labelText: 'Kệ:',
-        selectedValue: controller.selectedShelf.value,
-        onTap:
-            () => showSearchableSelectionDialog(
-              title: 'Chọn kệ',
-              itemList: controller.shelfList,
-              selectedItem: controller.selectedShelf.value,
-              onSelected: (val) => {controller.selectedShelf.value = val},
-            ),
       ),
     );
   }

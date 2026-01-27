@@ -24,7 +24,14 @@ class RFIDHandler(
   
 
     private fun initSound() {
-        soundPool = SoundPool(1, AudioManager.STREAM_MUSIC, 0)
+        soundPool = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            SoundPool.Builder()
+                .setMaxStreams(1)
+                .build()
+        } else {
+            @Suppress("DEPRECATION")
+            SoundPool(1, AudioManager.STREAM_MUSIC, 0)
+        }
         soundId = soundPool?.load(context, R.raw.barcodebeep, 1)
 
         soundId?.let {

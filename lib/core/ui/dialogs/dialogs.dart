@@ -146,7 +146,13 @@ class DialogsUtils {
                               ),
                             ),
                             onPressed: () {
-                              Get.back(); 
+                              try {
+                                if (Get.context != null) {
+                                  Navigator.of(Get.context!).pop();
+                                }
+                              } catch (e) {
+                                print('Error closing dialog: $e');
+                              }
                             },
                           ),
                         ),
@@ -174,7 +180,13 @@ class DialogsUtils {
                               if (onPresss != null) {
                                 onPresss();
                               }
-                              Get.back(); 
+                              try {
+                                if (Get.context != null) {
+                                  Navigator.of(Get.context!).pop();
+                                }
+                              } catch (e) {
+                                print('Error closing dialog: $e');
+                              }
                             },
                           ),
                         ),
@@ -300,7 +312,13 @@ class DialogsUtils {
                               if (onPress != null) {
                                 onPress(); 
                               } else {
-                                Get.back();
+                                try {
+                                  if (Get.context != null) {
+                                    Navigator.of(Get.context!).pop();
+                                  }
+                                } catch (e) {
+                                  print('Error closing dialog: $e');
+                                }
                               }
                             },
                           ),

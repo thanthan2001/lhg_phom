@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
-import 'package:lhg_phom/core/services/models/user/domain/usecase/save_user_use_case.dart';
 import 'package:lhg_phom/features/login/presentation/widgets/factory_selection.dart';
 
 class ForgotPasswordController extends GetxController {
   final Prefs prefs = Prefs.preferences;
-  final SaveUserUseCase _saveUserUseCase;
-  ForgotPasswordController(this._saveUserUseCase);
 
   var isShowPwd = false.obs;
   var selectedFactory = "".obs; 

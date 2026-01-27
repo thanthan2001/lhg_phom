@@ -5,7 +5,6 @@ import 'package:lhg_phom/core/ui/widgets/textfield/custom_textfield_widget.dart'
 import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
 
-import '../../../../core/routes/routes.dart';
 import '../../../../core/ui/dialogs/showSearchableSelectionDialog.dart';
 import '../../../../core/ui/widgets/textfield/custom_dropdownfield_widget.dart';
 import '../controller/bindingPhom_controller.dart';
@@ -308,22 +307,6 @@ class BindingPhomPage extends GetView<BindingPhomController> {
     );
   }
 
-  Widget _buildShelfDropdown() {
-    return Obx(
-      () => CustomDropdownField(
-        labelText: 'Chọn Kệ:',
-        selectedValue: controller.selectedShelf.value,
-        onTap:
-            () => showSearchableSelectionDialog(
-              title: 'Chọn kệ',
-              itemList: controller.shelfList,
-              selectedItem: controller.selectedShelf.value,
-              onSelected: (val) => controller.selectedShelf.value = val,
-            ),
-      ),
-    );
-  }
-
   Widget _buildLeftRightButtons() {
     return Obx(() {
       final isLeft = controller.isLeftSide.value;
@@ -361,10 +344,29 @@ class BindingPhomPage extends GetView<BindingPhomController> {
 
   Widget _buildRfidScanButtons() {
     return Obx(() {
-      if (controller.isLoading.value) {
+      if (controller.isScanning.value) {
         return Row(
           children: [
-            const Expanded(child: Center(child: CircularProgressIndicator())),
+            const Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Đang quét...',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: ButtonWidget(
@@ -445,7 +447,6 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                   border: Border.all(color: AppColors.grey2, width: 1),
                 ),
                 child: Scrollbar(
-                  thumbVisibility: true,
                   child: ListView.separated(
                     padding: const EdgeInsets.all(8.0),
                     itemCount: controller.TagsList.length,

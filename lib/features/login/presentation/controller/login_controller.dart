@@ -5,7 +5,6 @@ import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
 import 'package:lhg_phom/core/services/models/user/domain/usecase/save_user_use_case.dart';
 import 'package:lhg_phom/features/login/presentation/widgets/factory_selection.dart';
-import 'package:dio/dio.dart';
 
 import '../../../../core/services/dio.api.service.dart';
 import '../../../../core/services/models/user/model/user_model.dart';
