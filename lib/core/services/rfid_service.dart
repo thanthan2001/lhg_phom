@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 class RFIDService {
   static const MethodChannel _channel = MethodChannel('rfid_channel');
   static Function(String epc)? _onScanCallback;
+  static Function(Map<String, dynamic> data)? _onScanDataCallback;
+  static Map<String, dynamic>? _lastScanData;
   static bool _handlerInitialized = false;
   static Function()? _onHardwareScanCallback;
 
@@ -17,8 +19,24 @@ class RFIDService {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'onTagScanned':
-          final epc = call.arguments as String;
-          _onScanCallback?.call(epc);
+          final args = call.arguments;
+          String? epc;
+          Map<String, dynamic>? scanData;
+
+          if (args is String) {
+            epc = args;
+          } else if (args is Map) {
+            scanData = Map<String, dynamic>.from(args);
+            epc = scanData['epc']?.toString() ?? scanData['rfid']?.toString();
+          }
+
+          if (epc != null && epc.isNotEmpty) {
+            _lastScanData = scanData ?? {'epc': epc};
+            _onScanCallback?.call(epc);
+            if (_lastScanData != null) {
+              _onScanDataCallback?.call(_lastScanData!);
+            }
+          }
           break;
 
         case 'onScanButtonPressed':
@@ -119,4 +137,13 @@ class RFIDService {
       return [];
     }
   }
+
+  /// Optional: listen to full scan data (epc, rssi, antId, ...)
+  static void setOnScanData(Function(Map<String, dynamic> data) callback) {
+    _onScanDataCallback = callback;
+    _registerHandlerOnce();
+  }
+
+  /// Optional: get last scan data without changing existing flows
+  static Map<String, dynamic>? getLastScanData() => _lastScanData;
 }

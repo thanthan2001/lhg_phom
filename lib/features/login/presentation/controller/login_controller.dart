@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_images_string.dart';
 import 'package:lhg_phom/core/data/pref/prefs.dart';
 import 'package:lhg_phom/core/services/models/user/domain/usecase/save_user_use_case.dart';
+import 'package:lhg_phom/core/utils/app_snackbar.dart';
 import 'package:lhg_phom/features/login/presentation/widgets/factory_selection.dart';
 
 import '../../../../core/services/dio.api.service.dart';
@@ -76,7 +77,7 @@ class LoginController extends GetxController {
 
   bool verifyInputLogin(userID, pwd, selectedFactory) {
     if (userID.text.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.show(
         "Error",
         "Please enter your User ID",
         snackPosition: SnackPosition.TOP,
@@ -84,7 +85,7 @@ class LoginController extends GetxController {
       return false;
     }
     if (pwd.text.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.show(
         "Error",
         "Please enter your Password",
         snackPosition: SnackPosition.TOP,
@@ -92,7 +93,7 @@ class LoginController extends GetxController {
       return false;
     }
     if (selectedFactory.value.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.show(
         "Error",
         "Please select a factory",
         snackPosition: SnackPosition.TOP,
@@ -112,6 +113,8 @@ class LoginController extends GetxController {
     verifyInputLogin(userID, pwd, selectedFactory);
     if (verifyInputLogin(userID, pwd, selectedFactory)) {
       try {
+        print("data login: $data");
+        print(  "baseUrl: $baseUrl");
         var response = await ApiService(baseUrl).post('/auth/login', data);
 
         if (response.statusCode == 200) {
@@ -122,14 +125,14 @@ class LoginController extends GetxController {
 
           Get.offAllNamed('/main');
         } else {
-          Get.snackbar(
+          AppSnackbar.show(
             "Error",
             "Login failed: ${response.statusMessage}",
             snackPosition: SnackPosition.TOP,
           );
         }
       } catch (e) {
-        Get.snackbar(
+        AppSnackbar.show(
           "Error",
           "An error occurred: $e",
           snackPosition: SnackPosition.TOP,

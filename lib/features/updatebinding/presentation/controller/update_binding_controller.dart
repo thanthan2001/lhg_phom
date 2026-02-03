@@ -226,7 +226,7 @@ class UpdateBindingController extends GetxController {
           totalCount.value = phomBindingList.length.toDouble();
 
           print(
-            '✅ Added new tag: $normalizedEpc | Total: ${totalCount.value} | Set size: ${listTagRFID.length}',
+            '✅ Added new tag: $normalizedEpc | Total: ${totalCount.value} | Set length: ${listTagRFID.length}',
           );
         } else {
           print(

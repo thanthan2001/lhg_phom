@@ -8,6 +8,7 @@ import 'package:lhg_phom/core/services/models/user/domain/usecase/get_user_use_c
 import 'package:lhg_phom/core/services/models/user/model/user_model.dart';
 import 'package:lhg_phom/core/services/rfid_service.dart';
 import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
+import 'package:lhg_phom/core/utils/app_snackbar.dart';
 
 class LendReturnController extends GetxController {
   final GetuserUseCase _getuserUseCase;
@@ -155,8 +156,6 @@ class LendReturnController extends GetxController {
     totalScannedEPCs.value++;
     _seenTags.add(epc);
 
-    listFinalRFID.add(epc);
-
     final data = {
       "companyName": companyName,
       "RFID": epc,
@@ -184,7 +183,7 @@ class LendReturnController extends GetxController {
       final String key = "$lastno-$lastsize";
 
       if (status == 1) {
-        if (side == 'unknown') {
+        if (side == 'NULL' || side == 'unknown') {
           _sessionUnborrowedTags.add({
             'lastno': lastno,
             'lastsize': lastsize,
@@ -196,6 +195,8 @@ class LendReturnController extends GetxController {
             'message': 'Không xác định bên phom',
           });
         } else {
+          // Chỉ thêm RFID hợp lệ vào danh sách cuối cùng
+          listFinalRFID.add(epc);
           _updateScannedCounts(
             key: key,
             lastNo: lastno,
@@ -318,8 +319,7 @@ class LendReturnController extends GetxController {
         baseUrl,
       ).post('/phom/submitReturnPhom', data);
       if (response.data["statusCode"] == 200) {
-        Get.snackbar(
-          backgroundColor: AppColors.green.withOpacity(0.6),
+        AppSnackbar.show(
           "Thành công",
           response.data["message"] ?? "Quá trình trả phom thành công.",
         );

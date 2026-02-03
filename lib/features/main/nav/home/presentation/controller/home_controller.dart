@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lhg_phom/core/utils/app_snackbar.dart';
 
 import '../../../../../../core/configs/prefs_contants.dart';
 import '../../../../../../core/services/dio.api.service.dart';
@@ -27,7 +28,7 @@ class HomeController extends GetxController {
     try {
       user = await _getuserUseCase.getUser();
       if (user?.companyName == null || user!.companyName!.isEmpty) {
-        Get.snackbar(
+        AppSnackbar.show(
           'Lỗi',
           'Không tìm thấy thông tin người dùng hoặc công ty.',
         );
@@ -37,7 +38,7 @@ class HomeController extends GetxController {
       await fetchData();
       await loadLanguage();
     } catch (e) {
-      Get.snackbar('Lỗi', 'Không thể khởi tạo dữ liệu: $e');
+      AppSnackbar.show('Lỗi', 'Không thể khởi tạo dữ liệu: $e');
     } finally {
       isLoading.value = false;
     }
@@ -114,10 +115,10 @@ class HomeController extends GetxController {
               return map;
             }).toList();
       } else {
-        Get.snackbar("Error", response.data["message"] ?? "Unknown error");
+        AppSnackbar.show("Error", response.data["message"] ?? "Unknown error");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.show("Error", e.toString());
     } finally {
       isLoading.value = false;
     }

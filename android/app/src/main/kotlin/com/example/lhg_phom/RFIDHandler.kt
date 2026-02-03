@@ -77,8 +77,10 @@ class RFIDHandler(
             override fun tagCallback(tag: ReadTag?) {
                 tag?.epcId?.let { epc ->
                     val normalizedEpc = epc.trim()
+                    val rssi = tag.rssi
+                    val antId = tag.antId
   
-                    Log.d("RFID", "📦 Tag scanned on background thread: $normalizedEpc")
+                    Log.d("RFID", "📦 Tag scanned: $normalizedEpc | RSSI: $rssi dBm | Ant: $antId")
 
                     // Check for duplicates at native level
                     synchronized(scannedEPCs) {
@@ -94,8 +96,13 @@ class RFIDHandler(
   
                     // Only send to Flutter if it's a new tag
                     Handler(Looper.getMainLooper()).post {
-                        Log.d("RFID", "🚀 Sending unique tag to Flutter: $normalizedEpc")
-                        channel.invokeMethod("onTagScanned", normalizedEpc)
+                        Log.d("RFID", "🚀 Sending unique tag to Flutter: $normalizedEpc (RSSI: $rssi)")
+                        val tagData = mapOf(
+                            "epc" to normalizedEpc,
+                            "rssi" to rssi,
+                            "antId" to antId
+                        )
+                        channel.invokeMethod("onTagScanned", tagData)
                     }
                 }
             }
