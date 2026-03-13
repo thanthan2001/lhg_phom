@@ -13,7 +13,7 @@ class AppSnackbar {
   }) {
     final messenger = rootScaffoldMessengerKey.currentState;
     if (messenger == null) {
-      debugPrint('[${title}] $message');
+      debugPrint('[$title] $message');
       return;
     }
 

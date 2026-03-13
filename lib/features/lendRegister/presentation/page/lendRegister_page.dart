@@ -251,7 +251,7 @@ class LendRegisterPage extends GetView<LendRegisterController> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: DropdownButtonFormField<String>(
-        value: value.value.isEmpty ? null : value.value,
+        initialValue: value.value.isEmpty ? null : value.value,
         decoration: InputDecoration(
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),

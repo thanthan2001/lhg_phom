@@ -32,7 +32,7 @@ void clearAllComments(Directory dir) {
       // Xóa nhiều dòng trống liên tiếp
       content = content.replaceAll(RegExp(r'\n\s*\n+'), '\n\n');
 
-      entity.writeAsStringSync(content.trim() + '\n');
+      entity.writeAsStringSync('${content.trim()}\n');
       print('🧹 Đã xoá comment trong: ${entity.path}');
     }
   }

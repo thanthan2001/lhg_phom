@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lhg_phom/core/configs/app_colors.dart';
-import 'package:lhg_phom/core/ui/widgets/textfield/custom_textfield_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/button/button_widget.dart';
 import 'package:lhg_phom/core/ui/widgets/text/text_widget.dart';
 
@@ -195,10 +194,10 @@ class BindingPhomPage extends GetView<BindingPhomController> {
                             }
                           }
                         },
-                        color: MaterialStateProperty.resolveWith<Color?>((
-                          Set<MaterialState> states,
+                        color: WidgetStateProperty.resolveWith<Color?>((
+                          Set<WidgetState> states,
                         ) {
-                          if (states.contains(MaterialState.selected)) {
+                          if (states.contains(WidgetState.selected)) {
                             return AppColors.primary.withOpacity(0.2);
                           }
                           return null;
@@ -224,18 +223,32 @@ class BindingPhomPage extends GetView<BindingPhomController> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: CustomTextFieldWidget(
-            height: 48,
-            labelText: "Mã vật tư",
-            labelColor: AppColors.black,
-            controller: controller.materialCodeController,
-            obscureText: false,
-            borderRadius: 8,
-            onCompleted: (value) {
-              controller.callLastName(value);
+          child: Obx(
+            () => CustomDropdownField(
+              labelText: 'Mã vật tư:',
+              selectedValue: controller.selectedMatNo.value,
+              onTap: () {
+                if (controller.codePhomList.isEmpty &&
+                    !controller.isLoadingCodes.value) {
+                  Get.snackbar('Thong bao', 'Khong co ma vat tu de chon.');
+                  return;
+                }
+                if (controller.isLoadingCodes.value) return;
 
-              FocusScope.of(Get.context!).nextFocus();
-            },
+                showSearchableSelectionDialog2(
+                  title: 'Chon ma vat tu',
+                  itemList: controller.codePhomList.toList(),
+                  selectedItem: controller.selectedMatNo.value,
+                  onSelected: (val) {
+                    controller.selectedMatNo.value = val;
+                    controller.materialCodeController.text = val;
+                  },
+                  onSelectedAndCallApi: (val) async {
+                    await controller.callLastName(val);
+                  },
+                );
+              },
+            ),
           ),
         ),
         const SizedBox(width: 16),

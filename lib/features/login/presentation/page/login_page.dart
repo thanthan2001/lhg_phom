@@ -146,6 +146,8 @@ class LoginPage extends GetView<LoginController> {
 }
 
 class LanguageSelector extends GetView<LoginController> {
+  const LanguageSelector({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {

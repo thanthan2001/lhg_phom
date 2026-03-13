@@ -470,7 +470,7 @@ class LendReturnController extends GetxController {
     final String displayText =
         (totalPairCount % 1 == 0)
             ? "${totalPairCount.toInt()} đôi"
-            : "${totalPairCount} đôi";
+            : "$totalPairCount đôi";
 
     return Theme(
       data: Get.theme.copyWith(dividerColor: Colors.transparent),

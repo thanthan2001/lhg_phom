@@ -179,7 +179,7 @@ class TransferLendPage extends GetView<TransferLendController> {
           _buildTableRow(controller.headers, isHeader: true),
           ...controller.inventoryData
               .map((row) => _buildTableRow(row))
-              .toList(),
+              ,
         ],
       ),
     );

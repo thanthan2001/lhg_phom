@@ -4,6 +4,8 @@ import '../../../../core/configs/app_colors.dart';
 import '../controller/forgotPassword_controller.dart';
 
 class FactorySelectionWidget extends GetView<ForgotPasswordController> {
+  const FactorySelectionWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     final ForgotPasswordController loginController = Get.find();

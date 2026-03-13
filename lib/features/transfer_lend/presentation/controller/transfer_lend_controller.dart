@@ -81,7 +81,7 @@ class TransferLendController extends GetxController {
     final String? companyName = user?.companyName;
     final String? userId = user?.userId;
 
-    final new_bill_return =
+    final newBillReturn =
         inventoryData.map((item) {
           return {
             "ID_BILL": item[0],
@@ -92,7 +92,7 @@ class TransferLendController extends GetxController {
             "LastSum": double.parse(item[5]) - double.parse(item[6]),
           };
         }).toList();
-    final new_bill_borrow = {
+    final newBillBorrow = {
       "RFIDDetails":
           scannedRfidDetailsList.map((item) {
             return {
@@ -118,8 +118,8 @@ class TransferLendController extends GetxController {
     final data = {
       "companyName": companyName,
       "userId": userId,
-      "BILL_RETURN": new_bill_return,
-      "BILL_BORROW": new_bill_borrow,
+      "BILL_RETURN": newBillReturn,
+      "BILL_BORROW": newBillBorrow,
     };
 
     try {

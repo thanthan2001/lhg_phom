@@ -649,7 +649,7 @@ class UpdateBindingPage extends GetView<UpdateBindingController> {
           scrollDirection: Axis.horizontal,
           child: DataTable(
             border: TableBorder.all(color: Colors.grey.shade300, width: 1),
-            headingRowColor: MaterialStateProperty.all(
+            headingRowColor: WidgetStateProperty.all(
               AppColors.primary.withOpacity(0.1),
             ),
             columnSpacing: 20,

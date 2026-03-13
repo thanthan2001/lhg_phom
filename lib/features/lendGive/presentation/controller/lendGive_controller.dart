@@ -523,7 +523,7 @@ class LendGiveController extends GetxController {
                               ],
                             ),
                           );
-                        }).toList(),
+                        }),
                       ],
                       const Divider(height: 24, thickness: 1),
                       if (invalidRfids.isNotEmpty ||

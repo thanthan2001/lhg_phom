@@ -4,6 +4,8 @@ import '../../../../core/configs/app_colors.dart';
 import '../controller/login_controller.dart';
 
 class FactorySelectionWidget extends GetView<LoginController> {
+  const FactorySelectionWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     final LoginController loginController = Get.find();

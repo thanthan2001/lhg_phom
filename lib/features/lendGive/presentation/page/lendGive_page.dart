@@ -213,7 +213,7 @@ class LendGivePage extends GetView<LendGiveController> {
             minWidth: 1200,
             dataRowHeight: 45,
             headingRowHeight: 50,
-            headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
+            headingRowColor: WidgetStateProperty.all(Colors.grey[200]),
             columns:
                 controller.headers
                     .map(
@@ -243,7 +243,7 @@ class LendGivePage extends GetView<LendGiveController> {
                   }
 
                   return DataRow(
-                    color: MaterialStateProperty.all(rowColor),
+                    color: WidgetStateProperty.all(rowColor),
                     cells: row.map((cell) => DataCell(Text(cell))).toList(),
                   );
                 }).toList(),

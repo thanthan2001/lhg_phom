@@ -44,10 +44,6 @@ class HomeController extends GetxController {
     }
   }
 
-  @override
-  void onClose() {
-    super.onClose();
-  }
 
   var expandedIndex = (-1).obs;
   var isExpanded = false.obs;

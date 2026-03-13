@@ -38,7 +38,7 @@ class CustomTextFieldWidget extends StatefulWidget {
   final AutovalidateMode autovalidateMode;
   final String? Function(String?)? validator;
 
-  CustomTextFieldWidget({
+  const CustomTextFieldWidget({
     super.key,
     this.height = 52.0,
     this.errorText = "Text is empty",

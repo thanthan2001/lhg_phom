@@ -18,6 +18,7 @@ class BindingPhomController extends GetxController {
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
   final GetuserUseCase _getuserUseCase;
   UserModel? user;
+  String? companyName;
 
   BindingPhomController(this._getuserUseCase);
   Timer? _debounce;
@@ -53,6 +54,9 @@ class BindingPhomController extends GetxController {
   final sizeController = TextEditingController();
   final rfidController = TextEditingController();
   final phomBindingList = <PhomBindingItem>[].obs;
+  final selectedMatNo = ''.obs;
+  final RxList<String> codePhomList = <String>[].obs;
+  final isLoadingCodes = false.obs;
 
   final tableScrollController = ScrollController();
   final scrollbarController = ScrollController();
@@ -88,9 +92,11 @@ class BindingPhomController extends GetxController {
     isScan.value = false;
     isScanning.value = false;
     materialCodeController.clear();
+    selectedMatNo.value = '';
     TagsList.clear();
     phomName.value = '';
     selectedSize.value = '';
+    sizeList.clear();
     rfidController.clear();
     listTagRFID.clear();
     phomBindingList.clear();
@@ -108,7 +114,7 @@ class BindingPhomController extends GetxController {
           'Tổng số lượng RFID lỗi: ${errorItems.length}',
           style: TextStyle(color: Colors.red[700]),
         ),
-        content: Container(
+        content: SizedBox(
           width: double.maxFinite,
           child: SizedBox(
             height: 300.0,
@@ -185,7 +191,7 @@ class BindingPhomController extends GetxController {
         final List<Map<String, dynamic>> errorItemsDetails =
             errorRfidListFromApi.cast<Map<String, dynamic>>();
 
-        if (errorItemsDetails.length > 0) {
+        if (errorItemsDetails.isNotEmpty) {
           _showErrorDialog(errorItemsDetails);
         } else {
           _showFeedback('Thành công', 'Không có lỗi RFID', isSuccess: true);
@@ -283,8 +289,8 @@ class BindingPhomController extends GetxController {
         if (!isScanning.value) return;
         if (!listTagRFID.contains(epc)) {
           listTagRFID.add(epc);
-          var _rfidShortcut = epc.substring(epc.length - 10);
-          TagsList.add(_rfidShortcut);
+          var rfidShortcut = epc.substring(epc.length - 10);
+          TagsList.add(rfidShortcut);
           final item = PhomBindingItem(
             rfid: epc,
             lastMatNo: materialCodeController.text.trim(),
@@ -297,7 +303,7 @@ class BindingPhomController extends GetxController {
             dateIn: currentDate,
             userID: user.userId ?? "",
             shelfName: 'K1',
-            rfidShortcut: _rfidShortcut,
+            rfidShortcut: rfidShortcut,
             companyName: user.companyName ?? "",
           );
           phomBindingList.add(item);
@@ -371,7 +377,14 @@ class BindingPhomController extends GetxController {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 1000), () async {
       if (MaVatTu.trim().isNotEmpty) {
-        final companyName = user!.companyName;
+        final companyName = user?.companyName;
+        if (companyName == null || companyName.isEmpty) {
+          _showFeedback('Loi', 'Khong tim thay thong tin cong ty');
+          return;
+        }
+
+        sizeList.clear();
+        selectedSize.value = '';
 
         final data = {"LastMatNo": MaVatTu, "companyName": companyName};
         try {
@@ -425,7 +438,12 @@ class BindingPhomController extends GetxController {
   Future<void> searchPhomBinding() async {
     isLoading.value = true;
     user = await _getuserUseCase.getUser();
-    final companyName = user!.companyName;
+    final companyName = user?.companyName;
+    if (companyName == null || companyName.isEmpty) {
+      isLoading.value = false;
+      _showFeedback('Loi', 'Khong tim thay thong tin cong ty');
+      return;
+    }
     try {
       final data = {
         "companyName": companyName,
@@ -533,6 +551,7 @@ class BindingPhomController extends GetxController {
   void onInit() {
     super.onInit();
     _syncScrollControllers();
+    _initializeData();
 
     RFIDService.setOnHardwareScan(() {
       print(
@@ -559,5 +578,47 @@ class BindingPhomController extends GetxController {
     scrollbarController.dispose();
 
     super.onClose();
+  }
+
+  Future<void> _initializeData() async {
+    isLoadingCodes.value = true;
+    try {
+      user = await _getuserUseCase.getUser();
+      companyName = user?.companyName;
+      if (companyName == null || companyName!.isEmpty) {
+        _showFeedback('Loi', 'Khong tim thay thong tin cong ty');
+        return;
+      }
+      await getLastMatNo();
+    } catch (e) {
+      _showFeedback('Loi', 'Khong the khoi tao du lieu: $e');
+    } finally {
+      isLoadingCodes.value = false;
+    }
+  }
+
+  Future<void> getLastMatNo() async {
+    if (companyName == null || companyName!.isEmpty) {
+      _showFeedback('Loi', 'Khong tim thay thong tin cong ty');
+      return;
+    }
+    isLoadingCodes.value = true;
+    final data = {"companyName": companyName};
+    try {
+      final response = await ApiService(
+        baseUrl,
+      ).post('/phom/getPhomNotBinding', data);
+
+      final List<dynamic> jsonArray = response.data["data"]["jsonArray"];
+      final List<String> newCodes =
+          jsonArray
+              .map<String>((item) => item["LastMatNo"].toString().trim())
+              .toList();
+      codePhomList.assignAll(newCodes.toSet().toList());
+    } catch (e) {
+      _showFeedback('Loi', 'Khong the lay thong tin ma phom');
+    } finally {
+      isLoadingCodes.value = false;
+    }
   }
 }
