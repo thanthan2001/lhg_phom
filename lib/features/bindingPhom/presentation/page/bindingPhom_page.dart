@@ -302,17 +302,56 @@ class BindingPhomPage extends GetView<BindingPhomController> {
         const SizedBox(width: 16),
         Expanded(
           flex: 2,
-          child: ButtonWidget(
-            height: 48,
-            text: "Tìm kiếm",
-            ontap: controller.searchPhomBinding,
-            backgroundColor: AppColors.primary,
-            textColor: Colors.white,
-            borderRadius: 8,
-            leadingIcon: const Icon(
-              Icons.search,
-              color: Colors.white,
-              size: 20,
+          child: Obx(
+            () => ButtonWidget(
+              height: 48,
+              text: "Tìm kiếm",
+              ontap:
+                  controller.isSearching.value
+                      ? () {}
+                      : controller.searchPhomBinding,
+              backgroundColor: AppColors.primary,
+              textColor: Colors.white,
+              borderRadius: 8,
+              child:
+                  controller.isSearching.value
+                      ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            "Đang tìm...",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      )
+                      : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Tìm kiếm",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.search, color: Colors.white, size: 20),
+                        ],
+                      ),
             ),
           ),
         ),
@@ -488,15 +527,50 @@ class BindingPhomPage extends GetView<BindingPhomController> {
   Widget _buildDoneButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: ButtonWidget(
-        text: "Hoàn tất",
-        height: 50,
-        ontap: controller.onFinish,
-        borderRadius: 12,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
+      child: Obx(
+        () => ButtonWidget(
+          text: "Hoàn tất",
+          height: 50,
+          ontap: controller.isFinishing.value ? () {} : controller.onFinish,
+          borderRadius: 12,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          child:
+              controller.isFinishing.value
+                  ? const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        "Đang xử lý...",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  )
+                  : const Text(
+                    "Hoàn tất",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+        ),
       ),
     );
   }

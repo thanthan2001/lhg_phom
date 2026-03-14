@@ -63,6 +63,8 @@ class BindingPhomController extends GetxController {
 
   final isLoading = false.obs;
   final isLoadingStop = false.obs;
+  final isSearching = false.obs;
+  final isFinishing = false.obs;
 
   final phomName = ''.obs;
   final lastNo = ''.obs;
@@ -436,11 +438,12 @@ class BindingPhomController extends GetxController {
   }
 
   Future<void> searchPhomBinding() async {
-    isLoading.value = true;
+    if (isSearching.value) return;
+    isSearching.value = true;
     user = await _getuserUseCase.getUser();
     final companyName = user?.companyName;
     if (companyName == null || companyName.isEmpty) {
-      isLoading.value = false;
+      isSearching.value = false;
       _showFeedback('Loi', 'Khong tim thay thong tin cong ty');
       return;
     }
@@ -493,11 +496,12 @@ class BindingPhomController extends GetxController {
     } catch (e) {
       Get.snackbar('Lỗi', 'Đã xảy ra lỗi khi gọi API: $e');
     } finally {
-      isLoading.value = false;
+      isSearching.value = false;
     }
   }
 
   Future<void> onFinish() async {
+    if (isFinishing.value) return;
     // Không cho submit khi đang quét
     if (isScanning.value) {
       _showFeedback('Cảnh báo', 'Vui lòng dừng quét trước khi hoàn tất');
@@ -508,6 +512,7 @@ class BindingPhomController extends GetxController {
       _showFeedback('Thông báo', 'Không có dữ liệu để gửi');
       return;
     }
+    isFinishing.value = true;
     try {
       final data = {
         "companyName": user?.companyName ?? "",
@@ -544,6 +549,8 @@ class BindingPhomController extends GetxController {
       }
     } catch (e) {
       _showFeedback('Lỗi', "Đã xảy ra lỗi: $e");
+    } finally {
+      isFinishing.value = false;
     }
   }
 
