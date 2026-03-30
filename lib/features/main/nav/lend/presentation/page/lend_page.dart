@@ -98,7 +98,10 @@ class LendPage extends GetView<LendController> {
               color: Colors.white.withOpacity(0.18),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.local_shipping_rounded, color: Colors.white),
+            child: const Icon(
+              Icons.local_shipping_rounded,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -116,7 +119,9 @@ class LendPage extends GetView<LendController> {
           fontWeight: FontWeight.bold,
         ),
         const SizedBox(height: 10),
-        Row(
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
           children: [
             _buildActionCard(
               title: "lend_give".tr,
@@ -125,7 +130,13 @@ class LendPage extends GetView<LendController> {
               icon: Icons.qr_code_scanner_rounded,
               route: Routes.lendGive,
             ),
-            const SizedBox(width: 12),
+            _buildActionCard(
+              title: "Quick Scan",
+              subtitle: "Scan nhanh tạo phiếu",
+              color: AppColors.green,
+              icon: Icons.bolt_rounded,
+              route: Routes.quickScanBorrow,
+            ),
             _buildActionCard(
               title: "lend_return".tr,
               subtitle: "Trả phom nhanh",
@@ -133,7 +144,6 @@ class LendPage extends GetView<LendController> {
               icon: Icons.assignment_turned_in_rounded,
               route: Routes.lendReturn,
             ),
-            const SizedBox(width: 12),
             _buildActionCard(
               title: "lend_others".tr,
               subtitle: "Khác",
@@ -154,7 +164,10 @@ class LendPage extends GetView<LendController> {
     required IconData icon,
     required String route,
   }) {
-    return Expanded(
+    final cardWidth = (Get.width - 44) / 2;
+
+    return SizedBox(
+      width: cardWidth,
       child: GestureDetector(
         onTap: () => Get.toNamed(route),
         child: Container(
@@ -327,7 +340,10 @@ class LendPage extends GetView<LendController> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: cardColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -345,7 +361,10 @@ class LendPage extends GetView<LendController> {
             const SizedBox(height: 10),
             Row(
               children: [
-                _buildMetaChip("borrower".tr, item.idNguoiMuon?.userName ?? '---'),
+                _buildMetaChip(
+                  "borrower".tr,
+                  item.idNguoiMuon?.userName ?? '---',
+                ),
                 const SizedBox(width: 8),
                 _buildMetaChip("department".tr, item.donVi ?? '---'),
               ],
@@ -374,11 +393,7 @@ class LendPage extends GetView<LendController> {
               fontWeight: FontWeight.bold,
             ),
             const SizedBox(height: 2),
-            TextWidget(
-              text: value,
-              size: 12,
-              fontWeight: FontWeight.w600,
-            ),
+            TextWidget(text: value, size: 12, fontWeight: FontWeight.w600),
           ],
         ),
       ),

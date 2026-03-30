@@ -55,7 +55,6 @@ repositories {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation(mapOf("name" to "rfiddrive-release", "ext" to "aar"))
-    implementation(mapOf("name" to "rfidV2.1", "ext" to "jar"))
 }
 
 flutter {

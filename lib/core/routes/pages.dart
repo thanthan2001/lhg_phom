@@ -24,6 +24,8 @@ import '../../features/login/di/login_binding.dart';
 import '../../features/login/presentation/page/login_page.dart';
 import '../../features/main/di/main_binding.dart';
 import '../../features/main/presentation/page/main_page.dart';
+import '../../features/quickScanBorrow/di/quick_scan_borrow_binding.dart';
+import '../../features/quickScanBorrow/presentation/page/quick_scan_borrow_page.dart';
 import '../../features/splash/di/splash_binding.dart';
 import '../../features/splash/presentation/page/splash_page.dart';
 import '../../features/transfer_lend/di/transfer_lend_binding.dart';
@@ -94,6 +96,12 @@ class Pages {
       name: Routes.lendGive,
       page: () => const LendGivePage(),
       binding: LendGiveBinding(),
+    ),
+
+    GetPage(
+      name: Routes.quickScanBorrow,
+      page: () => const QuickScanBorrowPage(),
+      binding: QuickScanBorrowBinding(),
     ),
 
     GetPage(
