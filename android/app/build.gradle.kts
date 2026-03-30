@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    id("org.jetbrains.kotlin.android")
   
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -53,7 +53,9 @@ repositories {
 }
 
 dependencies {
-    implementation(files("libs/rfiddrive-release.aar"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation(mapOf("name" to "rfiddrive-release", "ext" to "aar"))
+    implementation(mapOf("name" to "rfidV2.1", "ext" to "jar"))
 }
 
 flutter {
