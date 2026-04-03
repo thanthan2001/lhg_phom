@@ -196,7 +196,7 @@ class UserPage extends GetView<UserController> {
       title: Text('dark_mode'.tr),
       trailing: Obx(
         () => Switch(
-          activeThumbColor: AppColors.primary1,
+          thumbColor: WidgetStatePropertyAll(AppColors.primary1),
           inactiveThumbColor: AppColors.primary1,
           inactiveTrackColor: AppColors.white,
           trackOutlineColor: WidgetStateProperty.all(AppColors.primary1),

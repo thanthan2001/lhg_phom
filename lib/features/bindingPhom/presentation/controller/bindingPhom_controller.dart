@@ -22,13 +22,18 @@ class BindingPhomController extends GetxController {
 
   BindingPhomController(this._getuserUseCase);
   Timer? _debounce;
-  
+
   // Safe feedback helper - uses dialog for async contexts instead of snackbar
   void _showFeedback(String title, String message, {bool isSuccess = false}) {
     print('[$title] $message'); // Always log for debugging
-    
+
     try {
-      if (Get.context != null && WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+      if (Get.context != null &&
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
+
         // Use dialog instead of snackbar for stability in async callbacks
         Get.dialog(
           AlertDialog(
@@ -36,7 +41,7 @@ class BindingPhomController extends GetxController {
             content: Text(message),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(Get.context!).pop(),
+                onPressed: Get.back,
                 child: const Text('OK'),
               ),
             ],
@@ -89,24 +94,38 @@ class BindingPhomController extends GetxController {
   final selectedSize = ''.obs;
   final sizeList = <String>[].obs;
   final isScanning = false.obs;
+  final isExitsChecked = false.obs;
+  final checkedRfidSnapshot = <String>[].obs;
+  final hasCheckedCurrentSession = false.obs;
+  static const Duration _shortApiTimeout = Duration(seconds: 20);
+  static const Duration _mediumApiTimeout = Duration(seconds: 25);
+  static const Duration _longApiTimeout = Duration(seconds: 30);
   Future<void> onClear() async {
-    totalCount.value = 0;
+    _resetCurrentScanSessionState();
     isScan.value = false;
-    isScanning.value = false;
     materialCodeController.clear();
     selectedMatNo.value = '';
-    TagsList.clear();
     phomName.value = '';
     selectedSize.value = '';
     sizeList.clear();
-    rfidController.clear();
-    listTagRFID.clear();
-    phomBindingList.clear();
     inventoryData.clear();
     isLeftSide.value = true;
     isShowingDetail.value = false;
     selectedRowIndex.value = null;
     update();
+  }
+
+  void _resetCurrentScanSessionState() {
+    totalCount.value = 0;
+    isScanning.value = false;
+    isLoading.value = false;
+    isExitsChecked.value = false;
+    hasCheckedCurrentSession.value = false;
+    checkedRfidSnapshot.clear();
+    TagsList.clear();
+    phomBindingList.clear();
+    listTagRFID.clear();
+    rfidController.clear();
   }
 
   void _showErrorDialog(List<Map<String, dynamic>> errorItems) {
@@ -125,11 +144,21 @@ class BindingPhomController extends GetxController {
               itemCount: errorItems.length,
               itemBuilder: (BuildContext context, int index) {
                 final item = errorItems[index];
-                final data = item['data'][0];
-                final rfid =
-                    data['RFID_Shortcut']?.trim() ?? data['RFID'] ?? 'N/A';
-                final lastName = data['LastName']?.trim() ?? 'N/A';
-                final lastSize = data['LastSize']?.trim() ?? 'N/A';
+              final rawData = item['data'];
+              final Map<String, dynamic> data =
+                rawData is List &&
+                    rawData.isNotEmpty &&
+                    rawData.first is Map
+                  ? Map<String, dynamic>.from(rawData.first as Map)
+                  : <String, dynamic>{};
+              final rfid =
+                data['RFID_Shortcut']?.toString().trim() ??
+                data['RFID']?.toString().trim() ??
+                'N/A';
+              final lastName =
+                data['LastName']?.toString().trim() ?? 'N/A';
+              final lastSize =
+                data['LastSize']?.toString().trim() ?? 'N/A';
 
                 return Card(
                   margin: EdgeInsets.symmetric(vertical: 4.0),
@@ -176,6 +205,16 @@ class BindingPhomController extends GetxController {
         return;
       }
 
+      final currentSnapshot = listTagRFID.map((e) => e.toString()).toList();
+      if (hasCheckedCurrentSession.value && _sameRfidSnapshot(currentSnapshot)) {
+        _showFeedback(
+          'Thông báo',
+          'Danh sách RFID phiên này đã được kiểm tra trước đó.',
+          isSuccess: true,
+        );
+        return;
+      }
+
       print('List Tag RFID: $listTagRFID');
       final data = {
         "companyName": companyName,
@@ -184,7 +223,7 @@ class BindingPhomController extends GetxController {
 
       final response = await ApiService(
         baseUrl,
-      ).post('/phom/checkExitsRFID', data);
+      ).post('/phom/checkExitsRFID', data, timeout: _mediumApiTimeout);
 
       if (response.data["statusCode"] == 400) {
         print(response.data["data"]);
@@ -193,13 +232,29 @@ class BindingPhomController extends GetxController {
         final List<Map<String, dynamic>> errorItemsDetails =
             errorRfidListFromApi.cast<Map<String, dynamic>>();
 
+        hasCheckedCurrentSession.value = true;
+        checkedRfidSnapshot
+          ..clear()
+          ..addAll(currentSnapshot);
+
         if (errorItemsDetails.isNotEmpty) {
+          isExitsChecked.value = false;
           _showErrorDialog(errorItemsDetails);
         } else {
+          isExitsChecked.value = true;
           _showFeedback('Thành công', 'Không có lỗi RFID', isSuccess: true);
         }
       } else {
         print("Không tìm thấy thông tin chi tiết cho RFID lỗi.");
+        hasCheckedCurrentSession.value = true;
+        checkedRfidSnapshot
+          ..clear()
+          ..addAll(currentSnapshot);
+        _showFeedback(
+          'Thông báo',
+          'Phiên RFID này đã được kiểm tra nhưng máy chủ không trả về danh sách lỗi.',
+          isSuccess: true,
+        );
       }
     } catch (e) {
       isScanning.value = false;
@@ -259,6 +314,8 @@ class BindingPhomController extends GetxController {
     isLoading.value = true;
 
     try {
+      _resetCurrentScanSessionState();
+
       // Connect to RFID device first
       final connected = await RFIDService.connect();
       if (!connected) {
@@ -266,27 +323,21 @@ class BindingPhomController extends GetxController {
         isLoading.value = false;
         return;
       }
-      
+
       final user = await _getuserUseCase.getUser();
       if (user == null) {
         _showFeedback('Lỗi', 'Không thể lấy thông tin người dùng.');
         isLoading.value = false;
         return;
       }
-      listTagRFID.clear();
-      TagsList.clear();
-      phomBindingList.clear();
-      rfidController.clear();
-      totalCount.value = 0;
-
       // Clear native cache to start fresh
       await RFIDService.clearScannedTags();
 
       update();
-      
+
       isScanning.value = true;
       isLoading.value = false; // Turn off loading once scanning starts
-      
+
       await RFIDService.scanContinuous((epc) {
         if (!isScanning.value) return;
         if (!listTagRFID.contains(epc)) {
@@ -311,6 +362,7 @@ class BindingPhomController extends GetxController {
           phomBindingList.add(item);
           rfidController.text = listTagRFID.join(', ');
           totalCount.value += 1;
+          isExitsChecked.value = false;
         }
       });
     } catch (e) {
@@ -337,6 +389,8 @@ class BindingPhomController extends GetxController {
     isLoading.value = true;
     final user = await _getuserUseCase.getUser();
     try {
+      _resetCurrentScanSessionState();
+
       final tags = await RFIDService.scanSingleTagMultiple(
         timeout: Duration(milliseconds: 100),
       );
@@ -360,6 +414,7 @@ class BindingPhomController extends GetxController {
           );
           phomBindingList.add(item);
         }
+        isExitsChecked.value = false;
         print(
           "phomBindingList: ${jsonEncode(phomBindingList.map((e) => e.toJson()).toList())}",
         );
@@ -392,7 +447,7 @@ class BindingPhomController extends GetxController {
         try {
           var response = await ApiService(
             baseUrl,
-          ).post('/phom/getPhomByLastMatNo', data);
+          ).post('/phom/getPhomByLastMatNo', data, timeout: _shortApiTimeout);
 
           if (response.statusCode == 200) {
             var data = response.data;
@@ -402,6 +457,7 @@ class BindingPhomController extends GetxController {
               final resLastSize = await ApiService(baseUrl).post(
                 '/phom/getSizeNotBinding',
                 {"LastMatNo": MaVatTu, "companyName": companyName},
+                timeout: _shortApiTimeout,
               );
               if (resLastSize.data["statusCode"] == 200) {
                 print(
@@ -428,7 +484,10 @@ class BindingPhomController extends GetxController {
           } else {
             phomName.value = '';
 
-            _showFeedback('Lỗi', 'Đã xảy ra lỗi khi gọi API: ${response.statusMessage}');
+            _showFeedback(
+              'Lỗi',
+              'Đã xảy ra lỗi khi gọi API: ${response.statusMessage}',
+            );
           }
         } catch (e) {
           _showFeedback('Lỗi', 'Đã xảy ra lỗi khi gọi API: $e');
@@ -457,7 +516,7 @@ class BindingPhomController extends GetxController {
 
       var response = await ApiService(
         baseUrl,
-      ).post('/phom/searchPhomBinding', data);
+      ).post('/phom/searchPhomBinding', data, timeout: _mediumApiTimeout);
 
       if (response.data["statusCode"] == 200) {
         var data = response.data;
@@ -507,7 +566,7 @@ class BindingPhomController extends GetxController {
       _showFeedback('Cảnh báo', 'Vui lòng dừng quét trước khi hoàn tất');
       return;
     }
-    
+
     if (phomBindingList.isEmpty) {
       _showFeedback('Thông báo', 'Không có dữ liệu để gửi');
       return;
@@ -523,7 +582,7 @@ class BindingPhomController extends GetxController {
       );
       final response = await ApiService(
         baseUrl,
-      ).post('/phom/bindingPhom', data);
+      ).post('/phom/bindingPhom', data, timeout: _longApiTimeout);
 
       final resData = response.data;
 
@@ -535,6 +594,9 @@ class BindingPhomController extends GetxController {
         listTagRFID.clear();
         TagsList.clear();
         phomBindingList.clear();
+        isExitsChecked.value = false;
+        hasCheckedCurrentSession.value = false;
+        checkedRfidSnapshot.clear();
 
         totalCount.value = 0;
 
@@ -614,7 +676,7 @@ class BindingPhomController extends GetxController {
     try {
       final response = await ApiService(
         baseUrl,
-      ).post('/phom/getPhomNotBinding', data);
+      ).post('/phom/getPhomNotBinding', data, timeout: _shortApiTimeout);
 
       final List<dynamic> jsonArray = response.data["data"]["jsonArray"];
       final List<String> newCodes =
@@ -627,5 +689,19 @@ class BindingPhomController extends GetxController {
     } finally {
       isLoadingCodes.value = false;
     }
+  }
+
+  bool _sameRfidSnapshot(List<String> currentSnapshot) {
+    if (currentSnapshot.length != checkedRfidSnapshot.length) {
+      return false;
+    }
+
+    for (var i = 0; i < currentSnapshot.length; i++) {
+      if (currentSnapshot[i] != checkedRfidSnapshot[i]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

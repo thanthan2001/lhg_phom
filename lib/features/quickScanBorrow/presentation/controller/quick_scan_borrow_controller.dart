@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
@@ -40,6 +42,7 @@ class QuickScanBorrowController extends GetxController {
   final scannedEpcList = <String>[].obs;
 
   final invalidRfids = <String>[].obs;
+  final invalidRfidDetails = <Map<String, String>>[].obs;
   final outRfids = <Map<String, String>>[].obs;
   final lostRfids = <Map<String, String>>[].obs;
 
@@ -53,6 +56,10 @@ class QuickScanBorrowController extends GetxController {
   UserModel? user;
   String? companyName;
 
+  static const Duration _shortApiTimeout = Duration(seconds: 12);
+  static const Duration _mediumApiTimeout = Duration(seconds: 20);
+  static const Duration _longApiTimeout = Duration(seconds: 30);
+
   bool get hasRfidErrors =>
       invalidRfids.isNotEmpty || outRfids.isNotEmpty || lostRfids.isNotEmpty;
 
@@ -63,7 +70,6 @@ class QuickScanBorrowController extends GetxController {
     try {
       user = await _getuserUseCase.getUser();
       companyName = user?.companyName;
-      userIdController.text = user?.userId?.trim() ?? '';
       if (companyName == null || companyName!.isEmpty) {
         throw Exception('Không tìm thấy thông tin công ty người dùng.');
       }
@@ -85,6 +91,39 @@ class QuickScanBorrowController extends GetxController {
 
   void _showFeedback(String title, String message) {
     debugPrint('[$title] $message');
+    if (Get.isSnackbarOpen) {
+      Get.closeCurrentSnackbar();
+    }
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 4),
+    );
+
+    final lowerTitle = title.toLowerCase();
+    final isError = lowerTitle.contains('lỗi') || lowerTitle.contains('error');
+    if (isError) {
+      _showErrorDialog(title: title, message: message);
+    }
+  }
+
+  void _showErrorDialog({required String title, required String message}) {
+    if (Get.isDialogOpen ?? false) {
+      return;
+    }
+
+    Get.defaultDialog(
+      title: title,
+      middleText: message,
+      textConfirm: 'Đóng',
+      confirmTextColor: Colors.white,
+      onConfirm: () {
+        if (Get.context != null) {
+          Navigator.of(Get.context!).pop();
+        }
+      },
+    );
   }
 
   Future<void> getDepartment() async {
@@ -92,7 +131,11 @@ class QuickScanBorrowController extends GetxController {
     try {
       final response = await ApiService(
         baseUrl,
-      ).post('/phom/getDepartment', {'companyName': companyName});
+      ).post(
+        '/phom/getDepartment',
+        {'companyName': companyName},
+        timeout: _mediumApiTimeout,
+      );
 
       final List<dynamic>? jsonArray = response.data?['data']?['jsonArray'];
       if (response.statusCode == 200 && jsonArray != null) {
@@ -138,6 +181,7 @@ class QuickScanBorrowController extends GetxController {
     scannedEpcList.clear();
 
     invalidRfids.clear();
+    invalidRfidDetails.clear();
     outRfids.clear();
     lostRfids.clear();
 
@@ -207,7 +251,7 @@ class QuickScanBorrowController extends GetxController {
     try {
       final response = await ApiService(
         baseUrl,
-      ).post('/phom/getphomrfid', data);
+      ).post('/phom/getphomrfid', data, timeout: _shortApiTimeout);
 
       final List<dynamic>? responseData = response.data?['data'];
       if (response.statusCode != 200 ||
@@ -216,6 +260,7 @@ class QuickScanBorrowController extends GetxController {
         if (!invalidRfids.contains(epc)) {
           invalidRfids.add(epc);
         }
+        _upsertInvalidRfidDetail(epc: epc);
         lastScanStatus.value = 'RFID không có dữ liệu: $epc';
         return;
       }
@@ -245,6 +290,7 @@ class QuickScanBorrowController extends GetxController {
         if (!invalidRfids.contains(epc)) {
           invalidRfids.add(epc);
         }
+        _upsertInvalidRfidDetail(epc: epc, lastNo: lastNo, lastSize: lastSize);
         lastScanStatus.value =
             'Không xác định bên trái/phải: $lastNo - Size $lastSize';
         return;
@@ -269,6 +315,15 @@ class QuickScanBorrowController extends GetxController {
     if (value == true) return true;
     final normalized = value?.toString().toLowerCase().trim();
     return normalized == '1' || normalized == 'true';
+  }
+
+  void _upsertInvalidRfidDetail({
+    required String epc,
+    String lastNo = 'N/A',
+    String lastSize = 'N/A',
+  }) {
+    if (invalidRfidDetails.any((x) => x['rfid'] == epc)) return;
+    invalidRfidDetails.add({'rfid': epc, 'matNo': lastNo, 'size': lastSize});
   }
 
   void _updateInventoryRow({
@@ -343,8 +398,15 @@ class QuickScanBorrowController extends GetxController {
     }
 
     isSaving.value = true;
+    var hasShownResult = false;
 
     try {
+      if (baseUrl.trim().isEmpty) {
+        throw Exception(
+          'BASE_URL đang rỗng. Kiểm tra file .env đã được đóng gói trong build chưa.',
+        );
+      }
+
       final now = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
       final payload = {
         'companyName': companyName,
@@ -357,17 +419,35 @@ class QuickScanBorrowController extends GetxController {
       };
 
       final response = await ApiService(
-        baseUrl,
-      ).post('/phom/quickScanBorrow', payload);
+        baseUrl.trim(),
+      ).post('/phom/quickScanBorrow', payload, timeout: _longApiTimeout);
       debugPrint('Quick Scan Borrow Response: ${response.data}');
 
-      final responseBody = response.data;
-      final statusCode = responseBody?['statusCode'];
-      final status = responseBody?['status'];
+      final dynamic rawBody = response.data;
+      Map<String, dynamic>? responseBody;
+      if (rawBody is Map<String, dynamic>) {
+        responseBody = rawBody;
+      } else if (rawBody is Map) {
+        responseBody = Map<String, dynamic>.from(rawBody);
+      } else if (rawBody is String && rawBody.trim().isNotEmpty) {
+        try {
+          final decoded = jsonDecode(rawBody);
+          if (decoded is Map) {
+            responseBody = Map<String, dynamic>.from(decoded);
+          }
+        } catch (_) {
+          responseBody = null;
+        }
+      }
 
-      if (response.statusCode == 200 &&
-          statusCode == 200 &&
-          status == 'Success') {
+      final statusCode = responseBody?['statusCode'];
+      final status = responseBody?['status']?.toString().toLowerCase();
+      final isHttpSuccess =
+          (response.statusCode ?? 0) >= 200 && (response.statusCode ?? 0) < 300;
+      final isApiSuccess =
+          status == 'success' || statusCode?.toString() == '200';
+
+      if (isHttpSuccess && isApiSuccess) {
         final data = responseBody?['data'];
         List<dynamic> rawBills = const [];
         int totalBills = 0;
@@ -405,15 +485,38 @@ class QuickScanBorrowController extends GetxController {
         _showSaveResultDialog(
           message: responseBody?['message']?.toString() ?? 'Thành công',
         );
+        hasShownResult = true;
+        _resetSessionState();
       } else {
-        throw Exception(
-          responseBody?['message']?.toString() ?? 'Quick scan borrow thất bại.',
+        final invalidEpc = responseBody?['invalidEPC'];
+        _applyInvalidFromQuickScan(invalidEpc);
+        final apiMessage = responseBody?['message']?.toString();
+        final failMessage =
+            apiMessage ??
+            'Quick scan borrow thất bại. HTTP ${response.statusCode} - ${response.statusMessage}. status=${responseBody?['status']}, statusCode=${responseBody?['statusCode']}';
+
+        debugPrint(
+          '[QuickScanBorrow][SaveFail] payload=$payload | response=$rawBody',
         );
+        _showFeedback('Lỗi lưu phiếu', failMessage);
+        hasShownResult = true;
+        return;
       }
     } catch (e) {
-      _showFeedback('Lỗi', 'Không thể lưu quick scan borrow: $e');
+      debugPrint('[QuickScanBorrow][SaveException] $e');
+      String errorMessage = e.toString();
+      // Nếu bạn dùng Dio, e có thể ép kiểu để lấy status code
+      // if (e is DioException) { errorMessage = e.message ?? "Lỗi mạng"; }
+      _showFeedback('Lỗi kỹ thuật', 'Chi tiết: $errorMessage');
+      hasShownResult = true;
     } finally {
       isSaving.value = false;
+      if (!hasShownResult) {
+        _showFeedback(
+          'Lỗi lưu phiếu',
+          'Không nhận được phản hồi hợp lệ từ máy chủ. Vui lòng thử lại.',
+        );
+      }
     }
   }
 
@@ -426,6 +529,7 @@ class QuickScanBorrowController extends GetxController {
             .toList();
     for (final epc in notFound) {
       if (!invalidRfids.contains(epc)) invalidRfids.add(epc);
+      _upsertInvalidRfidDetail(epc: epc);
     }
 
     final outList =
@@ -451,17 +555,33 @@ class QuickScanBorrowController extends GetxController {
 
   void _showScanSummaryDialog() {
     final pairLines = _buildPairSummaryLines();
+    final invalidLines = <String>[
+      ...invalidRfidDetails.map(
+        (x) =>
+            '- EPC: ${x['rfid'] ?? ''} - ${x['matNo'] ?? 'N/A'} - ${x['size'] ?? 'N/A'}',
+      ),
+      ...outRfids.map(
+        (x) =>
+            '- EPC: ${x['rfid'] ?? ''} - ${x['matNo'] ?? 'N/A'} - ${x['size'] ?? 'N/A'}',
+      ),
+      ...lostRfids.map(
+        (x) =>
+            '- EPC: ${x['rfid'] ?? ''} - ${x['matNo'] ?? 'N/A'} - ${x['size'] ?? 'N/A'}',
+      ),
+    ];
 
     Get.defaultDialog(
       title: 'Kết thúc quét',
       middleText: [
         'Đã quét ${totalScannedEPCs.value} EPC',
-        'Tổng số đôi hợp lệ: ${totalScannedPairs.value}',
+        'Hợp lệ - Tổng số đôi: ${totalScannedPairs.value}',
+        if (pairLines.isNotEmpty) 'LastNo - LastSize - Số đôi hợp lệ:',
+        ...pairLines,
         'Không dữ liệu: ${invalidRfids.length}',
         'Đã mượn: ${outRfids.length}',
         'Mất/hỏng: ${lostRfids.length}',
-        if (pairLines.isNotEmpty) 'Chi tiết đôi theo bảng:',
-        ...pairLines,
+        if (invalidLines.isNotEmpty) 'EPC lỗi - LastNo - LastSize:',
+        ...invalidLines,
       ].join('\n'),
       textConfirm: 'Đóng',
       onConfirm: () {
@@ -506,7 +626,7 @@ class QuickScanBorrowController extends GetxController {
       if (row.length < 6) continue;
       final pairCount = double.tryParse(row[5]) ?? 0.0;
       if (pairCount <= 0) continue;
-      lines.add('- ${row[0]} - ${row[1]} - $pairCount đôi');
+      lines.add('- ${row[0]} - ${row[1]} - $pairCount');
     }
     return lines;
   }

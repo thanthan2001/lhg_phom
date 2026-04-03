@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -7,6 +8,8 @@ class ApiService {
   final String baseUrl;
   String? bearerToken; 
   final Map<String, String> headers = {'Content-Type': 'application/json'};
+  static const Duration requestTimeout = Duration(seconds: 60);
+  static const String timeoutMessage = 'Không nhận được phản hồi từ máy chủ';
 
   ApiService(this.baseUrl, [this.bearerToken]) {
     if (bearerToken != null && bearerToken!.isNotEmpty) {
@@ -28,12 +31,18 @@ class ApiService {
       headers['Authorization'] = 'Bearer $accessToken';
     }
 
-    final response = await http.post(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers,
-      body: json.encode(data),
-    );
-    return _handleResponse(response);
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: headers,
+            body: json.encode(data),
+          )
+          .timeout(requestTimeout);
+      return _handleResponse(response);
+    } on TimeoutException {
+      throw Exception(timeoutMessage);
+    }
   }
 
   Future<Map<String, dynamic>> getData(
@@ -44,11 +53,17 @@ class ApiService {
       headers['Authorization'] = 'Bearer $accessToken';
     }
 
-    final response = await http.get(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers,
-    );
-    return _handleResponse(response);
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: headers,
+          )
+          .timeout(requestTimeout);
+      return _handleResponse(response);
+    } on TimeoutException {
+      throw Exception(timeoutMessage);
+    }
   }
 
   Future<Map<String, dynamic>> putData(
@@ -60,12 +75,18 @@ class ApiService {
       headers['Authorization'] = 'Bearer $accessToken';
     }
 
-    final response = await http.put(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers,
-      body: json.encode(data),
-    );
-    return _handleResponse(response);
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: headers,
+            body: json.encode(data),
+          )
+          .timeout(requestTimeout);
+      return _handleResponse(response);
+    } on TimeoutException {
+      throw Exception(timeoutMessage);
+    }
   }
 
   Future<Map<String, dynamic>> deleteData(
@@ -77,25 +98,37 @@ class ApiService {
       headers['Authorization'] = 'Bearer $accessToken';
     }
 
-    final response = await http.delete(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers,
-      body: data != null ? json.encode(data) : null,
-    );
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: headers,
+            body: data != null ? json.encode(data) : null,
+          )
+          .timeout(requestTimeout);
 
-    return _handleResponse(response);
+      return _handleResponse(response);
+    } on TimeoutException {
+      throw Exception(timeoutMessage);
+    }
   }
 
   Future<Map<String, dynamic>> patchData(
     String endpoint,
     Map<String, dynamic> data,
   ) async {
-    final response = await http.patch(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers,
-      body: json.encode(data),
-    );
-    return _handleResponse(response);
+    try {
+      final response = await http
+          .patch(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: headers,
+            body: json.encode(data),
+          )
+          .timeout(requestTimeout);
+      return _handleResponse(response);
+    } on TimeoutException {
+      throw Exception(timeoutMessage);
+    }
   }
 
   Future<Map<String, dynamic>> postMultipartData(
@@ -150,13 +183,17 @@ class ApiService {
       }
     }
 
-    var response = await request.send();
+    try {
+      var response = await request.send().timeout(requestTimeout);
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      var responseData = await response.stream.bytesToString();
-      return json.decode(responseData);
-    } else {
-      throw Exception('Failed to process data: ${response.statusCode}');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        var responseData = await response.stream.bytesToString();
+        return json.decode(responseData);
+      } else {
+        throw Exception('Failed to process data: ${response.statusCode}');
+      }
+    } on TimeoutException {
+      throw Exception(timeoutMessage);
     }
   }
 
@@ -170,7 +207,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> getDataFromUrl(String fullUrl) async {
     try {
-      final response = await http.get(Uri.parse(fullUrl));
+      final response = await http.get(Uri.parse(fullUrl)).timeout(requestTimeout);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

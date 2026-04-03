@@ -37,6 +37,10 @@ class LendReturnController extends GetxController {
   final totalScannedEPCs = 0.obs;
   final totalPairs = 0.0.obs;
 
+  static const Duration _shortApiTimeout = Duration(seconds: 12);
+  static const Duration _mediumApiTimeout = Duration(seconds: 20);
+  static const Duration _longApiTimeout = Duration(seconds: 30);
+
   // Safe feedback helper - uses print for async contexts
   void _showFeedback(String title, String message) {
     print('[$title] $message');
@@ -85,7 +89,7 @@ class LendReturnController extends GetxController {
       final data = {"companyName": companyName};
       var response = await ApiService(
         baseUrl,
-      ).post('/phom/getDepartment', data);
+      ).post('/phom/getDepartment', data, timeout: _mediumApiTimeout);
       if (response.statusCode == 200) {
         final List<dynamic>? jsonArray = response.data?["data"]?["jsonArray"];
         if (jsonArray != null) {
@@ -165,7 +169,7 @@ class LendReturnController extends GetxController {
     try {
       final response = await ApiService(
         baseUrl,
-      ).post('/phom/checkRFIDinBrBill', data);
+      ).post('/phom/checkRFIDinBrBill', data, timeout: _shortApiTimeout);
       final status = response.data['status'];
       final message = response.data['message'] ?? 'Lỗi không xác định';
       final responseData = response.data['data'] as List<dynamic>?;
@@ -317,7 +321,7 @@ class LendReturnController extends GetxController {
     try {
       final response = await ApiService(
         baseUrl,
-      ).post('/phom/submitReturnPhom', data);
+      ).post('/phom/submitReturnPhom', data, timeout: _longApiTimeout);
       if (response.data["statusCode"] == 200) {
         AppSnackbar.show(
           "Thành công",
